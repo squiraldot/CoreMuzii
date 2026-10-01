@@ -1,15 +1,15 @@
 [Setup]
 AppId=B9F6E402-0CAE-4045-BDE6-14BD6C39C4EA
 AppVersion=1.12.2+27
-AppName=Harmony Music
-AppPublisher=North-Abyss
-AppPublisherURL=https://github.com/North-Abyss/Harmony-Music
-AppSupportURL=https://github.com/North-Abyss/Harmony-Music
-AppUpdatesURL=https://github.com/North-Abyss/Harmony-Music
-DefaultDirName={autopf}\harmonymusic
+AppName=MDLovFi Music
+AppPublisher=Merrmist
+AppPublisherURL=https://github.com/Merrmist/MDLovFi-Music
+AppSupportURL=https://github.com/Merrmist/MDLovFi-Music
+AppUpdatesURL=https://github.com/Merrmist/MDLovFi-Music
+DefaultDirName={autopf}\mdlovfimusic
 DisableProgramGroupPage=yes
 OutputDir=.
-OutputBaseFilename=harmonymusic-1.12.2
+OutputBaseFilename=mdlovfimusic-1.12.2
 Compression=lzma
 SolidCompression=yes
 SetupIconFile=..\..\windows\runner\resources\app_icon.ico
@@ -26,13 +26,13 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "..\..\build\windows\x64\runner\Release\harmonymusic.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\build\windows\x64\runner\Release\mdlovfimusic.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\Harmony Music"; Filename: "{app}\harmonymusic.exe"
-Name: "{autodesktop}\Harmony Music"; Filename: "{app}\harmonymusic.exe"; Tasks: desktopicon
+Name: "{autoprograms}\MDLovFi Music"; Filename: "{app}\mdlovfimusic.exe"
+Name: "{autodesktop}\MDLovFi Music"; Filename: "{app}\mdlovfimusic.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\harmonymusic.exe"; Description: "{cm:LaunchProgram,{#StringChange('Harmony Music', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\mdlovfimusic.exe"; Description: "{cm:LaunchProgram,{#StringChange('MDLovFi Music', '&', '&&')}}"; Flags: nowait postinstall skipifsilent

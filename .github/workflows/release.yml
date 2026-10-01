@@ -87,7 +87,7 @@ jobs:
             exit 1
           fi
           cd "$RELEASE_DIR"
-          tar -czf "$GITHUB_WORKSPACE/dist/harmonymusic-linux.tar.gz" *
+          tar -czf "$GITHUB_WORKSPACE/dist/mdlovfimusic-linux.tar.gz" *
           
           cd "$GITHUB_WORKSPACE"
           cp dist/*/linux-*/*.deb dist/ || true
@@ -136,7 +136,7 @@ jobs:
 
           $releaseDir = "build\windows\x64\runner\Release"
           if (Test-Path $releaseDir) {
-            Compress-Archive -Path "$releaseDir\*" -DestinationPath dist\harmonymusic-windows.zip
+            Compress-Archive -Path "$releaseDir\*" -DestinationPath dist\mdlovfimusic-windows.zip
           } else {
             throw "Release directory not found at $releaseDir"
           }
@@ -178,45 +178,45 @@ jobs:
           
           # Rename Android APKs to match standard naming (stripping -release)
           if [ -f "app-armeabi-v7a-release.apk" ]; then
-            mv app-armeabi-v7a-release.apk harmonymusic-${VERSION}-armeabi-v7a.apk
+            mv app-armeabi-v7a-release.apk mdlovfimusic-${VERSION}-armeabi-v7a.apk
           fi
           if [ -f "app-arm64-v8a-release.apk" ]; then
-            mv app-arm64-v8a-release.apk harmonymusic-${VERSION}-arm64-v8a.apk
+            mv app-arm64-v8a-release.apk mdlovfimusic-${VERSION}-arm64-v8a.apk
           fi
           if [ -f "app-release.apk" ]; then
-            mv app-release.apk harmonymusic-${VERSION}.apk
+            mv app-release.apk mdlovfimusic-${VERSION}.apk
           fi
           
-          if [ -f "harmonymusic-linux.tar.gz" ]; then
-            mv "harmonymusic-linux.tar.gz" "harmonymusic-${VERSION}-linux.tar.gz"
+          if [ -f "mdlovfimusic-linux.tar.gz" ]; then
+            mv "mdlovfimusic-linux.tar.gz" "mdlovfimusic-${VERSION}-linux.tar.gz"
           fi
           
-          if [ -f "harmonymusic-windows.zip" ]; then
-            mv "harmonymusic-windows.zip" "harmonymusic-${VERSION}-windows.zip"
+          if [ -f "mdlovfimusic-windows.zip" ]; then
+            mv "mdlovfimusic-windows.zip" "mdlovfimusic-${VERSION}-windows.zip"
           fi
           
           DEB_FILE=$(ls *.deb 2>/dev/null | head -n 1)
           if [ -n "$DEB_FILE" ]; then
-            mv "$DEB_FILE" "harmonymusic-${VERSION}-linux.deb"
+            mv "$DEB_FILE" "mdlovfimusic-${VERSION}-linux.deb"
           fi
           
           RPM_FILE=$(ls *.rpm 2>/dev/null | head -n 1)
           if [ -n "$RPM_FILE" ]; then
-            mv "$RPM_FILE" "harmonymusic-${VERSION}-linux.rpm"
+            mv "$RPM_FILE" "mdlovfimusic-${VERSION}-linux.rpm"
           fi
           
           APPIMAGE_FILE=$(ls *.AppImage *.appimage 2>/dev/null | head -n 1)
           if [ -n "$APPIMAGE_FILE" ]; then
-            mv "$APPIMAGE_FILE" "harmonymusic-${VERSION}-linux.AppImage"
+            mv "$APPIMAGE_FILE" "mdlovfimusic-${VERSION}-linux.AppImage"
           fi
           
           EXE_FILE=$(ls *.exe 2>/dev/null | head -n 1)
           if [ -n "$EXE_FILE" ]; then
-            mv "$EXE_FILE" "harmonymusic-${VERSION}-windows.exe"
+            mv "$EXE_FILE" "mdlovfimusic-${VERSION}-windows.exe"
           fi
           
           # Generate SHA256 sums
-          sha256sum * > harmonymusic-v${VERSION}.sha256sum
+          sha256sum * > mdlovfimusic-v${VERSION}.sha256sum
           
       - name: Publish Release
         uses: softprops/action-gh-release@v1

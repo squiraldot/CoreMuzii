@@ -1,4 +1,4 @@
-# Harmony Music V1.13.3 🎵
+# MDLovFi Music V1.13.3 🎵
 We are pushing a critical update to resolve the widespread "403 Forbidden" streaming errors, massively improve lyrics fetching, and refine the desktop user experience!
 
 ### 🐛 Bug Fixes & Stability

@@ -38,7 +38,7 @@ Future<AudioHandler> initAudioService() async {
     config: const AudioServiceConfig(
       androidNotificationIcon: 'mipmap/ic_launcher_monochrome',
       androidNotificationChannelId: 'com.mycompany.myapp.audio',
-      androidNotificationChannelName: 'Harmony Music Notification',
+      androidNotificationChannelName: 'MDLovFi Music Notification',
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,
     ),
@@ -70,7 +70,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
   MyAudioHandler() {
     if (GetPlatform.isWindows || GetPlatform.isLinux) {
-      JustAudioMediaKit.title = 'Harmony music';
+      JustAudioMediaKit.title = 'MDLovFi music';
       JustAudioMediaKit.protocolWhitelist = const ['http', 'https', 'file'];
       JustAudioMediaKit.ensureInitialized(linux: true, windows: true);
     }

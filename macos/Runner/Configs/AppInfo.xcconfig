@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = harmonymusic
+PRODUCT_NAME = mdlovfimusic
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.northabyss.harmonymusic
+PRODUCT_BUNDLE_IDENTIFIER = com.merrmist.mdlovfimusic
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2024 northabyss (Original), North-Abyss (Modifications). All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2024 merrmist (Original), Merrmist (Modifications). All rights reserved.

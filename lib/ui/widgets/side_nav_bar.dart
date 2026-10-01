@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:harmonymusic/ui/screens/Home/home_screen_controller.dart';
+import 'package:mdlovfimusic/ui/screens/Home/home_screen_controller.dart';
 import 'sidebar_with_animation.dart';
 
 class SideNavBar extends StatelessWidget {

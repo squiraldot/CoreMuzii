@@ -30,7 +30,7 @@ class NewVersionDialog extends StatelessWidget {
                       onPressed: () {
                         launchUrl(
                           Uri.parse(
-                            'https://github.com/North-Abyss/Harmony-Music/releases/latest',
+                            'https://github.com/Merrmist/MDLovFi-Music/releases/latest',
                           ),
                           mode: LaunchMode.externalApplication,
                         );

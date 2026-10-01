@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:harmonymusic/utils/helper.dart';
-import 'package:harmonymusic/utils/lang_mapping.dart';
+import 'package:mdlovfimusic/utils/helper.dart';
+import 'package:mdlovfimusic/utils/lang_mapping.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../widgets/common_dialog_widget.dart';
@@ -58,7 +58,7 @@ class SettingsScreen extends StatelessWidget {
                             onTap: () {
                               launchUrl(
                                 Uri.parse(
-                                  'https://github.com/North-Abyss/Harmony-Music/releases/latest',
+                                  'https://github.com/Merrmist/MDLovFi-Music/releases/latest',
                                 ),
                                 mode: LaunchMode.externalApplication,
                               );
@@ -669,14 +669,14 @@ class SettingsScreen extends StatelessWidget {
                     contentPadding: const EdgeInsets.only(left: 5, right: 10),
                     title: Text("github".tr),
                     subtitle: Text(
-                      "This app is a fork of the original Harmony Music app by anandnet, with additional features and improvements added by North-Abyss.\n\n${"githubDes".tr}${((Get.find<PlayerController>().playerPanelMinHeight.value) == 0 || !isBottomNavActive) ? "" : "\n\n${settingsController.currentVersion} ${"by".tr} North-Abyss"}",
+                      "This app is a fork of the original MDLovFi Music app by anandnet, with additional features and improvements added by Merrmist.\n\n${"githubDes".tr}${((Get.find<PlayerController>().playerPanelMinHeight.value) == 0 || !isBottomNavActive) ? "" : "\n\n${settingsController.currentVersion} ${"by".tr} Merrmist"}",
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     isThreeLine: true,
                     onTap: () {
                       launchUrl(
                         Uri.parse(
-                          'https://github.com/North-Abyss/Harmony-Music',
+                          'https://github.com/Merrmist/MDLovFi-Music',
                         ),
                         mode: LaunchMode.externalApplication,
                       );
@@ -686,13 +686,13 @@ class SettingsScreen extends StatelessWidget {
                     contentPadding: const EdgeInsets.only(left: 5, right: 10),
                     title: const Text("Original Repository (anandnet)"),
                     subtitle: Text(
-                      "View the original unmaintained Harmony Music repository by anandnet",
+                      "View the original unmaintained MDLovFi Music repository by anandnet",
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     onTap: () {
                       launchUrl(
                         Uri.parse(
-                          'https://github.com/anandnet/Harmony-Music',
+                          'https://github.com/anandnet/MDLovFi-Music',
                         ),
                         mode: LaunchMode.externalApplication,
                       );
@@ -703,7 +703,7 @@ class SettingsScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         Text(
-                          "Harmony Music",
+                          "MDLovFi Music",
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         Text(settingsController.currentVersion,
@@ -718,7 +718,7 @@ class SettingsScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 20.0),
             child: Text(
-              "${settingsController.currentVersion} ${"by".tr} North-Abyss\n(Forked from anandnet)",
+              "${settingsController.currentVersion} ${"by".tr} Merrmist\n(Forked from anandnet)",
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
