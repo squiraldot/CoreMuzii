@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:audio_service/audio_service.dart' show MediaItem;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:harmonymusic/models/thumbnail.dart';
-import 'package:harmonymusic/services/permission_service.dart';
-import 'package:harmonymusic/ui/screens/Settings/settings_screen_controller.dart';
-import 'package:harmonymusic/ui/widgets/snackbar.dart';
-import 'package:harmonymusic/utils/helper.dart';
+import 'package:mdlovfimusic/models/thumbnail.dart';
+import 'package:mdlovfimusic/services/permission_service.dart';
+import 'package:mdlovfimusic/ui/screens/Settings/settings_screen_controller.dart';
+import 'package:mdlovfimusic/ui/widgets/snackbar.dart';
+import 'package:mdlovfimusic/utils/helper.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart' as path_provider;
 
@@ -557,7 +557,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   // Helper method to get the appropriate export directory for each platform
   Future<Directory> _getExportDirectory() async {
     Directory directory;
-    const appFolderName = "HarmonyMusic";
+    const appFolderName = "MDLovFiMusic";
 
     try {
       if (Platform.isAndroid) {
@@ -599,11 +599,11 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   // Helper method to get a user-friendly location message
   String _getLocationMessage(String path) {
     if (Platform.isAndroid) {
-      return "Downloads/HarmonyMusic";
+      return "Downloads/MDLovFiMusic";
     } else if (Platform.isIOS) {
-      return "Files App > HarmonyMusic";
+      return "Files App > MDLovFiMusic";
     } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      return "Downloads/HarmonyMusic";
+      return "Downloads/MDLovFiMusic";
     } else {
       return path.split('/').last;
     }
