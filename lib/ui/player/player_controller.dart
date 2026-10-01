@@ -72,7 +72,7 @@ class PlayerController extends GetxController
   // 0 for play, 1 for pause, 2 for blank
   final gesturePlayerVisibleState = 2.obs;
   final lyricUi =
-      HarmonyLyricUI(highlight: true, defaultSize: 20, defaultExtSize: 12);
+      MDLovFiLyricUI(highlight: true, defaultSize: 20, defaultExtSize: 12);
   RxMap<String, dynamic> lyrics =
       <String, dynamic>{"synced": "", "plainLyrics": ""}.obs;
   ScrollController scrollController = ScrollController();
@@ -1109,7 +1109,7 @@ class PlayerController extends GetxController
 
 enum PlayButtonState { paused, playing, loading }
 
-class HarmonyLyricUI extends LyricUI {
+class MDLovFiLyricUI extends LyricUI {
   final double defaultSize;
   final double defaultExtSize;
   final double otherMainSize;
@@ -1121,7 +1121,7 @@ class HarmonyLyricUI extends LyricUI {
   final bool highlight;
   final HighlightDirection highlightDirection;
 
-  HarmonyLyricUI({
+  MDLovFiLyricUI({
     this.defaultSize = 20,
     this.defaultExtSize = 12,
     this.otherMainSize = 16,
