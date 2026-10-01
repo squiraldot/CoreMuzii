@@ -1,18 +1,18 @@
 # Project Memory / Agent Database
 
-This document acts as the primary Agent Database and Context Memory for AI agents assisting with the **Harmony Music** project. It preserves architectural decisions, project structure, and overarching project goals. 
+This document acts as the primary Agent Database and Context Memory for AI agents assisting with the **MDLovFi Music** project. It preserves architectural decisions, project structure, and overarching project goals. 
 
 > **CRITICAL INSTRUCTION FOR AGENTS:**
 > **PRIORITIZE `issues.md`**: `issues.md` is the **absolute source of truth** for ongoing tasks, feature priorities, and bugs. ALWAYS check `issues.md` before starting work to understand current priorities.
 
 ## Project Context
-- **Name**: Harmony Music
-- **Dart Package Name**: `harmonymusic`
-- **App ID / Bundle Identifier**: `com.northabyss.harmonymusic`
+- **Name**: MDLovFi Music
+- **Dart Package Name**: `mdlovfimusic`
+- **App ID / Bundle Identifier**: `com.merrmist.mdlovfimusic`
 - **Version**: 1.13.0
-- **Forked From**: [northabyss/Harmony-Music](https://github.com/northabyss/Harmony-Music)
-- **Maintained By**: [North-Abyss/Harmony-Music](https://github.com/North-Abyss/Harmony-Music)
-- **Goal**: Develop and actively maintain the Harmony Music cross-platform music streaming app, adding new features and fixing legacy bugs.
+- **Forked From**: [merrmist/MDLovFi-Music](https://github.com/merrmist/MDLovFi-Music)
+- **Maintained By**: [Merrmist/MDLovFi-Music](https://github.com/Merrmist/MDLovFi-Music)
+- **Goal**: Develop and actively maintain the MDLovFi Music cross-platform music streaming app, adding new features and fixing legacy bugs.
 - **Framework**: Flutter (Dart SDK >=3.1.5 <4.0.0)
 
 ## Output Guidelines
@@ -61,7 +61,7 @@ This document acts as the primary Agent Database and Context Memory for AI agent
 
 ## App Store Metadata & Packaging
 - **Android**: Metadata for F-Droid and Play Store is stored in `fastlane/metadata/android/en-US/`. This includes descriptions, changelogs, and screenshots.
-- **Linux (AppStream)**: Rich metadata for Linux software centers (Screenshots, descriptions, categories) is defined in `linux/packaging/deb/usr/share/metainfo/harmonymusic.metainfo.xml`. This file is automatically injected into DEB, RPM, and AppImage builds by `flutter_distributor`.
+- **Linux (AppStream)**: Rich metadata for Linux software centers (Screenshots, descriptions, categories) is defined in `linux/packaging/deb/usr/share/metainfo/mdlovfimusic.metainfo.xml`. This file is automatically injected into DEB, RPM, and AppImage builds by `flutter_distributor`.
 - **Windows**: Package metadata (Publisher URL, App ID, Display Name) is defined in `windows/packaging/exe/make_config.yaml` for `flutter_distributor`.
 
 ### Architecture Overview
