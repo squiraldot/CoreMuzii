@@ -1,11 +1,11 @@
-display_name: Harmony Music
-package_name: harmonymusic
+display_name: MDLovFi Music
+package_name: mdlovfimusic
 maintainer:
-  name: northabyss
+  name: merrmist
 priority: optional
 section: x11
 installed_size: 20000
-homepage: https://github.com/North-Abyss/Harmony-Music
+homepage: https://github.com/Merrmist/MDLovFi-Music
 description: A cross platform app for music streaming.
 dependencies:
   - mpv
