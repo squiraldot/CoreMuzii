@@ -42,6 +42,13 @@ jobs:
       - name: Generate localization
         run: dart localization/generator.dart
 
+      - name: Verify Android MainActivity package
+        shell: bash
+        run: |
+          test -f android/app/src/main/kotlin/com/merrmist/mdlovfimusic/MainActivity.kt
+          grep -Fx 'package com.merrmist.mdlovfimusic' android/app/src/main/kotlin/com/merrmist/mdlovfimusic/MainActivity.kt
+          grep -F 'android:name=".MainActivity"' android/app/src/main/AndroidManifest.xml
+
       - name: Get dependencies
         run: flutter pub get
 
