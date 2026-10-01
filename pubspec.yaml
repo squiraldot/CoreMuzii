@@ -82,7 +82,7 @@ dependencies:
       ref: fix-visionos-403
   qr_flutter: ^4.1.0
   flutter_zxing: ^2.2.1
-  camera: ^0.12.0+1
+  camera: ^0.11.0+2
   camera_linux: ^0.0.8
   flutter_distributor: ^0.0.2
   http: ^1.6.0
