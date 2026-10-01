@@ -2,6 +2,9 @@ name: MDLovFi Android APK
 # CI runs on every pull-request commit targeting main.
 
 on:
+  push:
+    branches:
+      - mdlovfi-branding
   pull_request:
     branches:
       - main
