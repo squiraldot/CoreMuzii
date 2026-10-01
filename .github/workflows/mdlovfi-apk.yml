@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -24,24 +26,21 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          flutter-version: '3.44.0'
-          cache: true
-
+      - name: Bootstrap pinned Flutter SDK
+        run: |
+          ./flutter/bin/flutter --version
+          ./flutter/bin/flutter precache --android
       - name: Generate localization
-        run: dart localization/generator.dart
+        run: ./flutter/bin/dart localization/generator.dart
 
       - name: Get dependencies
-        run: flutter pub get
+        run: ./flutter/bin/flutter pub get
 
       - name: Analyze
-        run: flutter analyze --no-fatal-infos
+        run: ./flutter/bin/flutter analyze --no-fatal-infos
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: ./flutter/bin/flutter build apk --release
 
       - name: Verify APK
         shell: bash
