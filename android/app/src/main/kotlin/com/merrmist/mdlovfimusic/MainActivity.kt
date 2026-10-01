@@ -1,4 +1,4 @@
-package com.merrmist.mdlovfimusicmusic
+package com.merrmist.mdlovfimusic
 
 import com.ryanheise.audioservice.AudioServiceActivity
 
