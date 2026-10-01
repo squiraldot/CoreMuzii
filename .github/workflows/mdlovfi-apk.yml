@@ -27,7 +27,11 @@ jobs:
           cache: gradle
 
       - name: Bootstrap pinned Flutter SDK
+        env:
+          FLUTTER_COMMIT: 4cf269e36de2573851eaef3c763994f8f9be494d
         run: |
+          git -C flutter checkout -B stable "$FLUTTER_COMMIT"
+          test "$(git -C flutter rev-parse HEAD)" = "$FLUTTER_COMMIT"
           ./flutter/bin/flutter --version
           ./flutter/bin/flutter precache --android
       - name: Generate localization
