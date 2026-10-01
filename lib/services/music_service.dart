@@ -87,6 +87,12 @@ class MusicServices extends getx.GetxService {
 
     final appPrefsBox = Hive.box('AppPrefs');
     hlCode = appPrefsBox.get('contentLanguage') ?? "en";
+
+    final storedCookies = appPrefsBox.get('yt_cookies');
+    if (storedCookies != null && storedCookies.toString().isNotEmpty) {
+      await updateAuthCookies(storedCookies.toString());
+    }
+
     if (appPrefsBox.containsKey('visitorId')) {
       final visitorData = appPrefsBox.get("visitorId");
       if (visitorData != null && !isExpired(epoch: visitorData['exp'])) {
@@ -113,6 +119,15 @@ class MusicServices extends getx.GetxService {
     // not able to generate in that case
     _headers['X-Goog-Visitor-Id'] =
         visitorId ?? "CgttN24wcmd5UzNSWSi2lvq2BjIKCgJKUBIEGgAgYQ%3D%3D";
+  }
+
+  Future<void> updateAuthCookies(String cookies) async {
+    _headers['cookie'] = cookies;
+  }
+
+  void clearAuthCookies() {
+    _headers['cookie'] = 'CONSENT=YES+1';
+    _headers.remove('authorization');
   }
 
   set hlCode(String code) {

@@ -46,12 +46,13 @@ class ModificationList extends StatelessWidget {
                   ),
                 ),
             itemCount: items.length,
-            onReorderItem: (old_, new_) {
+            onReorder: (oldIndex, newIndex) {
+              if (oldIndex < newIndex) {
+                newIndex -= 1;
+              }
               final list = items.toList();
-              final item = list.removeAt(
-                old_,
-              );
-              list.insert(new_, item);
+              final item = list.removeAt(oldIndex);
+              list.insert(newIndex, item);
               screenController.additionalOperationTempList.value = list;
             }),
       );
