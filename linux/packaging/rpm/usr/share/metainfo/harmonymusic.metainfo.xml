@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>harmonymusic.desktop</id>
+  <id>mdlovfimusic.desktop</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
-  <name>Harmony Music</name>
+  <name>MDLovFi Music</name>
   <summary>A cross platform app for music streaming</summary>
   
   <description>
-    <p>Harmony Music is a beautiful, cross-platform app for music streaming made with Flutter.</p>
+    <p>MDLovFi Music is a beautiful, cross-platform app for music streaming made with Flutter.</p>
     <ul>
       <li>Ability to play song from YouTube/YouTube Music.</li>
       <li>Song cache while playing</li>
@@ -22,14 +22,14 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">harmonymusic.desktop</launchable>
+  <launchable type="desktop-id">mdlovfimusic.desktop</launchable>
 
-  <url type="homepage">https://github.com/North-Abyss/Harmony-Music</url>
-  <url type="bugtracker">https://github.com/North-Abyss/Harmony-Music/issues</url>
+  <url type="homepage">https://github.com/Merrmist/MDLovFi-Music</url>
+  <url type="bugtracker">https://github.com/Merrmist/MDLovFi-Music/issues</url>
 
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/North-Abyss/Harmony-Music/main/images/cover.png</image>
+      <image>https://raw.githubusercontent.com/Merrmist/MDLovFi-Music/main/images/cover.png</image>
       <caption>Home screen showing trending songs and playlists</caption>
     </screenshot>
   </screenshots>
@@ -41,6 +41,6 @@
   </categories>
   
   <provides>
-    <binary>harmonymusic</binary>
+    <binary>mdlovfimusic</binary>
   </provides>
 </component>
