@@ -1,6 +1,6 @@
 # GitHub Scripts
 
-This directory contains utility scripts for managing the Harmony Music repository.
+This directory contains utility scripts for managing the MDLovFi Music repository.
 
 ## close_search_issues.sh
 
