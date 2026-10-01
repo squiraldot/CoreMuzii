@@ -26,26 +26,30 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Bootstrap pinned Flutter SDK
+      - name: Verify pinned Flutter submodule
         env:
           FLUTTER_COMMIT: 4cf269e36de2573851eaef3c763994f8f9be494d
         run: |
-          git -C flutter fetch --tags --force origin
-          git -C flutter checkout -B stable "$FLUTTER_COMMIT"
           test "$(git -C flutter rev-parse HEAD)" = "$FLUTTER_COMMIT"
-          ./flutter/bin/flutter --version
-          ./flutter/bin/flutter precache --android
+          git -C flutter show -s --format='%H %s' HEAD
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.5'
+          cache: true
       - name: Generate localization
-        run: ./flutter/bin/dart localization/generator.dart
+        run: dart localization/generator.dart
 
       - name: Get dependencies
-        run: ./flutter/bin/flutter pub get
+        run: flutter pub get
 
       - name: Analyze
-        run: ./flutter/bin/flutter analyze --no-fatal-infos lib test
+        run: flutter analyze --no-fatal-infos lib test
 
       - name: Build release APK
-        run: ./flutter/bin/flutter build apk --release
+        run: flutter build apk --release
 
       - name: Verify APK
         shell: bash
