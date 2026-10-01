@@ -49,7 +49,7 @@ dependencies:
   hive_flutter: ^1.1.0
   html: ^0.15.6
   jni: ^0.14.0
-  just_audio: ^0.9.46
+  just_audio: ^0.10.6
   just_audio_media_kit: ^2.1.0
   media_kit_libs_linux: ^1.2.0
   palette_generator: ^0.3.3+4
@@ -81,8 +81,8 @@ dependencies:
       url: https://github.com/its-ashutosh-pathak/youtube_explode_dart.git
       ref: fix-visionos-403
   qr_flutter: ^4.1.0
-  flutter_zxing: ^2.2.1
-  camera: ^0.11.0+2
+  flutter_zxing: ^2.3.0
+  camera: ^0.12.0+1
   camera_linux: ^0.0.8
   flutter_distributor: ^0.0.2
   http: ^1.6.0
@@ -137,5 +137,3 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
 
 
-dependency_overrides:
-  path: 1.9.0
