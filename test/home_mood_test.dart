@@ -4,7 +4,7 @@ import 'package:mdlovfimusic/models/home_mood.dart';
 void main() {
   test('parses a mood navigation renderer', () {
     final mood = HomeMood.fromRenderer({
-      'title': {'simpleText': 'Focus'},
+      'buttonText': {'runs': [{'text': 'Focus'}]},
       'navigationEndpoint': {
         'browseEndpoint': {
           'browseId': 'FEmusic_moods_and_genres_category',
