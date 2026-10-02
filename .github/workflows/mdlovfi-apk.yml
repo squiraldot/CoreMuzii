@@ -1,7 +1,10 @@
 name: MDLovFi Android APK
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+  pull_request:
 
 permissions:
   contents: read
