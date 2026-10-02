@@ -271,16 +271,26 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     queue.add(newQueue);
   }
 
-  AudioSource _createAudioSource(MediaItem mediaItem) {
+  Future<AudioSource> _createAudioSource(MediaItem mediaItem) async {
     final originalUrl = mediaItem.extras!['url'] as String;
-    final streamHeaders = (mediaItem.extras!['streamHeaders'] as Map?)?.cast<String, String>();
-    
-    // YouTube now strictly checks User-Agent which MPV/media_kit strips.
-    // So we use LocalProxy on ALL platforms to guarantee header injection.
-    final isDesktop = GetPlatform.isWindows || GetPlatform.isLinux || GetPlatform.isMacOS;
+    final streamHeaders =
+        (mediaItem.extras!['streamHeaders'] as Map?)?.cast<String, String>();
+
+    final isDesktop =
+        GetPlatform.isWindows || GetPlatform.isLinux || GetPlatform.isMacOS;
+
+    // Android/iOS support request headers natively when
+    // useProxyForRequestHeaders=false. Avoiding our own proxy here removes
+    // the first-play race where the proxy server had not finished binding.
+    // Desktop media backends still use our proxy so YouTube headers survive.
     final url = (!originalUrl.startsWith('http'))
-        ? originalUrl 
-        : LocalProxy.addUrl(originalUrl, headers: streamHeaders);
+        ? originalUrl
+        : isDesktop
+            ? await LocalProxy.addUrlAsync(
+                originalUrl,
+                headers: streamHeaders,
+              )
+            : originalUrl;
 
     // LockCachingAudioSource is broken on just_audio_media_kit (it ignores cache and drops headers).
     // So we disable it on Desktop.
@@ -500,7 +510,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         currentSong.extras!['streamHeaders'] = streamInfo.streamHeaders;
         playbackState
             .add(playbackState.value.copyWith(queueIndex: currentIndex));
-        await _player.setAudioSource(_createAudioSource(currentSong));
+        await _player.setAudioSource(await _createAudioSource(currentSong));
 
         isSongLoading = false;
         if (loudnessNormalizationEnabled && GetPlatform.isAndroid) {
@@ -598,7 +608,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         currentSongUrl = currMed.extras!['url'] = streamInfo.audio!.url;
         currMed.extras!['streamHeaders'] = streamInfo.streamHeaders;
 
-        await _player.setAudioSource(_createAudioSource(currMed));
+        await _player.setAudioSource(await _createAudioSource(currMed));
         isSongLoading = false;
 
         // Normalize audio
