@@ -99,29 +99,31 @@ class HomeScreenController extends GetxController {
     networkError.value = false;
     try {
       List middleContentTemp = [];
-      final homeContentListMap = await _musicServices.getHome(
-          limit:
-              Get.find<SettingsScreenController>().noOfHomeScreenContent.value);
-
-      // The same authenticated InnerTube home response is already personalized
-      // when the YouTube session is valid. Do not make a second request or mix
-      // anonymous and account-scoped home sections.
       final isAuthenticatedHome =
           box.get('yt_logged_in', defaultValue: false) == true;
+      final homeContentListMap = await _musicServices.getHome(
+        limit: Get.find<SettingsScreenController>()
+            .noOfHomeScreenContent
+            .value,
+        allSections: isAuthenticatedHome,
+      );
+
+      // For a signed-in YouTube Music account, use the complete personalized
+      // Home feed exactly as returned by FEmusic_home. This includes every
+      // shelf returned through section continuations (Quick picks, Listen
+      // again, mixes, community playlists, new releases, videos, regional
+      // shelves, and any account-specific shelves YouTube adds later).
       if (isAuthenticatedHome && homeContentListMap.isNotEmpty) {
-        final firstSection = homeContentListMap.first;
-        if (firstSection is Map && firstSection.containsKey("contents")) {
-          quickPicks.value = QuickPicks(
-            List<MediaItem>.from(firstSection["contents"]),
-            title: firstSection["title"] ?? "Listen Again",
-          );
+        final parsedHome = _setAuthenticatedHomeContent(homeContentListMap);
+        if (parsedHome.isNotEmpty && parsedHome.first is QuickPicks) {
+          quickPicks.value = parsedHome.first as QuickPicks;
+          middleContentTemp.addAll(parsedHome.skip(1));
+        } else {
+          quickPicks.value = QuickPicks([]);
+          middleContentTemp.addAll(parsedHome);
         }
-        // YT Music Home is already ordered as a single feed. Keep the
-        // remaining shelves in one list; rendering them again as fixedContent
-        // was the source of the post-login double-shelf bug.
-        middleContentTemp.addAll(homeContentListMap.skip(1));
       }
-      if (contentType == "TR") {
+      if (!isAuthenticatedHome && contentType == "TR") {
         final index = homeContentListMap
             .indexWhere((element) => element['title'] == "Trending");
         if (index != -1 && index != 0) {
@@ -140,7 +142,7 @@ class HomeScreenController extends GetxController {
             middleContentTemp.addAll(charts);
           }
         }
-      } else if (contentType == "TMV") {
+      } else if (!isAuthenticatedHome && contentType == "TMV") {
         final index = homeContentListMap
             .indexWhere((element) => element['title'] == "Top music videos");
         if (index != -1 && index != 0) {
@@ -159,7 +161,7 @@ class HomeScreenController extends GetxController {
             middleContentTemp.addAll(charts);
           }
         }
-      } else if (contentType == "BOLI") {
+      } else if (!isAuthenticatedHome && contentType == "BOLI") {
         try {
           final songId = box.get("recentSongId");
           if (songId != null) {
@@ -186,8 +188,11 @@ class HomeScreenController extends GetxController {
         }
       }
 
-      middleContent.value = _setContentList(middleContentTemp);
-      fixedContent.value = _setContentList(homeContentListMap);
+      middleContent.value = isAuthenticatedHome
+          ? middleContentTemp
+          : _setContentList(middleContentTemp);
+      fixedContent.value =
+          isAuthenticatedHome ? [] : _setContentList(homeContentListMap);
 
       isContentFetched.value = true;
 
@@ -201,6 +206,44 @@ class HomeScreenController extends GetxController {
       await Future.delayed(const Duration(seconds: 1));
       networkError.value = !silent;
     }
+  }
+
+  List<dynamic> _setAuthenticatedHomeContent(
+      List<dynamic> sections) {
+    final result = <dynamic>[];
+
+    for (final section in sections) {
+      if (section is! Map) continue;
+      final title = (section["title"] ?? "").toString().trim();
+      final contents = section["contents"];
+      if (contents is! List || contents.isEmpty) continue;
+
+      final songs = contents.whereType<MediaItem>().toList();
+      final playlists = contents.whereType<Playlist>().toList();
+      final albums = contents.whereType<Album>().toList();
+
+      // Prefer the content type that matches the shelf. Mixed shelves can
+      // occasionally contain one non-primary item; keep the dominant useful
+      // type instead of dropping the whole YouTube section.
+      if (playlists.isNotEmpty) {
+        result.add(PlaylistContent(
+          title: title.isEmpty ? "YouTube Music" : title,
+          playlistList: playlists,
+        ));
+      } else if (albums.isNotEmpty) {
+        result.add(AlbumContent(
+          title: title.isEmpty ? "YouTube Music" : title,
+          albumList: albums,
+        ));
+      } else if (songs.isNotEmpty) {
+        result.add(QuickPicks(
+          songs,
+          title: title.isEmpty ? "YouTube Music" : title,
+        ));
+      }
+    }
+
+    return result;
   }
 
   List _setContentList(
