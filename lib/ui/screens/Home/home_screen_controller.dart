@@ -29,7 +29,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   final List<ScrollController> contentScrollControllers = [];
   bool reverseAnimationtransiton = false;
   bool _homeRefreshInProgress = false;
-  DateTime? _lastAuthenticatedHomeRefresh;
 
   @override
   onInit() {
@@ -37,6 +36,13 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     loadContent();
     if (updateCheckFlag) _checkNewVersion();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && tabIndex.value == 0) {
+      refreshHome(showLoading: false);
+    }
   }
 
   Future<void> refreshHome({bool showLoading = true}) async {
@@ -49,7 +55,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
       await loadContentFromNetwork(silent: false);
       final box = Hive.box("AppPrefs");
       if (box.get('yt_logged_in', defaultValue: false) == true) {
-        _lastAuthenticatedHomeRefresh = DateTime.now();
       }
     } finally {
       _homeRefreshInProgress = false;
@@ -65,7 +70,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     if (hasYouTubeSession) {
       // Account-scoped home must never reuse anonymous/stale cached shelves.
       await loadContentFromNetwork();
-      _lastAuthenticatedHomeRefresh = DateTime.now();
       return;
     }
     if (isCachedHomeScreenDataEnabled) {

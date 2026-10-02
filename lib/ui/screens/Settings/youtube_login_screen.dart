@@ -9,6 +9,7 @@ import 'package:mdlovfimusic/services/music_service.dart';
 import 'package:mdlovfimusic/ui/screens/Home/home_screen_controller.dart';
 import 'package:mdlovfimusic/ui/screens/Library/library_controller.dart';
 import 'package:mdlovfimusic/utils/youtube_login_utils.dart';
+import 'package:mdlovfimusic/utils/youtube_auth.dart';
 
 class YoutubeLoginScreen extends StatefulWidget {
   const YoutubeLoginScreen({super.key});
@@ -23,7 +24,6 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
   bool _isLoading = true;
   bool _loginCompleting = false;
   Timer? _sessionPoller;
-  bool _setSidRecoveryAttempted = false;
 
   @override
   void initState() {
@@ -45,19 +45,16 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
             await _checkAndExtractSession();
           },
           onWebResourceError: (WebResourceError error) {
-            if (error.isForMainFrame != true ||
-                !(error.url?.contains('accounts.youtube.com/accounts/SetSID') ?? false)) {
-              return;
-            }
-            if (!_setSidRecoveryAttempted) {
-              _setSidRecoveryAttempted = true;
-              _webViewController.loadRequest(Uri.parse(buildYouTubeLoginUrl()));
+            // SetSID may transiently reset while Google completes the
+            // redirect. Keep polling the WebView cookies instead of reloading.
+            if (error.isForMainFrame != true) return;
+            if (error.url?.contains('accounts.youtube.com/accounts/SetSID') ?? false) {
               return;
             }
             if (mounted) {
               Get.snackbar(
                 'YouTube Login',
-                'Google login redirect was reset by the network. Tap refresh and try again.',
+                'The YouTube login page reported a network error. You can continue or tap refresh.',
                 snackPosition: SnackPosition.BOTTOM,
               );
             }
@@ -162,6 +159,29 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
       }
 
       final box = Hive.box('AppPrefs');
+      final identity = YouTubeSessionIdentity.fromDataSyncId(
+        sessionContext['dataSyncId']?.toString(),
+        authUser: sessionContext['authUser']?.toString(),
+      );
+      final accounts = <String, dynamic>{};
+      final storedAccounts = box.get('yt_accounts');
+      if (storedAccounts is Map) {
+        accounts.addAll(
+          storedAccounts.map(
+            (key, value) => MapEntry(key.toString(), value),
+          ),
+        );
+      }
+      accounts[identity.accountKey] = {
+        'cookies': cookies,
+        'visitorData': sessionContext['visitorData']?.toString(),
+        'dataSyncId': sessionContext['dataSyncId']?.toString(),
+        'authUser': identity.authUser,
+        'identityToken': sessionContext['identityToken']?.toString(),
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      };
+      await box.put('yt_accounts', accounts);
+      await box.put('yt_active_account_key', identity.accountKey);
       await box.put('yt_cookies', cookies);
       await box.put('yt_logged_in', true);
       if (sessionContext['visitorData']?.toString().trim().isNotEmpty == true) {

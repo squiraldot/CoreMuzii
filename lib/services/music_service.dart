@@ -12,6 +12,7 @@ import '/models/artist.dart';
 import '/models/playlist.dart';
 import '/services/utils.dart';
 import '../utils/helper.dart';
+import '../utils/youtube_auth.dart';
 import 'constant.dart';
 import 'continuations.dart';
 import 'nav_parser.dart';
@@ -93,11 +94,29 @@ class MusicServices extends getx.GetxService {
     final appPrefsBox = Hive.box('AppPrefs');
     hlCode = appPrefsBox.get('contentLanguage') ?? "en";
 
-    final storedCookies = appPrefsBox.get('yt_cookies');
-    final storedVisitorData = appPrefsBox.get('yt_visitor_data')?.toString();
-    final storedDataSyncId = appPrefsBox.get('yt_data_sync_id')?.toString();
-    final storedAuthUser = appPrefsBox.get('yt_auth_user')?.toString();
-    final storedIdentityToken = appPrefsBox.get('yt_identity_token')?.toString();
+    final storedAccounts = appPrefsBox.get('yt_accounts');
+    final activeAccountKey = appPrefsBox.get('yt_active_account_key')?.toString();
+    Map<String, dynamic>? activeAccount;
+    if (storedAccounts is Map && activeAccountKey != null) {
+      final candidate = storedAccounts[activeAccountKey];
+      if (candidate is Map) {
+        activeAccount = Map<String, dynamic>.from(candidate);
+      }
+    }
+    final storedCookies =
+        activeAccount?['cookies'] ?? appPrefsBox.get('yt_cookies');
+    final storedVisitorData =
+        activeAccount?['visitorData']?.toString() ??
+        appPrefsBox.get('yt_visitor_data')?.toString();
+    final storedDataSyncId =
+        activeAccount?['dataSyncId']?.toString() ??
+        appPrefsBox.get('yt_data_sync_id')?.toString();
+    final storedAuthUser =
+        activeAccount?['authUser']?.toString() ??
+        appPrefsBox.get('yt_auth_user')?.toString();
+    final storedIdentityToken =
+        activeAccount?['identityToken']?.toString() ??
+        appPrefsBox.get('yt_identity_token')?.toString();
     if (storedCookies != null && storedCookies.toString().isNotEmpty) {
       await updateAuthCookies(
         storedCookies.toString(),
@@ -158,31 +177,16 @@ class MusicServices extends getx.GetxService {
       _context['context']['client']['visitorData'] = visitorData.trim();
     }
 
-    final syncId = dataSyncId?.trim();
-    if (syncId != null && syncId.isNotEmpty) {
-      final parts = syncId.split('||');
-      final isDelegatedAccount =
-          parts.length > 1 && parts[1].trim().isNotEmpty;
-      final delegatedSessionId =
-          isDelegatedAccount ? parts.first.trim() : null;
-      final userSessionId = isDelegatedAccount
-          ? parts[1].trim()
-          : (parts.first.trim().isNotEmpty ? parts.first.trim() : null);
-
-      if (delegatedSessionId != null && delegatedSessionId.isNotEmpty) {
-        _headers['X-Goog-PageId'] = delegatedSessionId;
-      } else {
-        _headers.remove('X-Goog-PageId');
-      }
-      if (userSessionId != null && userSessionId.isNotEmpty) {
-        _headers['X-Goog-AuthUser'] =
-            authUser?.trim().isNotEmpty == true ? authUser!.trim() : '0';
-      }
-    } else if (authUser?.trim().isNotEmpty == true) {
-      _headers['X-Goog-AuthUser'] = authUser!.trim();
+    final identity = YouTubeSessionIdentity.fromDataSyncId(
+      dataSyncId,
+      authUser: authUser,
+    );
+    if (identity.delegatedSessionId != null) {
+      _headers['X-Goog-PageId'] = identity.delegatedSessionId!;
     } else {
-      _headers['X-Goog-AuthUser'] = '0';
+      _headers.remove('X-Goog-PageId');
     }
+    _headers['X-Goog-AuthUser'] = identity.authUser;
 
     _headers['X-Youtube-Bootstrap-Logged-In'] = 'true';
     if (identityToken != null && identityToken.trim().isNotEmpty) {
