@@ -8,6 +8,7 @@ import 'package:get/get.dart' as getx;
 import 'package:hive/hive.dart';
 
 import '/models/album.dart';
+import '/models/artist.dart';
 import '/models/playlist.dart';
 import '/services/utils.dart';
 import '../utils/helper.dart';
