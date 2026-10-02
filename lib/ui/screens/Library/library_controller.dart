@@ -277,7 +277,6 @@ class LibraryPlaylistsController extends GetxController
           playlist.playlistId == 'LM' || playlist.playlistId.startsWith('YT:'));
     }
 
-    await syncYouTubeSubscribedArtists(box);
     isContentFetched.value = true;
     await box.close();
   }
