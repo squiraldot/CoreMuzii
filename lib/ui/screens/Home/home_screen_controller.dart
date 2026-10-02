@@ -39,6 +39,13 @@ class HomeScreenController extends GetxController {
     final box = Hive.box("AppPrefs");
     final isCachedHomeScreenDataEnabled =
         box.get("cacheHomeScreenData") ?? true;
+    final hasYouTubeSession =
+        box.get('yt_logged_in', defaultValue: false) == true;
+    if (hasYouTubeSession) {
+      // Account-scoped home must never reuse anonymous/stale cached shelves.
+      await loadContentFromNetwork();
+      return;
+    }
     if (isCachedHomeScreenDataEnabled) {
       final loaded = await loadContentFromDb();
 
