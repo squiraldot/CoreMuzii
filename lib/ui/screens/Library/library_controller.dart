@@ -255,13 +255,15 @@ class LibraryPlaylistsController extends GetxController
 
   void refreshLib() async {
     final box = await Hive.openBox("LibraryPlaylists");
-    libraryPlaylists.value = [
-      ...initPlst,
-      ...(box.values
-          .map<Playlist?>((item) => Playlist.fromJson(item))
-          .whereType<Playlist>()
-          .toList())
-    ];
+    final mergedPlaylists = <String, Playlist>{};
+    for (final playlist in initPlst) {
+      mergedPlaylists[playlist.playlistId] = playlist;
+    }
+    for (final item in box.values) {
+      final playlist = Playlist.fromJson(item);
+      mergedPlaylists[playlist.playlistId] = playlist;
+    }
+    libraryPlaylists.value = mergedPlaylists.values.toList();
 
     final appPrefsBox = Hive.box("AppPrefs");
     if (appPrefsBox.containsKey("piped")) {
@@ -296,8 +298,13 @@ class LibraryPlaylistsController extends GetxController
       }
 
       final ytPlaylists = await musicServices.getAccountPlaylists();
-      libraryPlaylists.removeWhere(
-          (playlist) => previousIds.contains(playlist.playlistId) || playlist.playlistId == 'LM');
+      libraryPlaylists.removeWhere((playlist) {
+        final id = playlist.playlistId;
+        return id == 'LM' ||
+            id == 'VLLM' ||
+            previousIds.contains(id) ||
+            previousIds.contains(id.startsWith('VL') ? id.substring(2) : id);
+      });
 
       final likedMusic = Playlist(
         title: 'Liked Music',
@@ -310,10 +317,12 @@ class LibraryPlaylistsController extends GetxController
 
       final currentIds = <String>{'LM'};
       for (final playlist in ytPlaylists) {
-        if (playlist.playlistId == 'LM') continue;
-        if (currentIds.add(playlist.playlistId)) {
-          libraryPlaylists.add(playlist);
-        }
+        final rawId = playlist.playlistId;
+        if (rawId == 'LM' || rawId == 'VLLM') continue;
+        final canonicalId =
+            rawId.startsWith('VL') ? rawId.substring(2) : rawId;
+        if (canonicalId.isEmpty || !currentIds.add(canonicalId)) continue;
+        libraryPlaylists.add(playlist.copyWith(playlistId: canonicalId));
       }
       await appPrefsBox.put('yt_account_playlist_ids', currentIds.toList());
     } catch (_) {
