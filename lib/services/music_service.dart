@@ -73,11 +73,12 @@ class MusicServices extends getx.GetxService {
 
   @override
   void onInit() {
-    init();
+    _initFuture = init();
     super.onInit();
   }
 
   final dio = Dio();
+  late Future<void> _initFuture;
 
   Future<void> init() async {
     //check visitor id in data base, if not generate one , set lang code
@@ -133,6 +134,8 @@ class MusicServices extends getx.GetxService {
     _headers['X-Goog-Visitor-Id'] =
         visitorId ?? "CgttN24wcmd5UzNSWSi2lvq2BjIKCgJKUBIEGgAgYQ%3D%3D";
   }
+
+  Future<void> ensureReady() => _initFuture;
 
   Future<bool> updateAuthCookies(
     String cookies, {
@@ -197,22 +200,14 @@ class MusicServices extends getx.GetxService {
     }
 
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final parts = <String>[];
     final syncParts = syncId?.split('||') ?? const <String>[];
     final userSessionId = syncParts.length > 1 && syncParts[1].isNotEmpty
         ? syncParts[1]
         : (syncParts.isNotEmpty ? syncParts.first : '');
-    if (userSessionId.isNotEmpty) {
-      parts.add('u:$userSessionId');
-    }
-    parts.addAll([
-      timestamp.toString(),
-      sapisid,
-      'https://music.youtube.com',
-    ]);
-    final hash = sha1.convert(utf8.encode(parts.join(' '))).toString();
-    final suffix = userSessionId.isNotEmpty ? '_u' : '';
-    final auth = 'SAPISIDHASH ' + timestamp.toString() + '_' + hash + suffix;
+        final hash = sha1.convert(
+      utf8.encode('$timestamp $sapisid https://music.youtube.com'),
+    ).toString();
+    final auth = 'SAPISIDHASH $timestamp' + '_' + hash;
 
     final sapisid1p = _extractCookie(normalizedCookies, '__Secure-1PAPISID');
     final sapisid3p = _extractCookie(normalizedCookies, '__Secure-3PAPISID');
@@ -223,11 +218,10 @@ class MusicServices extends getx.GetxService {
     }.entries) {
       final sid = entry.value;
       if (sid == null || sid.isEmpty) continue;
-      final extraParts = <String>[];
-      if (userSessionId.isNotEmpty) extraParts.add('u:$userSessionId');
-      extraParts.addAll([timestamp.toString(), sid, 'https://music.youtube.com']);
-      final sidHash = sha1.convert(utf8.encode(extraParts.join(' '))).toString();
-      authParts.add(entry.key + ' ' + timestamp.toString() + '_' + sidHash + suffix);
+      final sidHash = sha1
+          .convert(utf8.encode('$timestamp $sid https://music.youtube.com'))
+          .toString();
+      authParts.add(entry.key + ' ' + timestamp.toString() + '_' + sidHash);
     }
     _headers['authorization'] = authParts.join(' ');
     return true;
@@ -242,6 +236,7 @@ class MusicServices extends getx.GetxService {
   }
 
   Future<bool> validateYouTubeSession() async {
+    await ensureReady();
     try {
       final response = await _sendRequest(
         'browse',
@@ -271,6 +266,7 @@ class MusicServices extends getx.GetxService {
       'X-Goog-AuthUser',
       'X-Youtube-Bootstrap-Logged-In',
       'X-Origin',
+      'X-Youtube-Identity-Token',
     ]) {
       _headers.remove(key);
     }
@@ -320,6 +316,7 @@ class MusicServices extends getx.GetxService {
 
   // Future<List<Map<String, dynamic>>>
   Future<dynamic> getHome({int limit = 4}) async {
+    await ensureReady();
     final data = Map.from(_context);
     data["browseId"] = "FEmusic_home";
     final response = await _sendRequest("browse", data);
@@ -536,6 +533,7 @@ class MusicServices extends getx.GetxService {
   }
 
   Future<Map<String, dynamic>> getPlaylistOrAlbumSongs(
+    await ensureReady();
       {String? playlistId,
       String? albumId,
       int limit = 3000,
@@ -1174,6 +1172,7 @@ class MusicServices extends getx.GetxService {
   }
 
   Future<List<Playlist>> getAccountPlaylists() async {
+    await ensureReady();
     final playlists = <Playlist>[];
     final seen = <String>{};
 
@@ -1294,7 +1293,8 @@ class MusicServices extends getx.GetxService {
     return playlists;
   }
 
-  Future<bool> addSongToPlaylist(String playlistId, String videoId) async {
+  Future<bool> addSongToPlaylist(
+    await ensureReady();String playlistId, String videoId) async {
     final data = Map.from(_context);
     data['playlistId'] = playlistId;
     data['actions'] = [
