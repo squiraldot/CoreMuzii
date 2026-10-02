@@ -44,12 +44,20 @@ class HomeMoodWidget extends StatelessWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(18),
                         child: mood.thumbnailUrl == null
-                            ? Container(color: Theme.of(context).cardColor)
+                            ? Container(
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.auto_awesome,
+                                  size: 30,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              )
                             : Image.network(
                                 mood.thumbnailUrl!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Container(
-                                  color: Theme.of(context).cardColor,
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                 ),
                               ),
                       ),
