@@ -24,11 +24,18 @@ class QuickPicksWidget extends StatelessWidget {
 
   bool _isWideShelf(String title) {
     final normalized = title.trim().toLowerCase();
-    return normalized.contains('listen again') ||
+    final titleHint = normalized.contains('listen again') ||
         normalized.contains('forgotten') ||
         normalized.contains('long listens') ||
         normalized.contains('music video') ||
         normalized.contains('music videos');
+    final videoCount = content.songList.where((song) {
+      final type = song.extras?['videoType']?.toString() ?? '';
+      return type.isNotEmpty && type != 'MUSIC_VIDEO_TYPE_ATV';
+    }).length;
+    return titleHint ||
+        (content.songList.isNotEmpty &&
+            videoCount * 2 >= content.songList.length);
   }
 
   void _play(BuildContext context, int index) {
@@ -187,9 +194,13 @@ class QuickPicksWidget extends StatelessWidget {
                           child: SizedBox(
                             width: cardWidth,
                             height: imageHeight,
-                            child: ImageWidget(
-                              song: song,
-                              size: imageHeight,
+                            child: Image.network(
+                              song.artUri.toString(),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Image.asset(
+                                'assets/icons/song.png',
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ),
