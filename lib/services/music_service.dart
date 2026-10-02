@@ -602,35 +602,38 @@ class MusicServices extends getx.GetxService {
         }
       }
 
-      final int secondSubtitleRunCount =
-          header['secondSubtitle']['runs'].length;
-      final String count = (((header['secondSubtitle']['runs']
-                      [secondSubtitleRunCount % 3]['text'])
-                  .split(' ')[0])
-              .split(',') as List)
-          .join();
-      final int songCount = int.parse(count);
-      if (header['secondSubtitle']['runs'].length > 1) {
-        playlist['duration'] = header['secondSubtitle']['runs']
-            [(secondSubtitleRunCount % 3) + 2]['text'];
+      final secondSubtitleRuns =
+          (nav(header, ['secondSubtitle', 'runs']) as List?) ?? const [];
+      int songCount = 0;
+      for (final run in secondSubtitleRuns) {
+        final text = run is Map ? run['text']?.toString() ?? '' : '';
+        final match = RegExp(r'([0-9][0-9,]*)').firstMatch(text);
+        if (match != null) {
+          songCount = int.tryParse(match.group(1)!.replaceAll(',', '')) ?? 0;
+          if (songCount > 0) break;
+        }
+      }
+      if (secondSubtitleRuns.length > 1) {
+        playlist['duration'] = secondSubtitleRuns.last['text']?.toString();
       }
       playlist['trackCount'] = songCount;
-
-      // requestFunc(additionalParams) async => (await _sendRequest("browse", data,
-      //         additionalParams: additionalParams))
-      //     .data;
 
       requestFuncCountinuation(cont) async =>
           (await _sendRequest("browse", {...data, ...cont})).data;
 
+      final initialContents =
+          results['contents'] is List ? results['contents'] as List : const [];
+      playlist['tracks'] = parsePlaylistItems(initialContents);
+
       if (songCount > 0) {
-        playlist['tracks'] = parsePlaylistItems(results['contents']);
         limit = songCount;
-
+      }
+      if (initialContents.isNotEmpty &&
+          initialContents.last is Map &&
+          nav(initialContents.last, CONTINUATION_TOKEN) != null) {
         List<dynamic> parseFunc(contents) => parsePlaylistItems(contents);
-
         playlist['tracks'] = [
-          ...(playlist['tracks']),
+          ...(playlist['tracks'] as List),
           ...(await getContinuationsPlaylist(
               results, limit, requestFuncCountinuation, parseFunc))
         ];
