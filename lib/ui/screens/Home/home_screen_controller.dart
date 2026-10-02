@@ -196,10 +196,14 @@ class HomeScreenController extends GetxController {
 
       isContentFetched.value = true;
 
-      // set home content last update time
-      cachedHomeScreenData(updateAll: true);
-      await Hive.box("AppPrefs")
-          .put("homeScreenDataTime", DateTime.now().millisecondsSinceEpoch);
+      // Account-scoped Home shelves must not be written into the anonymous
+      // Home cache. They can contain private recommendations and QuickPicks
+      // sections that the legacy cache serializer does not model.
+      if (!isAuthenticatedHome) {
+        await cachedHomeScreenData(updateAll: true);
+        await Hive.box("AppPrefs")
+            .put("homeScreenDataTime", DateTime.now().millisecondsSinceEpoch);
+      }
       // ignore: unused_catch_stack
     } on NetworkError catch (r, e) {
       printERROR("Home Content not loaded due to ${r.message}");
