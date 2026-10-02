@@ -91,8 +91,16 @@ class MusicServices extends getx.GetxService {
     hlCode = appPrefsBox.get('contentLanguage') ?? "en";
 
     final storedCookies = appPrefsBox.get('yt_cookies');
+    final storedVisitorData = appPrefsBox.get('yt_visitor_data')?.toString();
+    final storedDataSyncId = appPrefsBox.get('yt_data_sync_id')?.toString();
+    final storedAuthUser = appPrefsBox.get('yt_auth_user')?.toString();
     if (storedCookies != null && storedCookies.toString().isNotEmpty) {
-      await updateAuthCookies(storedCookies.toString());
+      await updateAuthCookies(
+        storedCookies.toString(),
+        visitorData: storedVisitorData,
+        dataSyncId: storedDataSyncId,
+        authUser: storedAuthUser,
+      );
     }
 
     if (appPrefsBox.containsKey('visitorId')) {
