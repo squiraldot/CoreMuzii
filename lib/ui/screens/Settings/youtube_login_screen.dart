@@ -123,7 +123,7 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
 
       final sessionValid = await musicServices.validateYouTubeSession();
       if (!sessionValid) {
-        await musicServices.clearAuthCookies();
+        musicServices.clearAuthCookies();
         _loginCompleting = false;
         if (mounted) {
           Get.snackbar(
@@ -151,7 +151,7 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
           await Get.find<HomeScreenController>().loadContentFromNetwork(silent: true);
         }
         if (Get.isRegistered<LibraryPlaylistsController>()) {
-          await Get.find<LibraryPlaylistsController>().refreshLib();
+          Get.find<LibraryPlaylistsController>().refreshLib();
         }
       } catch (_) {
         // Authentication is already verified; UI refresh can retry on the next screen load.
