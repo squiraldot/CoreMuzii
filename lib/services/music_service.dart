@@ -529,12 +529,12 @@ class MusicServices extends getx.GetxService {
   }
 
   Future<Map<String, dynamic>> getPlaylistOrAlbumSongs(
-    await ensureReady();
       {String? playlistId,
       String? albumId,
       int limit = 3000,
       bool related = false,
       int suggestionsLimit = 0}) async {
+    await ensureReady();
     String browseId = playlistId != null
         ? (playlistId.startsWith("VL") ? playlistId : "VL$playlistId")
         : albumId!;
@@ -1293,7 +1293,8 @@ class MusicServices extends getx.GetxService {
   }
 
   Future<bool> addSongToPlaylist(
-    await ensureReady();String playlistId, String videoId) async {
+      String playlistId, String videoId) async {
+    await ensureReady();
     final data = Map.from(_context);
     data['playlistId'] = playlistId;
     data['actions'] = [
