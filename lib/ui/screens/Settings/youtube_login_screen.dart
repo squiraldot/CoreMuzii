@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:hive/hive.dart';
 import 'package:mdlovfimusic/services/music_service.dart';
@@ -20,6 +21,7 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
   final WebViewCookieManager _cookieManager = WebViewCookieManager();
   bool _isLoading = true;
   bool _loginCompleting = false;
+  Timer? _sessionPoller;
 
   @override
   void initState() {
@@ -43,7 +45,10 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
           },
         ),
       )
-      ..loadRequest(Uri.parse('https://accounts.google.com/ServiceLogin?service=youtube&continue=https://music.youtube.com/'));
+      ..loadRequest(Uri.parse('https://music.youtube.com/'));
+    _sessionPoller = Timer.periodic(const Duration(seconds: 2), (_) {
+      _checkAndExtractSession();
+    });
   }
 
   Future<void> _checkAndExtractSession() async {
@@ -175,6 +180,13 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
     } catch (_) {
       _loginCompleting = false;
     }
+  }
+
+  @override
+  void dispose() {
+    _sessionPoller?.cancel();
+    _sessionPoller = null;
+    super.dispose();
   }
 
   @override
