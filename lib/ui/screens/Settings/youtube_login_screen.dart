@@ -59,7 +59,8 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
             return JSON.stringify({
               visitorData: (get && get('VISITOR_DATA')) || (y && y.VISITOR_DATA) || null,
               dataSyncId: (get && get('DATASYNC_ID')) || (y && y.DATASYNC_ID) || null,
-              authUser: String((get && get('SESSION_INDEX')) || (y && y.SESSION_INDEX) || 0)
+              authUser: String((get && get('SESSION_INDEX')) || (y && y.SESSION_INDEX) || 0),
+              identityToken: (get && get('ID_TOKEN')) || (y && y.ID_TOKEN) || null
             });
           })()
         ''',
@@ -115,6 +116,7 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
         visitorData: sessionContext['visitorData']?.toString(),
         dataSyncId: sessionContext['dataSyncId']?.toString(),
         authUser: sessionContext['authUser']?.toString(),
+        identityToken: sessionContext['identityToken']?.toString(),
       );
       if (!authReady) {
         _loginCompleting = false;
@@ -145,6 +147,9 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
         await box.put('yt_data_sync_id', sessionContext['dataSyncId'].toString());
       }
       await box.put('yt_auth_user', sessionContext['authUser']?.toString() ?? '0');
+      if (sessionContext['identityToken']?.toString().trim().isNotEmpty == true) {
+        await box.put('yt_identity_token', sessionContext['identityToken'].toString());
+      }
 
       try {
         if (Get.isRegistered<HomeScreenController>()) {
