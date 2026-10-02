@@ -142,53 +142,113 @@ const musicPlaylistShelfRenderer = [
 ];
 
 List<Map<String, dynamic>> parseMixedContent(List<dynamic> rows) {
-  List<Map<String, dynamic>> items = [];
-  //inspect(rows);
+  final items = <Map<String, dynamic>>[];
 
-  for (var row in rows) {
-    dynamic title;
-    dynamic contents = [];
-    if (description_shelf[0] == row.keys.first.toString()) {
-      var results = nav(row, description_shelf);
-      title = nav(results, ['header', 'runs', 0, 'text']);
-      contents = nav(results, description);
-    } else {
-      var results = row.values.first;
-      if (!results.containsKey('contents')) {
-        continue;
+  String? sectionTitle(dynamic renderer) {
+    return nav(renderer, carousel_title + ['text']) ??
+        nav(renderer, [
+          'header',
+          'gridHeaderRenderer',
+          'title',
+          'runs',
+          0,
+          'text'
+        ]) ??
+        nav(renderer, [
+          'header',
+          'musicImmersiveCarouselShelfBasicHeaderRenderer',
+          'title',
+          'runs',
+          0,
+          'text'
+        ]);
+  }
+
+  dynamic parseHomeItem(dynamic result) {
+    if (result is! Map) return null;
+
+    dynamic data = nav(result, [mtrir]);
+    if (data != null) {
+      final pageType = nav(data, n_title + navigation_browse + page_type,
+          noneIfAbsent: true, funName: "mixed1");
+
+      if (pageType == null) {
+        return parseSong(data);
       }
-      title = nav(results, carousel_title + ['text']);
+      if (pageType == "MUSIC_PAGE_TYPE_ALBUM") {
+        return parseAlbum(data, reqAlbumObj: false);
+      }
+      if (pageType == "MUSIC_PAGE_TYPE_ARTIST") {
+        return parseRelatedArtist(data);
+      }
+      if (pageType == "MUSIC_PAGE_TYPE_PLAYLIST") {
+        return parsePlaylist(data);
+      }
+    }
 
-      for (var result in results['contents']) {
-        var data = nav(result, [mtrir]);
-        dynamic content;
-        if (data != null) {
-          var pageType = nav(data, n_title + navigation_browse + page_type,
-              noneIfAbsent: true, funName: "mixed1");
-          if (pageType == null) {
-            if (nav(data, navigation_watch_playlist_id) != null) {
-              //  content = parseWatchPlaylistHome(data);
-            } else {
-              content = parseSong(data);
-            }
-          } else if (pageType == "MUSIC_PAGE_TYPE_ALBUM") {
-            content = parseAlbum(data, reqAlbumObj: false);
-          } else if (pageType == "MUSIC_PAGE_TYPE_ARTIST") {
-            content = parseRelatedArtist(data);
-          } else if (pageType == "MUSIC_PAGE_TYPE_PLAYLIST") {
-            content = parsePlaylist(data);
-          }
-        } else {
-          data = nav(result, [mrlir]);
-          content = parseSongFlat(data);
-        }
+    data = nav(result, [mrlir]);
+    if (data != null) {
+      return parseSongFlat(data);
+    }
 
-        contents.add(content);
+    final gridPlaylist = result['gridPlaylistRenderer'];
+    if (gridPlaylist is Map) {
+      final playlistId = gridPlaylist['playlistId']?.toString() ??
+          nav(gridPlaylist, navigation_browse_id)?.toString();
+      final title = nav(gridPlaylist, ['title', 'runs', 0, 'text']) ??
+          nav(gridPlaylist, ['title', 'simpleText']);
+      if (playlistId != null && title != null) {
+        return Playlist.fromJson({
+          'title': title,
+          'playlistId': playlistId,
+          'thumbnails': nav(gridPlaylist, ['thumbnail', 'thumbnails']) ??
+              [{'url': Playlist.thumbPlaceholderUrl}],
+          'description': 'YouTube playlist',
+        });
+      }
+    }
+
+    return null;
+  }
+
+  for (final row in rows) {
+    if (row is! Map || row.isEmpty) continue;
+    final renderer = row.values.first;
+    if (renderer is! Map) continue;
+
+    final rawContents = renderer['contents'] ?? renderer['items'];
+    if (rawContents is! List || rawContents.isEmpty) continue;
+
+    final title = sectionTitle(renderer);
+    final contents = <dynamic>[];
+    final seen = <String>{};
+
+    for (final result in rawContents) {
+      final content = parseHomeItem(result);
+      if (content == null) continue;
+
+      String key;
+      if (content is MediaItem) {
+        key = 'song:${content.id}';
+      } else if (content is Playlist) {
+        key = 'playlist:${content.playlistId}';
+      } else if (content is Album) {
+        key = 'album:${content.browseId}';
+      } else {
+        key = '${content.runtimeType}:${content.toString()}';
       }
 
-      items.add({'title': title, 'contents': contents});
+      if (seen.add(key)) contents.add(content);
+    }
+
+    if (contents.isNotEmpty) {
+      items.add({
+        'title': title ?? '',
+        'contents': contents,
+      });
     }
   }
+
   return items;
 }
 
