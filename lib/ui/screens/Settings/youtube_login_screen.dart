@@ -146,11 +146,15 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
       }
       await box.put('yt_auth_user', sessionContext['authUser']?.toString() ?? '0');
 
-      if (Get.isRegistered<HomeScreenController>()) {
-        await Get.find<HomeScreenController>().loadContentFromNetwork(silent: true);
-      }
-      if (Get.isRegistered<LibraryPlaylistsController>()) {
-        await Get.find<LibraryPlaylistsController>().refreshLib();
+      try {
+        if (Get.isRegistered<HomeScreenController>()) {
+          await Get.find<HomeScreenController>().loadContentFromNetwork(silent: true);
+        }
+        if (Get.isRegistered<LibraryPlaylistsController>()) {
+          await Get.find<LibraryPlaylistsController>().refreshLib();
+        }
+      } catch (_) {
+        // Authentication is already verified; UI refresh can retry on the next screen load.
       }
 
       if (mounted) {
