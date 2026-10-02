@@ -62,22 +62,30 @@ class LocalProxy {
     }
   }
 
-  static String addUrl(String url, {Map<String, String>? headers}) {
-    if (_server == null) {
-      start(); // Attempt to start it if it hasn't been started
-      // Give it a small delay or just wait for the next call to succeed, but realistically it should be started in main.
+  static Future<String> addUrlAsync(
+    String url, {
+    Map<String, String>? headers,
+  }) async {
+    await start();
+    final server = _server;
+    if (server == null) {
+      throw StateError('Local audio proxy failed to start');
     }
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final id =
+        '${DateTime.now().microsecondsSinceEpoch}_${_urlMap.length}';
     _urlMap[id] = _ProxyTask(url, headers);
-    
-    // cleanup old tasks to prevent memory leaks (keep only latest 10)
-    if (_urlMap.length > 10) {
+
+    // Keep the in-memory map bounded; old stream URLs are already expired
+    // shortly after use and must not grow for long-running sessions.
+    if (_urlMap.length > 20) {
       final keys = _urlMap.keys.toList();
-      _urlMap.remove(keys.first);
+      for (final key in keys.take(_urlMap.length - 20)) {
+        _urlMap.remove(key);
+      }
     }
-    
-    // Defaulting to 8080 isn't ideal but will quickly fail or succeed
-    return 'http://127.0.0.1:${_server?.port ?? 8080}/$id.mp3';
+
+    return 'http://127.0.0.1:${server.port}/$id.mp3';
   }
 }
 
