@@ -159,6 +159,13 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
       }
 
       final box = Hive.box('AppPrefs');
+      Map<String, String?> accountInfo = {};
+      try {
+        accountInfo = await musicServices.getYouTubeAccountInfo();
+      } catch (_) {
+        // Profile metadata is cosmetic; a verified session is still valid.
+      }
+
       final identity = YouTubeSessionIdentity.fromDataSyncId(
         sessionContext['dataSyncId']?.toString(),
         authUser: sessionContext['authUser']?.toString(),
@@ -178,6 +185,9 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
         'dataSyncId': sessionContext['dataSyncId']?.toString(),
         'authUser': identity.authUser,
         'identityToken': sessionContext['identityToken']?.toString(),
+        'accountName': accountInfo['accountName'],
+        'channelHandle': accountInfo['channelHandle'],
+        'accountPhotoUrl': accountInfo['accountPhotoUrl'],
         'updatedAt': DateTime.now().millisecondsSinceEpoch,
       };
       await box.put('yt_accounts', accounts);
