@@ -11,6 +11,8 @@ import '/models/album.dart';
 import '/models/playlist.dart';
 import '/models/quick_picks.dart';
 import '../../../utils/home_history.dart';
+import '../../../utils/youtube_auth.dart';
+import '/models/home_mood.dart';
 import '/services/music_service.dart';
 import '../Settings/settings_screen_controller.dart';
 import '/ui/widgets/new_version_dialog.dart';
@@ -29,11 +31,14 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   final List<ScrollController> contentScrollControllers = [];
   bool reverseAnimationtransiton = false;
   bool _homeRefreshInProgress = false;
+  String _homeContextSignature = '';
+  List<HomeMood> homeMoods = <HomeMood>[];
 
   @override
   onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    _homeContextSignature = _currentHomeContextSignature();
     loadContent();
     if (updateCheckFlag) _checkNewVersion();
   }
@@ -41,7 +46,10 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && tabIndex.value == 0) {
-      refreshHome(showLoading: false);
+      final signature = _currentHomeContextSignature();
+      final contextChanged = signature != _homeContextSignature;
+      if (contextChanged) _homeContextSignature = signature;
+      refreshHome(showLoading: contextChanged);
     }
   }
 
@@ -117,6 +125,16 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     }
   }
 
+  String _currentHomeContextSignature() {
+    final settings = Get.find<SettingsScreenController>();
+    final language = settings.currentAppLanguageCode.value;
+    final country = Get.deviceLocale?.countryCode ?? 'US';
+    return YouTubeHomeContextSignature.build(
+      language: language,
+      country: country,
+    );
+  }
+
   Future<void> loadContentFromNetwork({bool silent = false}) async {
     final box = Hive.box("AppPrefs");
     String contentType = box.get("discoverContentType") ?? "QP";
@@ -126,12 +144,46 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
       List middleContentTemp = [];
       final isAuthenticatedHome =
           box.get('yt_logged_in', defaultValue: false) == true;
+
+      final independentSources = await Future.wait<dynamic>([
+        _musicServices.getNewReleases(limit: 12).catchError((_) => <dynamic>[]),
+        _musicServices.getCharts('TR').catchError((_) => <Map<String, dynamic>>[]),
+        _musicServices.getMoodsAndGenres().catchError((_) => <dynamic>[]),
+      ]);
+      final newReleaseSections = independentSources[0] is List
+          ? List<dynamic>.from(independentSources[0] as List)
+          : <dynamic>[];
+      final chartSections = independentSources[1] is List
+          ? List<dynamic>.from(independentSources[1] as List)
+          : <dynamic>[];
+      homeMoods = independentSources[2] is List
+          ? (independentSources[2] as List).whereType<HomeMood>().toList()
+          : <HomeMood>[];
+
       final homeContentListMap = await _musicServices.getHome(
         limit: Get.find<SettingsScreenController>()
             .noOfHomeScreenContent
             .value,
         allSections: isAuthenticatedHome,
       );
+
+      if (newReleaseSections.isNotEmpty) {
+        final hasNewReleases = homeContentListMap.any((section) =>
+            section is Map &&
+            (section['title'] ?? '').toString().toLowerCase().contains('new release'));
+        if (!hasNewReleases) {
+          homeContentListMap.addAll(newReleaseSections);
+        }
+      }
+      if (chartSections.isNotEmpty) {
+        final hasCharts = homeContentListMap.any((section) =>
+            section is Map &&
+            ((section['title'] ?? '').toString().toLowerCase().contains('trending') ||
+             (section['title'] ?? '').toString().toLowerCase().contains('chart')));
+        if (!hasCharts) {
+          homeContentListMap.addAll(chartSections);
+        }
+      }
 
       // Keep YouTube's personalized Home shelves intact, but merge the
       // persistent local listening history into "Listen again". The local
