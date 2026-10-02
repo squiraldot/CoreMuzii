@@ -123,21 +123,135 @@ class MusicServices extends getx.GetxService {
         visitorId ?? "CgttN24wcmd5UzNSWSi2lvq2BjIKCgJKUBIEGgAgYQ%3D%3D";
   }
 
-  Future<void> updateAuthCookies(String cookies) async {
-    _headers['cookie'] = cookies;
-    final sapisidMatch = RegExp(r'SAPISID=([^;]+)').firstMatch(cookies);
-    if (sapisidMatch != null) {
-      final sapisid = sapisidMatch.group(1)!;
-      final time = (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
-      final input = "$time $sapisid $domain";
-      final hash = sha1.convert(utf8.encode(input)).toString();
-      _headers['authorization'] = "SAPISIDHASH ${time}_$hash";
+  Future<bool> updateAuthCookies(
+    String cookies, {
+    String? visitorData,
+    String? dataSyncId,
+    String? authUser,
+  }) async {
+    final normalizedCookies = cookies.trim();
+    if (normalizedCookies.isEmpty) {
+      clearAuthCookies();
+      return false;
+    }
+
+    _headers['cookie'] = normalizedCookies;
+
+    if (visitorData != null && visitorData.trim().isNotEmpty) {
+      _headers['X-Goog-Visitor-Id'] = visitorData.trim();
+      _context['context']['client']['visitorData'] = visitorData.trim();
+    }
+
+    final syncId = dataSyncId?.trim();
+    if (syncId != null && syncId.isNotEmpty) {
+      final parts = syncId.split('||');
+      final delegatedSessionId = parts.isNotEmpty && parts.first.isNotEmpty ? parts.first : null;
+      final userSessionId = parts.length > 1 && parts[1].isNotEmpty ? parts[1] : null;
+      if (delegatedSessionId != null) {
+        _headers['X-Goog-PageId'] = delegatedSessionId;
+      } else {
+        _headers.remove('X-Goog-PageId');
+      }
+      if (userSessionId != null) {
+        _headers['X-Goog-AuthUser'] = authUser?.trim().isNotEmpty == true ? authUser!.trim() : '0';
+      }
+    } else if (authUser?.trim().isNotEmpty == true) {
+      _headers['X-Goog-AuthUser'] = authUser!.trim();
+    } else {
+      _headers['X-Goog-AuthUser'] = '0';
+    }
+
+    _headers['X-Youtube-Bootstrap-Logged-In'] = 'true';
+    _headers['X-Origin'] = 'https://www.youtube.com';
+
+    final sapisid = _extractCookie(normalizedCookies, 'SAPISID') ??
+        _extractCookie(normalizedCookies, '__Secure-3PAPISID') ??
+        _extractCookie(normalizedCookies, '__Secure-1PAPISID');
+    if (sapisid == null || sapisid.isEmpty) {
+      _headers.remove('authorization');
+      return false;
+    }
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final parts = <String>[];
+    final userSessionId = syncId != null && syncId.contains('||')
+        ? syncId.split('||').skip(1).firstWhere(
+            (value) => value.isNotEmpty,
+            orElse: () => '',
+          )
+        : '';
+    if (userSessionId.isNotEmpty) {
+      parts.add('u:$userSessionId');
+    }
+    parts.addAll([
+      timestamp.toString(),
+      sapisid,
+      'https://www.youtube.com',
+    ]);
+    final hash = sha1.convert(utf8.encode(parts.join(' '))).toString();
+    final suffix = userSessionId.isNotEmpty ? '_u' : '';
+    final auth = 'SAPISIDHASH ${timestamp}_${hash}$suffix';
+
+    final sapisid1p = _extractCookie(normalizedCookies, '__Secure-1PAPISID');
+    final sapisid3p = _extractCookie(normalizedCookies, '__Secure-3PAPISID');
+    final authParts = <String>[auth];
+    for (final entry in <String, String?>{
+      'SAPISID1PHASH': sapisid1p,
+      'SAPISID3PHASH': sapisid3p,
+    }.entries) {
+      final sid = entry.value;
+      if (sid == null || sid.isEmpty) continue;
+      final extraParts = <String>[];
+      if (userSessionId.isNotEmpty) extraParts.add('u:$userSessionId');
+      extraParts.addAll([timestamp.toString(), sid, 'https://www.youtube.com']);
+      final sidHash = sha1.convert(utf8.encode(extraParts.join(' '))).toString();
+      authParts.add('${entry.key} ${timestamp}_${sidHash}$suffix');
+    }
+    _headers['authorization'] = authParts.join(' ');
+    return true;
+  }
+
+  String? _extractCookie(String cookies, String name) {
+    final match = RegExp(
+      '(^|;\\s*)${RegExp.escape(name)}=([^;]*)',
+      caseSensitive: true,
+    ).firstMatch(cookies);
+    return match?.group(2);
+  }
+
+  Future<bool> validateYouTubeSession() async {
+    try {
+      final response = await _sendRequest(
+        'browse',
+        {
+          ...Map<String, dynamic>.from(_context),
+          'browseId': 'FEmusic_liked_playlists',
+        },
+      );
+      final data = response.data;
+      final sections = nav(
+        data,
+        single_column_tab + section_list,
+      );
+      return response.statusCode == 200 &&
+          sections is List &&
+          (sections.isNotEmpty || data.toString().contains('music'));
+    } catch (_) {
+      return false;
     }
   }
 
   void clearAuthCookies() {
     _headers['cookie'] = 'CONSENT=YES+1';
-    _headers.remove('authorization');
+    for (final key in [
+      'authorization',
+      'X-Goog-PageId',
+      'X-Goog-AuthUser',
+      'X-Youtube-Bootstrap-Logged-In',
+      'X-Origin',
+    ]) {
+      _headers.remove(key);
+    }
   }
 
   set hlCode(String code) {
