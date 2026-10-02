@@ -383,7 +383,10 @@ class MusicServices extends getx.GetxService {
     return parsed.take(limit).toList();
   }
 
-  Future<List<dynamic>> getCharts({String country = 'IN', int limit = 24}) async {
+  Future<List<dynamic>> getHomeCharts({
+    String country = 'IN',
+    int limit = 24,
+  }) async {
     await ensureReady();
     final data = Map.from(_context);
     data['browseId'] = 'FEmusic_charts';
