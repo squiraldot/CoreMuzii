@@ -223,7 +223,6 @@ class Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final homeScreenController = Get.find<HomeScreenController>();
     final settingsScreenController = Get.find<SettingsScreenController>();
-    final size = MediaQuery.of(context).size;
     final topPadding = GetPlatform.isDesktop
         ? 28.0
         : context.isLandscape
