@@ -361,6 +361,150 @@ class MusicServices extends getx.GetxService {
     return home;
   }
 
+  Future<List<MediaItem>> getYouTubeHistory({int limit = 20}) async {
+    await ensureReady();
+    final data = Map.from(_context);
+    data['browseId'] = 'FEmusic_history';
+    final response = (await _sendRequest('browse', data)).data;
+
+    dynamic findRenderer(dynamic root, String key) {
+      if (root is Map) {
+        final direct = root[key];
+        if (direct is Map) return direct;
+        for (final value in root.values) {
+          final found = findRenderer(value, key);
+          if (found != null) return found;
+        }
+      } else if (root is List) {
+        for (final value in root) {
+          final found = findRenderer(value, key);
+          if (found != null) return found;
+        }
+      }
+      return null;
+    }
+
+    List<MediaItem> parseHistoryContents(dynamic contents) {
+      if (contents is! List) return <MediaItem>[];
+      final parsed = parsePlaylistItems(contents);
+      final result = <MediaItem>[];
+      final seen = <String>{};
+      for (final item in parsed) {
+        if (item is! MediaItem) continue;
+        if (seen.add(item.id)) result.add(item);
+        if (result.length >= limit) break;
+      }
+      return result;
+    }
+
+    final shelf = findRenderer(response, 'musicShelfRenderer');
+    final contents = shelf is Map ? shelf['contents'] : null;
+    return parseHistoryContents(contents);
+  }
+
+  Future<List<Artist>> getYouTubeSubscriptions({int limit = 200}) async {
+    await ensureReady();
+    final data = Map.from(_context);
+    data['browseId'] = 'FEmusic_library_corpus_artists';
+    final response = (await _sendRequest('browse', data)).data;
+
+    dynamic findRenderer(dynamic root, String key) {
+      if (root is Map) {
+        final direct = root[key];
+        if (direct is Map) return direct;
+        for (final value in root.values) {
+          final found = findRenderer(value, key);
+          if (found != null) return found;
+        }
+      } else if (root is List) {
+        for (final value in root) {
+          final found = findRenderer(value, key);
+          if (found != null) return found;
+        }
+      }
+      return null;
+    }
+
+    List<Artist> parseArtists(dynamic contents) {
+      if (contents is! List) return <Artist>[];
+      final result = <Artist>[];
+      final seen = <String>{};
+
+      for (final item in contents) {
+        if (item is! Map) continue;
+        final renderer = item['musicResponsiveListItemRenderer'];
+        if (renderer is! Map) continue;
+
+        final browseId = nav(renderer, navigation_browse_id);
+        final name = nav(renderer, [
+          'flexColumns',
+          0,
+          'musicResponsiveListItemFlexColumnRenderer',
+          'text',
+          'runs',
+          0,
+          'text'
+        ]);
+        if (browseId == null || name == null || name.toString().trim().isEmpty) {
+          continue;
+        }
+
+        final subscribers = nav(renderer, [
+          'flexColumns',
+          1,
+          'musicResponsiveListItemFlexColumnRenderer',
+          'text',
+          'runs',
+          0,
+          'text'
+        ]);
+        final thumbnails = nav(renderer, thumbnail_renderer);
+        if (!seen.add(browseId.toString())) continue;
+
+        result.add(Artist.fromJson({
+          'artist': name.toString().trim(),
+          'browseId': browseId.toString(),
+          'subscribers': subscribers?.toString() ?? '',
+          'thumbnails': thumbnails is List && thumbnails.isNotEmpty
+              ? thumbnails
+              : [{'url': Playlist.thumbPlaceholderUrl}],
+        }));
+
+        if (result.length >= limit) break;
+      }
+      return result;
+    }
+
+    final shelf = findRenderer(response, 'musicShelfRenderer');
+    if (shelf is! Map) return <Artist>[];
+
+    final artists = parseArtists(shelf['contents']);
+    final continuation = shelf['continuations'];
+    if (artists.length >= limit || continuation is! List) {
+      return artists;
+    }
+
+    requestFunc(additionalParams) async {
+      return (await _sendRequest('browse', data,
+              additionalParams: additionalParams))
+          .data;
+    }
+
+    parseFunc(contents) => parseArtists(contents);
+    final remaining = limit - artists.length;
+    if (remaining > 0) {
+      final extra = await getContinuations(
+        shelf,
+        'musicShelfContinuation',
+        remaining,
+        requestFunc,
+        parseFunc,
+      );
+      artists.addAll(List<Artist>.from(extra));
+    }
+    return artists.take(limit).toList();
+  }
+
   Future<List<Map<String, dynamic>>> getCharts(String catogory,
       {String? countryCode}) async {
     final List<Map<String, dynamic>> charts = [];
