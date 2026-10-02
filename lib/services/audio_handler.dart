@@ -302,6 +302,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       // ignore: experimental_member_use
       return LockCachingAudioSource(
         Uri.parse(url),
+        headers: streamHeaders,
         cacheFile: File("$_cacheDir/cachedSongs/${mediaItem.id}.mp3"),
         tag: mediaItem,
       );
@@ -317,7 +318,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
     return AudioSource.uri(
       uri,
-      headers: isDesktop ? streamHeaders : null, 
+      headers: isDesktop ? null : streamHeaders,
       tag: mediaItem,
     );
   }
