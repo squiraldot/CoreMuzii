@@ -171,7 +171,7 @@ class MusicServices extends getx.GetxService {
     }
 
     _headers['X-Youtube-Bootstrap-Logged-In'] = 'true';
-    _headers['X-Origin'] = 'https://www.youtube.com';
+    _headers['X-Origin'] = 'https://music.youtube.com';
 
     final sapisid = _extractCookie(normalizedCookies, 'SAPISID') ??
         _extractCookie(normalizedCookies, '__Secure-3PAPISID') ??
@@ -212,7 +212,7 @@ class MusicServices extends getx.GetxService {
       if (sid == null || sid.isEmpty) continue;
       final extraParts = <String>[];
       if (userSessionId.isNotEmpty) extraParts.add('u:$userSessionId');
-      extraParts.addAll([timestamp.toString(), sid, 'https://www.youtube.com']);
+      extraParts.addAll([timestamp.toString(), sid, 'https://music.youtube.com']);
       final sidHash = sha1.convert(utf8.encode(extraParts.join(' '))).toString();
       authParts.add('${entry.key} ${timestamp}_${sidHash}$suffix');
     }
