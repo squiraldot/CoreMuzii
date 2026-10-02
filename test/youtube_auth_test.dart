@@ -34,4 +34,15 @@ void main() {
     expect(identity.authUser, '0');
     expect(identity.accountKey, '0:primary');
   });
+
+  test('builds a stable home context signature', () {
+    expect(
+      YouTubeHomeContextSignature.build(language: 'en', country: 'IN'),
+      'en|IN',
+    );
+    expect(
+      YouTubeHomeContextSignature.build(language: 'hi', country: 'IN'),
+      'hi|IN',
+    );
+  });
 }
