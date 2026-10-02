@@ -123,3 +123,6 @@ Synced lyrics provided by <a href = 'https://lrclib.net' >LRCLIB</a> <br/>
 * flutter_zxing: ^2.3.0 - cross-platform QR barcode scanning
 
 
+
+## GitHub Write Access Test
+This line was added to verify that the connected GitHub integration can write to the CoreMuzii repository.
