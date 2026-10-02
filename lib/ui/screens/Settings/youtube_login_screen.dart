@@ -8,6 +8,7 @@ import 'package:hive/hive.dart';
 import 'package:mdlovfimusic/services/music_service.dart';
 import 'package:mdlovfimusic/ui/screens/Home/home_screen_controller.dart';
 import 'package:mdlovfimusic/ui/screens/Library/library_controller.dart';
+import 'package:mdlovfimusic/utils/youtube_login_utils.dart';
 
 class YoutubeLoginScreen extends StatefulWidget {
   const YoutubeLoginScreen({super.key});
@@ -22,14 +23,13 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
   bool _isLoading = true;
   bool _loginCompleting = false;
   Timer? _sessionPoller;
+  bool _setSidRecoveryAttempted = false;
 
   @override
   void initState() {
     super.initState();
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setUserAgent(
-          "Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.104 Mobile Safari/537.36")
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (String url) {
@@ -38,14 +38,33 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
             });
           },
           onPageFinished: (String url) async {
+            if (!mounted) return;
             setState(() {
               _isLoading = false;
             });
             await _checkAndExtractSession();
           },
+          onWebResourceError: (WebResourceError error) {
+            if (!error.isForMainFrame ||
+                !error.url.contains('accounts.youtube.com/accounts/SetSID')) {
+              return;
+            }
+            if (!_setSidRecoveryAttempted) {
+              _setSidRecoveryAttempted = true;
+              _webViewController.loadRequest(Uri.parse(buildYouTubeLoginUrl()));
+              return;
+            }
+            if (mounted) {
+              Get.snackbar(
+                'YouTube Login',
+                'Google login redirect was reset by the network. Tap refresh and try again.',
+                snackPosition: SnackPosition.BOTTOM,
+              );
+            }
+          },
         ),
       )
-      ..loadRequest(Uri.parse('https://music.youtube.com/'));
+      ..loadRequest(Uri.parse(buildYouTubeLoginUrl()));
     _sessionPoller = Timer.periodic(const Duration(seconds: 2), (_) {
       _checkAndExtractSession();
     });
