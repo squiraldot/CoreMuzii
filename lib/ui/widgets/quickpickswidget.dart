@@ -131,7 +131,7 @@ class QuickPicksWidget extends StatelessWidget {
                                 if ((song.artist ?? '').trim().isNotEmpty) ...[
                                   const SizedBox(height: 5),
                                   Text(
-                                    song.artist,
+                                    song.artist ?? '',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -217,7 +217,7 @@ class QuickPicksWidget extends StatelessWidget {
                         if ((song.artist ?? '').trim().isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
-                            song.artist,
+                            song.artist ?? '',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
