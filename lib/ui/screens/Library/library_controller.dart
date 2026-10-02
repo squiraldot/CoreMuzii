@@ -270,6 +270,9 @@ class LibraryPlaylistsController extends GetxController
 
     if (appPrefsBox.get('yt_logged_in', defaultValue: false) == true) {
       await syncYouTubeAccountLibrary();
+    } else {
+      libraryPlaylists.removeWhere((playlist) =>
+          playlist.playlistId == 'LM' || playlist.playlistId.startsWith('YT:'));
     }
 
     isContentFetched.value = true;
@@ -277,16 +280,45 @@ class LibraryPlaylistsController extends GetxController
   }
 
   Future<void> syncYouTubeAccountLibrary() async {
+    final appPrefsBox = Hive.box("AppPrefs");
+    final previousIds = (appPrefsBox.get('yt_account_playlist_ids') as List?)
+            ?.map((e) => e.toString())
+            .toSet() ??
+        <String>{};
+
     try {
       final musicServices = Get.find<MusicServices>();
+      if (!await musicServices.validateYouTubeSession()) {
+        await appPrefsBox.put('yt_logged_in', false);
+        libraryPlaylists.removeWhere(
+            (playlist) => previousIds.contains(playlist.playlistId) || playlist.playlistId == 'LM');
+        return;
+      }
+
       final ytPlaylists = await musicServices.getAccountPlaylists();
-      final existingIds = libraryPlaylists.map((p) => p.playlistId).toSet();
-      for (var pl in ytPlaylists) {
-        if (!existingIds.contains(pl.playlistId)) {
-          libraryPlaylists.add(pl);
+      libraryPlaylists.removeWhere(
+          (playlist) => previousIds.contains(playlist.playlistId) || playlist.playlistId == 'LM');
+
+      final likedMusic = Playlist(
+        title: 'Liked Music',
+        playlistId: 'LM',
+        description: 'YouTube Music liked songs',
+        thumbnailUrl: Playlist.thumbPlaceholderUrl,
+        isCloudPlaylist: true,
+      );
+      libraryPlaylists.add(likedMusic);
+
+      final currentIds = <String>{'LM'};
+      for (final playlist in ytPlaylists) {
+        if (playlist.playlistId == 'LM') continue;
+        if (currentIds.add(playlist.playlistId)) {
+          libraryPlaylists.add(playlist);
         }
       }
-    } catch (_) {}
+      await appPrefsBox.put('yt_account_playlist_ids', currentIds.toList());
+    } catch (_) {
+      // Keep the last valid account playlists visible if the network temporarily fails.
+    }
   }
 
   void updatePlaylistIntoDb(Playlist playlist) async {
