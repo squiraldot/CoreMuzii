@@ -131,7 +131,7 @@ class SettingsScreenController extends GetxController {
         setBox.get("autoDownloadFavoriteSongEnabled") ?? false;
   }
 
-  Future<void> setAppLanguage(String? val) {
+  Future<void> setAppLanguage(String? val) async {
     Get.updateLocale(Locale(val!));
     Get.find<MusicServices>().hlCode = val;
     Get.find<HomeScreenController>().loadContentFromNetwork(silent: true);
@@ -139,17 +139,17 @@ class SettingsScreenController extends GetxController {
     await setBox.put('currentAppLanguageCode', val);
   }
 
-  Future<void> setContentNumber(int? no) {
+  Future<void> setContentNumber(int? no) async {
     noOfHomeScreenContent.value = no!;
     await setBox.put("noOfHomeScreenContent", no);
   }
 
-  Future<void> setStreamingQuality(dynamic val) {
+  Future<void> setStreamingQuality(dynamic val) async {
     await setBox.put("streamingQuality", AudioQuality.values.indexOf(val));
     streamingQuality.value = val;
   }
 
-  Future<void> setPlayerUi(dynamic val) {
+  Future<void> setPlayerUi(dynamic val) async {
     final playerCon = Get.find<PlayerController>();
     await setBox.put("playerUi", val);
     if (val == 1 && playerCon.gesturePlayerStateAnimationController == null) {
@@ -159,7 +159,7 @@ class SettingsScreenController extends GetxController {
     playerUi.value = val;
   }
 
-  Future<void> enableBottomNavBar(bool val) {
+  Future<void> enableBottomNavBar(bool val) async {
     final homeScrCon = Get.find<HomeScreenController>();
     final playerCon = Get.find<PlayerController>();
     if (val) {
@@ -176,12 +176,12 @@ class SettingsScreenController extends GetxController {
     await setBox.put("isBottomNavBarEnabled", val);
   }
 
-  Future<void> toggleSlidableAction(bool val) {
+  Future<void> toggleSlidableAction(bool val) async {
     await setBox.put("slidableActionEnabled", val);
     slidableActionEnabled.value = val;
   }
 
-  Future<void> changeDownloadingFormat(String? val) {
+  Future<void> changeDownloadingFormat(String? val) async {
     await setBox.put("downloadingFormat", val);
     downloadingFormat.value = val!;
   }
@@ -216,7 +216,7 @@ class SettingsScreenController extends GetxController {
     downloadLocationPath.value = pickedFolderPath;
   }
 
-  Future<void> disableTransitionAnimation(bool val) {
+  Future<void> disableTransitionAnimation(bool val) async {
     await setBox.put('isTransitionAnimationDisabled', val);
     isTransitionAnimationDisabled.value = val;
   }
@@ -233,42 +233,42 @@ class SettingsScreenController extends GetxController {
     } catch (e) {}
   }
 
-  Future<void> resetDownloadLocation() {
+  Future<void> resetDownloadLocation() async {
     final defaultPath = "$_supportDir/Music";
     await setBox.put("downloadLocationPath", defaultPath);
     downloadLocationPath.value = defaultPath;
   }
 
-  Future<void> onThemeChange(dynamic val) {
+  Future<void> onThemeChange(dynamic val) async {
     await setBox.put('themeModeType', ThemeType.values.indexOf(val));
     themeModetype.value = val;
     Get.find<ThemeController>().changeThemeModeType(val);
   }
 
-  Future<void> onContentChange(dynamic value) {
+  Future<void> onContentChange(dynamic value) async {
     await setBox.put('discoverContentType', value);
     discoverContentType.value = value;
     Get.find<HomeScreenController>().changeDiscoverContent(value);
   }
 
-  Future<void> toggleCachingSongsValue(bool value) {
+  Future<void> toggleCachingSongsValue(bool value) async {
     await setBox.put("cacheSongs", value);
     cacheSongs.value = value;
   }
 
-  Future<void> toggleSkipSilence(bool val) {
+  Future<void> toggleSkipSilence(bool val) async {
     Get.find<PlayerController>().toggleSkipSilence(val);
     await setBox.put('skipSilenceEnabled', val);
     skipSilenceEnabled.value = val;
   }
 
-  Future<void> toggleLoudnessNormalization(bool val) {
+  Future<void> toggleLoudnessNormalization(bool val) async {
     Get.find<PlayerController>().toggleLoudnessNormalization(val);
     await setBox.put("loudnessNormalizationEnabled", val);
     loudnessNormalizationEnabled.value = val;
   }
 
-  Future<void> toggleRestorePlaybackSession(bool val) {
+  Future<void> toggleRestorePlaybackSession(bool val) async {
     await setBox.put("restrorePlaybackSession", val);
     restorePlaybackSession.value = val;
   }
@@ -287,17 +287,17 @@ class SettingsScreenController extends GetxController {
     }
   }
 
-  Future<void> toggleAutoDownloadFavoriteSong(bool val) {
+  Future<void> toggleAutoDownloadFavoriteSong(bool val) async {
     await setBox.put("autoDownloadFavoriteSongEnabled", val);
     autoDownloadFavoriteSongEnabled.value = val;
   }
 
-  Future<void> toggleBackgroundPlay(bool val) {
+  Future<void> toggleBackgroundPlay(bool val) async {
     await setBox.put('backgroundPlayEnabled', val);
     backgroundPlayEnabled.value = val;
   }
 
-  Future<void> toggleKeepScreenAwake(bool val) {
+  Future<void> toggleKeepScreenAwake(bool val) async {
     await setBox.put('keepScreenAwake', val);
     keepScreenAwake.value = val;
     try {
@@ -322,7 +322,7 @@ class SettingsScreenController extends GetxController {
         await Permission.ignoreBatteryOptimizations.isGranted;
   }
 
-  Future<void> toggleAutoOpenPlayer(bool val) {
+  Future<void> toggleAutoOpenPlayer(bool val) async {
     await setBox.put('autoOpenPlayer', val);
     autoOpenPlayer.value = val;
   }
@@ -342,7 +342,7 @@ class SettingsScreenController extends GetxController {
     await setBox.clear();
   }
 
-  Future<void> toggleStopPlyabackOnSwipeAway(bool val) {
+  Future<void> toggleStopPlyabackOnSwipeAway(bool val) async {
     await setBox.put('stopPlyabackOnSwipeAway', val);
     stopPlyabackOnSwipeAway.value = val;
   }
