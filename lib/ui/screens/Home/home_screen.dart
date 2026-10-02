@@ -204,12 +204,10 @@ class Body extends StatelessWidget {
     final settingsScreenController = Get.find<SettingsScreenController>();
     final size = MediaQuery.of(context).size;
     final topPadding = GetPlatform.isDesktop
-        ? 85.0
+        ? 28.0
         : context.isLandscape
-            ? 50.0
-            : size.height < 750
-                ? 80.0
-                : 85.0;
+            ? 24.0
+            : 28.0;
     final leftPadding =
         settingsScreenController.isBottomNavBarEnabled.isTrue ? 20.0 : 28.0;
     if (homeScreenController.tabIndex.value == 0) {
