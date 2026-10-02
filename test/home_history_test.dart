@@ -14,8 +14,18 @@ void main() {
   });
 
   test('stores newest played track first and removes duplicates', () async {
-    final first = MediaItem(id: 'first', title: 'First');
-    final second = MediaItem(id: 'second', title: 'Second');
+    final first = MediaItem(
+      id: 'first',
+      title: 'First',
+      artUri: Uri.parse('https://example.com/first.jpg'),
+      extras: const {'artists': []},
+    );
+    final second = MediaItem(
+      id: 'second',
+      title: 'Second',
+      artUri: Uri.parse('https://example.com/second.jpg'),
+      extras: const {'artists': []},
+    );
 
     await saveRecentlyPlayed(first);
     await saveRecentlyPlayed(second);
