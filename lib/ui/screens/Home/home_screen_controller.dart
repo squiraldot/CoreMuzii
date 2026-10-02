@@ -27,12 +27,32 @@ class HomeScreenController extends GetxController {
   final isHomeSreenOnTop = true.obs;
   final List<ScrollController> contentScrollControllers = [];
   bool reverseAnimationtransiton = false;
+  bool _homeRefreshInProgress = false;
+  DateTime? _lastAuthenticatedHomeRefresh;
 
   @override
   onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     loadContent();
     if (updateCheckFlag) _checkNewVersion();
+  }
+
+  Future<void> refreshHome({bool showLoading = true}) async {
+    if (_homeRefreshInProgress) return;
+    _homeRefreshInProgress = true;
+    if (showLoading) {
+      isContentFetched.value = false;
+    }
+    try {
+      await loadContentFromNetwork(silent: false);
+      final box = Hive.box("AppPrefs");
+      if (box.get('yt_logged_in', defaultValue: false) == true) {
+        _lastAuthenticatedHomeRefresh = DateTime.now();
+      }
+    } finally {
+      _homeRefreshInProgress = false;
+    }
   }
 
   Future<void> loadContent() async {
@@ -44,6 +64,7 @@ class HomeScreenController extends GetxController {
     if (hasYouTubeSession) {
       // Account-scoped home must never reuse anonymous/stale cached shelves.
       await loadContentFromNetwork();
+      _lastAuthenticatedHomeRefresh = DateTime.now();
       return;
     }
     if (isCachedHomeScreenDataEnabled) {
@@ -476,7 +497,21 @@ class HomeScreenController extends GetxController {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || _homeRefreshInProgress) return;
+    final box = Hive.box("AppPrefs");
+    final loggedIn = box.get('yt_logged_in', defaultValue: false) == true;
+    final lastRefresh = _lastAuthenticatedHomeRefresh;
+    if (loggedIn &&
+        (lastRefresh == null ||
+            DateTime.now().difference(lastRefresh).inSeconds >= 15)) {
+      refreshHome(showLoading: false);
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     disposeDetachedScrollControllers(disposeAll: true);
     super.dispose();
   }
