@@ -755,14 +755,16 @@ class LibraryArtistsController extends GetxController {
     super.onInit();
   }
 
-  void refreshLib() async {
+  Future<void> refreshLib() async {
     final box = await Hive.openBox("LibraryArtists");
     libraryArtists.value = box.values
         .map<Artist?>((item) => Artist.fromJson(item))
         .whereType<Artist>()
         .toList();
+
+    await syncYouTubeSubscribedArtists(box);
     isContentFetched.value = true;
-    box.close();
+    await box.close();
   }
 
   Future<void> syncYouTubeSubscribedArtists(Box<dynamic> artistsBox) async {
