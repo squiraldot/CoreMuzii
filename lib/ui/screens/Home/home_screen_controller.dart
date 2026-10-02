@@ -167,24 +167,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
         allSections: isAuthenticatedHome,
       );
 
-      if (newReleaseSections.isNotEmpty) {
-        final hasNewReleases = homeContentListMap.any((section) =>
-            section is Map &&
-            (section['title'] ?? '').toString().toLowerCase().contains('new release'));
-        if (!hasNewReleases) {
-          homeContentListMap.addAll(newReleaseSections);
-        }
-      }
-      if (chartSections.isNotEmpty) {
-        final hasCharts = homeContentListMap.any((section) =>
-            section is Map &&
-            ((section['title'] ?? '').toString().toLowerCase().contains('trending') ||
-             (section['title'] ?? '').toString().toLowerCase().contains('chart')));
-        if (!hasCharts) {
-          homeContentListMap.addAll(chartSections);
-        }
-      }
-
       // Keep YouTube's personalized Home shelves intact, but merge the
       // persistent local listening history into "Listen again". The local
       // list updates immediately when playback starts; YouTube's FEmusic_history
@@ -241,6 +223,11 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
           middleContentTemp.addAll(parsedHome);
         }
       }
+      if (isAuthenticatedHome) {
+        middleContentTemp.addAll(newReleaseSections);
+        middleContentTemp.addAll(chartSections);
+      }
+
       if (!isAuthenticatedHome && contentType == "TR") {
         final index = homeContentListMap
             .indexWhere((element) => element['title'] == "Trending");
@@ -370,23 +357,34 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   List _setContentList(
     List<dynamic> contents,
   ) {
-    List contentTemp = [];
-    for (var content in contents) {
-      if((content["contents"]).isEmpty) continue;
-      if ((content["contents"][0]).runtimeType == Playlist) {
+    final contentTemp = <dynamic>[];
+    for (final content in contents) {
+      if (content is QuickPicks ||
+          content is PlaylistContent ||
+          content is AlbumContent) {
+        contentTemp.add(content);
+        continue;
+      }
+      if (content is! Map || content["contents"] is! List) continue;
+      final items = content["contents"] as List;
+      if (items.isEmpty) continue;
+      if (items.first is Playlist) {
         final tmp = PlaylistContent(
-            playlistList: (content["contents"]).whereType<Playlist>().toList(),
+            playlistList: items.whereType<Playlist>().toList(),
             title: content["title"]);
-        if (tmp.playlistList.length >= 2) {
-          contentTemp.add(tmp);
-        }
-      } else if ((content["contents"][0]).runtimeType == Album) {
+        if (tmp.playlistList.length >= 2) contentTemp.add(tmp);
+      } else if (items.first is Album) {
         final tmp = AlbumContent(
-            albumList: (content["contents"]).whereType<Album>().toList(),
+            albumList: items.whereType<Album>().toList(),
             title: content["title"]);
-        if (tmp.albumList.length >= 2) {
-          contentTemp.add(tmp);
-        }
+        if (tmp.albumList.length >= 2) contentTemp.add(tmp);
+      } else if (items.first is MediaItem) {
+        contentTemp.add(
+          QuickPicks(
+            items.whereType<MediaItem>().toList(),
+            title: content["title"]?.toString() ?? "YouTube Music",
+          ),
+        );
       }
     }
     return contentTemp;
