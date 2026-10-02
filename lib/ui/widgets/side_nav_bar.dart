@@ -59,6 +59,9 @@ class SideNavBar extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 100.0),
               child: SideBarAnimated(
                 onTap: homeScreenController.onSideBarTabSelected,
+                onLongPress: (index) {
+                  if (index == 0) homeScreenController.refreshHome();
+                },
                 sideBarColor: Theme.of(context).primaryColor.withAlpha(250),
                 animatedContainerColor: Theme.of(context).colorScheme.secondary,
                 hoverColor:
