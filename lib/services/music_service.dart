@@ -29,7 +29,7 @@ class MusicServices extends getx.GetxService {
     'content-encoding': 'gzip',
     'origin': 'https://music.youtube.com',
     'x-youtube-client-name': '67',
-    'x-youtube-client-version': '1.20260114.03.00',
+    'x-youtube-client-version': '1.20260707.12.00',
     'cookie': 'CONSENT=YES+1',
   };
   
@@ -39,7 +39,7 @@ class MusicServices extends getx.GetxService {
     'context': {
       'client': {
         "clientName": "WEB_REMIX",
-        "clientVersion": "1.20260114.03.00",
+        "clientVersion": "1.20260707.12.00",
       },
       'user': {}
     }
@@ -195,7 +195,7 @@ class MusicServices extends getx.GetxService {
     parts.addAll([
       timestamp.toString(),
       sapisid,
-      'https://www.youtube.com',
+      'https://music.youtube.com',
     ]);
     final hash = sha1.convert(utf8.encode(parts.join(' '))).toString();
     final suffix = userSessionId.isNotEmpty ? '_u' : '';
