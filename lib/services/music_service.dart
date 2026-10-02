@@ -199,7 +199,7 @@ class MusicServices extends getx.GetxService {
     ]);
     final hash = sha1.convert(utf8.encode(parts.join(' '))).toString();
     final suffix = userSessionId.isNotEmpty ? '_u' : '';
-    final auth = 'SAPISIDHASH ${timestamp}_${hash}$suffix';
+    final auth = 'SAPISIDHASH $timestamp_${hash}$suffix';
 
     final sapisid1p = _extractCookie(normalizedCookies, '__Secure-1PAPISID');
     final sapisid3p = _extractCookie(normalizedCookies, '__Secure-3PAPISID');
@@ -214,7 +214,7 @@ class MusicServices extends getx.GetxService {
       if (userSessionId.isNotEmpty) extraParts.add('u:$userSessionId');
       extraParts.addAll([timestamp.toString(), sid, 'https://music.youtube.com']);
       final sidHash = sha1.convert(utf8.encode(extraParts.join(' '))).toString();
-      authParts.add('${entry.key} ${timestamp}_${sidHash}$suffix');
+      authParts.add('$entry.key $timestamp_${sidHash}$suffix');
     }
     _headers['authorization'] = authParts.join(' ');
     return true;
