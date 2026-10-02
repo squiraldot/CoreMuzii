@@ -27,7 +27,9 @@ class MusicServices extends getx.GetxService {
     'accept-encoding': 'gzip, deflate',
     'content-type': 'application/json',
     'content-encoding': 'gzip',
-    'origin': domain,
+    'origin': 'https://music.youtube.com',
+    'x-youtube-client-name': '67',
+    'x-youtube-client-version': '1.20260114.03.00',
     'cookie': 'CONSENT=YES+1',
   };
   
@@ -37,7 +39,7 @@ class MusicServices extends getx.GetxService {
     'context': {
       'client': {
         "clientName": "WEB_REMIX",
-        "clientVersion": "1.20230213.01.00",
+        "clientVersion": "1.20260114.03.00",
       },
       'user': {}
     }
@@ -80,8 +82,8 @@ class MusicServices extends getx.GetxService {
   Future<void> init() async {
     //check visitor id in data base, if not generate one , set lang code
     final date = DateTime.now();
-    _context['context']['client']['clientVersion'] =
-        "1.${date.year}${date.month.toString().padLeft(2, '0')}${date.day.toString().padLeft(2, '0')}.01.00";
+    // Keep the WEB_REMIX client version aligned with a known-good current
+    // YouTube Music web client instead of inventing a date-based version.
     final signatureTimestamp = getDatestamp() - 1;
     _context['playbackContext'] = {
       'contentPlaybackContext': {'signatureTimestamp': signatureTimestamp},
