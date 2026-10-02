@@ -5,6 +5,8 @@ import 'dart:convert';
 
 import 'package:hive/hive.dart';
 import 'package:mdlovfimusic/services/music_service.dart';
+import 'package:mdlovfimusic/ui/screens/Home/home_screen_controller.dart';
+import 'package:mdlovfimusic/ui/screens/Library/library_controller.dart';
 
 class YoutubeLoginScreen extends StatefulWidget {
   const YoutubeLoginScreen({super.key});
@@ -138,6 +140,13 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
         await box.put('yt_data_sync_id', sessionContext['dataSyncId'].toString());
       }
       await box.put('yt_auth_user', sessionContext['authUser']?.toString() ?? '0');
+
+      if (Get.isRegistered<HomeScreenController>()) {
+        await Get.find<HomeScreenController>().loadContentFromNetwork(silent: true);
+      }
+      if (Get.isRegistered<LibraryPlaylistsController>()) {
+        await Get.find<LibraryPlaylistsController>().refreshLib();
+      }
 
       if (mounted) {
         Get.back(result: true);
