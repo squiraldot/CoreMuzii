@@ -277,6 +277,7 @@ class LibraryPlaylistsController extends GetxController
           playlist.playlistId == 'LM' || playlist.playlistId.startsWith('YT:'));
     }
 
+    await syncYouTubeSubscribedArtists(box);
     isContentFetched.value = true;
     await box.close();
   }
@@ -762,6 +763,65 @@ class LibraryArtistsController extends GetxController {
         .toList();
     isContentFetched.value = true;
     box.close();
+  }
+
+  Future<void> syncYouTubeSubscribedArtists(Box<dynamic> artistsBox) async {
+    final appPrefsBox = Hive.box("AppPrefs");
+    final previousIds =
+        (appPrefsBox.get('yt_account_artist_ids') as List?)
+                ?.map((e) => e.toString())
+                .toSet() ??
+            <String>{};
+
+    // Remove the previous account snapshot from the in-memory/library box.
+    for (final id in previousIds) {
+      await artistsBox.delete('YT:' + id);
+    }
+    libraryArtists.removeWhere((artist) => previousIds.contains(artist.browseId));
+
+    if (appPrefsBox.get('yt_logged_in', defaultValue: false) != true) {
+      await appPrefsBox.delete('yt_account_artist_ids');
+      return;
+    }
+
+    try {
+      final musicServices = Get.find<MusicServices>();
+      if (!await musicServices.validateYouTubeSession()) {
+        await appPrefsBox.put('yt_logged_in', false);
+        await appPrefsBox.delete('yt_account_artist_ids');
+        return;
+      }
+
+      // FEmusic_library_corpus_artists is the authenticated YouTube Music
+      // "Subscriptions" library. It includes followed music artists/channels.
+      final subscribedArtists =
+          await musicServices.getYouTubeSubscriptions(limit: 200);
+
+      final currentIds = <String>{};
+      for (final artist in subscribedArtists) {
+        if (!currentIds.add(artist.browseId)) continue;
+        final key = 'YT:' + artist.browseId;
+        await artistsBox.put(key, artist.toJson());
+        libraryArtists.add(artist);
+      }
+
+      await appPrefsBox.put(
+          'yt_account_artist_ids', currentIds.toList());
+    } catch (e) {
+      // Keep any persisted YT artists that were loaded before the network
+      // request failed; do not wipe the user's Artists tab on a transient error.
+      printINFO("YouTube subscribed artists unavailable: $e");
+      final persisted = artistsBox.values
+          .map<Artist?>((item) => Artist.fromJson(item))
+          .whereType<Artist>()
+          .where((artist) => previousIds.contains(artist.browseId))
+          .toList();
+      for (final artist in persisted) {
+        if (!libraryArtists.any((item) => item.browseId == artist.browseId)) {
+          libraryArtists.add(artist);
+        }
+      }
+    }
   }
 
   void onSort(SortType sortType, bool isAscending) {
