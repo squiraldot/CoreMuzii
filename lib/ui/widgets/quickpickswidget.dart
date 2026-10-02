@@ -128,7 +128,7 @@ class QuickPicksWidget extends StatelessWidget {
                                         fontWeight: FontWeight.w700,
                                       ),
                                 ),
-                                if (song.artist.trim().isNotEmpty) ...[
+                                if ((song.artist ?? '').trim().isNotEmpty) ...[
                                   const SizedBox(height: 5),
                                   Text(
                                     song.artist,
@@ -214,7 +214,7 @@ class QuickPicksWidget extends StatelessWidget {
                                 letterSpacing: -0.3,
                               ),
                         ),
-                        if (song.artist.trim().isNotEmpty) ...[
+                        if ((song.artist ?? '').trim().isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
                             song.artist,
