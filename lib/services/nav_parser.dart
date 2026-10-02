@@ -483,6 +483,7 @@ MediaItem parseSong(Map<dynamic, dynamic> result) {
     'playlistId': nav(result, navigation_playlist_id,
         noneIfAbsent: true, funName: "parseSong"),
     'thumbnails': nav(result, thumbnail_renderer),
+    'videoType': nav(result, navigation_video_type),
   };
 
   song.addAll(parseSongRuns(result['subtitle']['runs']));
@@ -607,6 +608,7 @@ MediaItem parseSongFlat(Map<String, dynamic> data) {
             noneIfAbsent: true, funName: "parseSongFlat"),
     'artists': parseSongArtists(data, 1),
     'thumbnails': nav(data, thumbnails),
+    'videoType': nav(data, navigation_video_type),
     //'isExplicit': nav(data, badge_label, noneIfAbsent: true) != null
   };
 //checkpoint .contains
