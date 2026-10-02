@@ -81,7 +81,6 @@ class MusicServices extends getx.GetxService {
 
   Future<void> init() async {
     //check visitor id in data base, if not generate one , set lang code
-    final date = DateTime.now();
     // Keep the WEB_REMIX client version aligned with a known-good current
     // YouTube Music web client instead of inventing a date-based version.
     final signatureTimestamp = getDatestamp() - 1;
