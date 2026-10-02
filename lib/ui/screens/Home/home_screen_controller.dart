@@ -454,7 +454,36 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     }
   }
 
-  void onTrackPlayed(MediaItem item) {
+  Future<void> onTrackPlayed(MediaItem item) async {
+    final appPrefs = Hive.box('AppPrefs');
+    final isYouTubeAuthenticated =
+        appPrefs.get('yt_logged_in', defaultValue: false) == true;
+
+    if (isYouTubeAuthenticated) {
+      try {
+        final history = await _musicServices.getYouTubeHistory(
+          limit: recentlyPlayedLimit,
+        );
+        if (history.isEmpty) return;
+
+        final listenAgainIndex = middleContent.indexWhere((section) {
+          return section is QuickPicks &&
+              (section.title.toLowerCase().contains('listen again') ||
+                  section.title.toLowerCase().contains('speed dial'));
+        });
+        final updated = QuickPicks(history, title: 'Listen again');
+
+        if (listenAgainIndex >= 0) {
+          final copy = List<dynamic>.from(middleContent);
+          copy[listenAgainIndex] = updated;
+          middleContent.value = copy;
+        }
+      } catch (e) {
+        printINFO('Unable to refresh YouTube Listen again: $e');
+      }
+      return;
+    }
+
     final localHistory = loadRecentlyPlayed();
     final history = mergeRecentlyPlayed([item], localHistory);
     final listenAgainIndex = middleContent.indexWhere((section) {
