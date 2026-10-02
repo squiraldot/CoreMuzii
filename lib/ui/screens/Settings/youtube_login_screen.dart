@@ -45,7 +45,7 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
             await _checkAndExtractSession();
           },
           onWebResourceError: (WebResourceError error) {
-            if (!error.isForMainFrame ||
+            if (error.isForMainFrame != true ||
                 !(error.url?.contains('accounts.youtube.com/accounts/SetSID') ?? false)) {
               return;
             }
