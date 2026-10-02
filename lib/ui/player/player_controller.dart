@@ -444,11 +444,12 @@ class PlayerController extends GetxController
         currentSongIndex.value = currentQueue
             .indexWhere((element) => element.id == currentSong.value!.id);
         await _checkFav();
-        await _addToRP(currentSong.value!);
-        await saveRecentlyPlayed(currentSong.value!);
-        if (Get.isRegistered<HomeScreenController>()) {
-          Get.find<HomeScreenController>()
-              .onTrackPlayed(currentSong.value!);
+        final appPrefs = Hive.box('AppPrefs');
+        final isYouTubeAuthenticated =
+            appPrefs.get('yt_logged_in', defaultValue: false) == true;
+        if (!isYouTubeAuthenticated) {
+          await _addToRP(currentSong.value!);
+          await saveRecentlyPlayed(currentSong.value!);
         }
         if (isRadioModeOn && (currentSong.value!.id == currentQueue.last.id)) {
           await _addRadioContinuation(radioInitiatorItem!);
