@@ -14,7 +14,7 @@ import '/services/music_service.dart';
 import '../Settings/settings_screen_controller.dart';
 import '/ui/widgets/new_version_dialog.dart';
 
-class HomeScreenController extends GetxController {
+class HomeScreenController extends GetxController with WidgetsBindingObserver {
   final MusicServices _musicServices = Get.find<MusicServices>();
   final isContentFetched = false.obs;
   final tabIndex = 0.obs;
