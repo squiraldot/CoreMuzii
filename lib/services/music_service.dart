@@ -1181,12 +1181,15 @@ class MusicServices extends getx.GetxService {
       if (renderer is! Map) return null;
 
       if (item['gridPlaylistRenderer'] != null ||
-          item['playlistRenderer'] != null) {
+          item['playlistRenderer'] != null ||
+          item['musicTwoRowItemRenderer'] != null) {
         final title = nav(renderer, ['title', 'simpleText']) ??
             nav(renderer, ['title', 'runs', 0, 'text']);
-        final playlistId = renderer['playlistId']?.toString();
+        final playlistId = renderer['playlistId']?.toString() ??
+            nav(renderer, ['navigationEndpoint', 'browseEndpoint', 'browseId'])?.toString();
         final thumbs = nav(renderer, ['thumbnail', 'thumbnails']) ??
-            nav(renderer, ['thumbnailRenderer', 'playlistThumbnailRenderer', 'thumbnail', 'thumbnails']);
+            nav(renderer, ['thumbnailRenderer', 'playlistThumbnailRenderer', 'thumbnail', 'thumbnails']) ??
+            nav(renderer, ['thumbnailRenderer', 'musicThumbnailRenderer', 'thumbnail', 'thumbnails']);
         if (title != null && playlistId != null && playlistId.isNotEmpty) {
           return Playlist.fromJson({
             'title': title,
