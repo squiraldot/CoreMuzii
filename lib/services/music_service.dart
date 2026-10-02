@@ -94,6 +94,8 @@ class MusicServices extends getx.GetxService {
 
     final appPrefsBox = Hive.box('AppPrefs');
     hlCode = appPrefsBox.get('contentLanguage') ?? "en";
+    glCode = appPrefsBox.get('contentCountryCode') ??
+        getx.Get.deviceLocale?.countryCode ?? 'US';
 
     final storedAccounts = appPrefsBox.get('yt_accounts');
     final activeAccountKey = appPrefsBox.get('yt_active_account_key')?.toString();
@@ -276,6 +278,10 @@ class MusicServices extends getx.GetxService {
 
   set hlCode(String code) {
     _context['context']['client']['hl'] = code;
+  }
+
+  set glCode(String code) {
+    _context['context']['client']['gl'] = code.toUpperCase();
   }
 
   Future<String?> genrateVisitorId() async {
