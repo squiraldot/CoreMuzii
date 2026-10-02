@@ -1195,7 +1195,11 @@ class MusicServices extends getx.GetxService {
         final thumbs = nav(renderer, ['thumbnail', 'thumbnails']) ??
             nav(renderer, ['thumbnailRenderer', 'playlistThumbnailRenderer', 'thumbnail', 'thumbnails']) ??
             nav(renderer, ['thumbnailRenderer', 'musicThumbnailRenderer', 'thumbnail', 'thumbnails']);
-        if (title != null && playlistId != null && playlistId.isNotEmpty) {
+        if (title != null &&
+            playlistId != null &&
+            playlistId.isNotEmpty &&
+            playlistId != 'LM' &&
+            playlistId != 'VLLM') {
           return Playlist.fromJson({
             'title': title,
             'playlistId': playlistId,
