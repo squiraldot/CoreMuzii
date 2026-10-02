@@ -106,8 +106,9 @@ class HomeScreenController extends GetxController {
       // The same authenticated InnerTube home response is already personalized
       // when the YouTube session is valid. Do not make a second request or mix
       // anonymous and account-scoped home sections.
-      if (box.get('yt_logged_in', defaultValue: false) == true &&
-          homeContentListMap.isNotEmpty) {
+      final isAuthenticatedHome =
+          box.get('yt_logged_in', defaultValue: false) == true;
+      if (isAuthenticatedHome && homeContentListMap.isNotEmpty) {
         final firstSection = homeContentListMap.first;
         if (firstSection is Map && firstSection.containsKey("contents")) {
           quickPicks.value = QuickPicks(
@@ -115,6 +116,9 @@ class HomeScreenController extends GetxController {
             title: firstSection["title"] ?? "Listen Again",
           );
         }
+        // YT Music Home is already ordered as a single feed. Keep the
+        // remaining shelves in one list; rendering them again as fixedContent
+        // was the source of the post-login double-shelf bug.
         middleContentTemp.addAll(homeContentListMap.skip(1));
       }
       if (contentType == "TR") {
