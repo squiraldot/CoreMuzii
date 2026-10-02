@@ -46,3 +46,10 @@ class YouTubeSessionIdentity {
     );
   }
 }
+
+
+class YouTubeHomeContextSignature {
+  static String build({required String language, required String country}) {
+    return language.trim().toLowerCase() + '|' + country.trim().toUpperCase();
+  }
+}
