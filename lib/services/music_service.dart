@@ -323,7 +323,7 @@ class MusicServices extends getx.GetxService {
   }
 
   // Future<List<Map<String, dynamic>>>
-  Future<dynamic> getHome({int limit = 4}) async {
+  Future<dynamic> getHome({int limit = 4, bool allSections = false}) async {
     await ensureReady();
     final data = Map.from(_context);
     data["browseId"] = "FEmusic_home";
@@ -333,8 +333,11 @@ class MusicServices extends getx.GetxService {
 
     final sectionList =
         nav(response.data, single_column_tab + ['sectionListRenderer']);
-    //inspect(sectionList);
-    //print(sectionList.containsKey('continuations'));
+    // YouTube Music Home is paginated. Authenticated accounts can expose
+    // many more personalized shelves than the first response page.
+    // allSections deliberately walks the Home continuation until exhausted
+    // (bounded by a generous safety cap) instead of the app's normal shelf
+    // count preference.
     if (sectionList.containsKey('continuations')) {
       requestFunc(additionalParams) async {
         return (await _sendRequest("browse", data,
@@ -343,10 +346,16 @@ class MusicServices extends getx.GetxService {
       }
 
       parseFunc(contents) => parseMixedContent(contents);
-      final x = (await getContinuations(sectionList, 'sectionListContinuation',
-          limit - home.length, requestFunc, parseFunc));
-      // inspect(x);
-      home.addAll([...x]);
+      final remainingLimit = allSections ? 1000 : limit - home.length;
+      if (remainingLimit > 0) {
+        final x = (await getContinuations(
+            sectionList,
+            'sectionListContinuation',
+            remainingLimit,
+            requestFunc,
+            parseFunc));
+        home.addAll([...x]);
+      }
     }
 
     return home;
