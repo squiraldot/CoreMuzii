@@ -1296,7 +1296,10 @@ class MusicServices extends getx.GetxService {
       String playlistId, String videoId) async {
     await ensureReady();
     final data = Map.from(_context);
-    data['playlistId'] = playlistId;
+    // Playlist detail pages use VL<id>; mutations require the raw playlist ID.
+    final cleanPlaylistId =
+        playlistId.startsWith('VL') ? playlistId.substring(2) : playlistId;
+    data['playlistId'] = cleanPlaylistId;
     data['actions'] = [
       {
         'action': 'ACTION_ADD_VIDEO',
