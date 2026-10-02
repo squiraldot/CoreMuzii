@@ -420,6 +420,9 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   void onBottonBarTabSelected(int index) {
     reverseAnimationtransiton = index > tabIndex.value;
     tabIndex.value = index;
+    if (index == 0) {
+      refreshHome();
+    }
   }
 
   void _checkNewVersion() {
