@@ -262,10 +262,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
           isAuthenticatedHome ? [] : _setContentList(homeContentListMap);
 
       isContentFetched.value = true;
-      if (isAuthenticatedHome) {
-        _lastAuthenticatedHomeRefresh = DateTime.now();
-      }
-
       // Account-scoped Home shelves must not be written into the anonymous
       // Home cache. They can contain private recommendations and QuickPicks
       // sections that the legacy cache serializer does not model.
@@ -541,16 +537,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.resumed || _homeRefreshInProgress) return;
-    final box = Hive.box("AppPrefs");
-    final loggedIn = box.get('yt_logged_in', defaultValue: false) == true;
-    if (loggedIn) {
-      // Do not rely on a time threshold. Returning to the foreground should
-      // behave like SimpMusic's Home reload and fetch the current feed.
-      refreshHome(showLoading: false);
-    }
-  }
 
   @override
   void dispose() {
