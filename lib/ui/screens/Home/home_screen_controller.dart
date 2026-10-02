@@ -537,8 +537,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   }
 
   @override
-
-  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     disposeDetachedScrollControllers(disposeAll: true);
