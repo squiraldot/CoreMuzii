@@ -443,8 +443,46 @@ class MusicServices extends getx.GetxService {
       data['params'] = params;
     }
     final response = await _sendRequest('browse', data);
-    final sections = nav(response.data, single_column_tab + section_list);
-    return parseMixedContent(sections);
+
+    // Mood/category pages are not always returned through the same
+    // single-column path as Home. Current YouTube Music responses can put
+    // their shelves under either a single-column or a two-column browse
+    // renderer. Walk the response and collect every sectionListRenderer
+    // contents list so we do not show an empty page for a valid mood.
+    final sectionRows = <dynamic>[];
+
+    void collectSections(dynamic value) {
+      if (value is Map) {
+        final sectionList = value['sectionListRenderer'];
+        if (sectionList is Map && sectionList['contents'] is List) {
+          sectionRows.addAll(sectionList['contents'] as List);
+        }
+        for (final child in value.values) {
+          if (child is Map || child is List) {
+            collectSections(child);
+          }
+        }
+      } else if (value is List) {
+        for (final child in value) {
+          if (child is Map || child is List) {
+            collectSections(child);
+          }
+        }
+      }
+    }
+
+    collectSections(response.data);
+
+    // Keep order while avoiding the same shelf being parsed twice when a
+    // renderer is reachable through nested wrapper objects.
+    final seenRows = <String>{};
+    final uniqueRows = <dynamic>[];
+    for (final row in sectionRows) {
+      final key = row is Map ? jsonEncode(row) : row.toString();
+      if (seenRows.add(key)) uniqueRows.add(row);
+    }
+
+    return parseMixedContent(uniqueRows);
   }
 
   Future<bool> activateYouTubeAccount(String accountKey) async {
