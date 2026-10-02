@@ -293,6 +293,11 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
         }
       }
 
+      if (!isAuthenticatedHome) {
+        middleContentTemp.addAll(newReleaseSections);
+        middleContentTemp.addAll(chartSections);
+      }
+
       middleContent.value = isAuthenticatedHome
           ? middleContentTemp
           : _setContentList(middleContentTemp);
