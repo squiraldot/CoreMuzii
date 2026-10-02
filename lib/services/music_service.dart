@@ -297,9 +297,8 @@ class MusicServices extends getx.GetxService {
 
       if (response.statusCode == 200) {
         return response;
-      } else {
-        return await _sendRequest(action, data, additionalParams: additionalParams);
       }
+      throw NetworkError();
     } on DioException catch (e) {
       printINFO("Error $e");
       throw NetworkError();
