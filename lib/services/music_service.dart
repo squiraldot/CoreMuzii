@@ -383,6 +383,17 @@ class MusicServices extends getx.GetxService {
     return parsed.take(limit).toList();
   }
 
+  Future<List<dynamic>> getCharts({String country = 'IN', int limit = 24}) async {
+    await ensureReady();
+    final data = Map.from(_context);
+    data['browseId'] = 'FEmusic_charts';
+    data['params'] = country.toUpperCase();
+    final response = await _sendRequest('browse', data);
+    final sections = nav(response.data, single_column_tab + section_list);
+    final parsed = parseMixedContent(sections);
+    return parsed.take(limit).toList();
+  }
+
   Future<List<dynamic>> getMoodsAndGenres() async {
     await ensureReady();
     final data = Map.from(_context);
