@@ -46,7 +46,7 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
           },
           onWebResourceError: (WebResourceError error) {
             if (!error.isForMainFrame ||
-                !error.url.contains('accounts.youtube.com/accounts/SetSID')) {
+                !(error.url?.contains('accounts.youtube.com/accounts/SetSID') ?? false)) {
               return;
             }
             if (!_setSidRecoveryAttempted) {
