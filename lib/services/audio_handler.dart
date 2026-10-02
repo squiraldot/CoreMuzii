@@ -527,9 +527,13 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
           // Persist local listening history immediately. YouTube's remote
           // history can lag, while Home's "Listen again" should update as
           // soon as a track actually starts playing.
-          await saveRecentlyPlayed(currentSong);
-          if (Get.isRegistered<HomeScreenController>()) {
-            Get.find<HomeScreenController>().onTrackPlayed(currentSong);
+          try {
+            await saveRecentlyPlayed(currentSong);
+            if (Get.isRegistered<HomeScreenController>()) {
+              Get.find<HomeScreenController>().onTrackPlayed(currentSong);
+            }
+          } catch (e) {
+            printINFO("Unable to persist local listening history: $e");
           }
         }
         break;
