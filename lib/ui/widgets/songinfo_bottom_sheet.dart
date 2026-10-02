@@ -23,6 +23,7 @@ import '../navigator.dart';
 import 'song_download_btn.dart';
 import 'image_widget.dart';
 import 'song_info_dialog.dart';
+import 'youtube_playlist_picker.dart';
 
 class SongInfoBottomSheet extends StatelessWidget {
   const SongInfoBottomSheet(this.song,
@@ -122,6 +123,20 @@ class SongInfoBottomSheet extends StatelessWidget {
                           size: SanckBarSize.BIG));
                     },
                   ),
+            if (calledFromPlayer &&
+                Hive.box("AppPrefs").get('yt_logged_in', defaultValue: false) == true)
+              ListTile(
+                visualDensity: const VisualDensity(vertical: -1),
+                leading: const Icon(Icons.cloud_upload),
+                title: const Text("Add this song to YouTube playlist"),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  showDialog(
+                    context: context,
+                    builder: (context) => YoutubePlaylistPicker(song: song),
+                  );
+                },
+              ),
             ListTile(
               visualDensity: const VisualDensity(vertical: -1),
               leading: const Icon(Icons.playlist_add),
