@@ -147,7 +147,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
 
       final independentSources = await Future.wait<dynamic>([
         _musicServices.getNewReleases(limit: 12).catchError((_) => <dynamic>[]),
-        _musicServices.getCharts('TR').catchError((_) => <Map<String, dynamic>>[]),
+        _musicServices.getHomeCharts(country: 'TR').catchError((_) => <dynamic>[]),
         _musicServices.getMoodsAndGenres().catchError((_) => <dynamic>[]),
       ]);
       final newReleaseSections = independentSources[0] is List
