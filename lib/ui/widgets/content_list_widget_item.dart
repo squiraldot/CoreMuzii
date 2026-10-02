@@ -23,7 +23,13 @@ class _ContentListItemState extends State<ContentListItem> {
     final content = widget.content;
     final isLibraryItem = widget.isLibraryItem;
     final isAlbum = content.runtimeType.toString() == "Album";
-    return InkWell(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 180.0;
+        final imageSize = cardWidth;
+        return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       onFocusChange: (focused) {
@@ -42,8 +48,8 @@ class _ContentListItemState extends State<ContentListItem> {
             arguments: [widget.content, widget.content.playlistId]);
       },
       child: Container(
-        width: 130,
-        height: 200,
+        width: double.infinity,
+        height: cardWidth + 92,
         padding: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
           border: _hasFocus
@@ -56,7 +62,7 @@ class _ContentListItemState extends State<ContentListItem> {
           children: [
             isAlbum
                 ? ImageWidget(
-                    size: 120,
+                    size: imageSize,
                     album: content,
                   )
                 : content.isCloudPlaylist ||
@@ -65,11 +71,11 @@ class _ContentListItemState extends State<ContentListItem> {
                             content.playlistId == 'SongsCache' ||
                             content.playlistId == 'SongDownloads')
                     ? SizedBox.square(
-                        dimension: 120,
+                        dimension: imageSize,
                         child: Stack(
                           children: [
                             ImageWidget(
-                              size: 120,
+                              size: imageSize,
                               playlist: content,
                             ),
                             if (content.isPipedPlaylist)
@@ -126,8 +132,8 @@ class _ContentListItemState extends State<ContentListItem> {
                         ),
                       )
                     : Container(
-                        height: 120,
-                        width: 120,
+                        height: imageSize,
+                        width: imageSize,
                         decoration: BoxDecoration(
                             color: Theme.of(context).primaryColorLight,
                             borderRadius: BorderRadius.circular(10)),
