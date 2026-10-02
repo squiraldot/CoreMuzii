@@ -223,7 +223,9 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
           middleContentTemp.addAll(parsedHome);
         }
       }
-      if (isAuthenticatedHome) {
+      if (isAuthenticatedHome && middleContentTemp.isEmpty) {
+        // If YouTube's personalized Home response is temporarily empty, keep
+        // the independent public shelves as a safe fallback.
         middleContentTemp.addAll(newReleaseSections);
         middleContentTemp.addAll(chartSections);
       }
