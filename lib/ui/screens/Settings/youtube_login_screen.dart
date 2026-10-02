@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'dart:convert';
+
 import 'package:hive/hive.dart';
 import 'package:mdlovfimusic/services/music_service.dart';
 
@@ -13,7 +15,9 @@ class YoutubeLoginScreen extends StatefulWidget {
 
 class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
   late final WebViewController _webViewController;
+  final WebViewCookieManager _cookieManager = WebViewCookieManager();
   bool _isLoading = true;
+  bool _loginCompleting = false;
 
   @override
   void initState() {
@@ -33,42 +37,121 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
             setState(() {
               _isLoading = false;
             });
-            await _checkAndExtractCookies();
+            await _checkAndExtractSession();
           },
         ),
       )
       ..loadRequest(Uri.parse('https://accounts.google.com/ServiceLogin?service=youtube&continue=https://music.youtube.com/'));
   }
 
-  Future<void> _checkAndExtractCookies() async {
+  Future<void> _checkAndExtractSession() async {
+    if (_loginCompleting) return;
+
     try {
-      final String cookiesString =
-          await _webViewController.runJavaScriptReturningResult('document.cookie') as String;
+      final rawContext = await _webViewController.runJavaScriptReturningResult(
+        '''
+          JSON.stringify({
+            visitorData: window.yt && window.yt.config_ ? window.yt.config_.VISITOR_DATA : null,
+            dataSyncId: window.yt && window.yt.config_ ? window.yt.config_.DATASYNC_ID : null,
+            authUser: window.yt && window.yt.config_ ? String(window.yt.config_.SESSION_INDEX || 0) : "0"
+          })
+        ''',
+      );
+      final contextText = rawContext is String ? rawContext : rawContext.toString();
+      dynamic decoded = contextText;
+      try {
+        decoded = jsonDecode(contextText);
+      } catch (_) {}
+      if (decoded is String) {
+        try {
+          decoded = jsonDecode(decoded);
+        } catch (_) {}
+      }
+      final sessionContext = decoded is Map
+          ? Map<String, dynamic>.from(decoded)
+          : <String, dynamic>{};
 
-      // Clean string if formatted by webview json encoding
-      final cleanedCookies = cookiesString.replaceAll('"', '');
-
-      if (cleanedCookies.contains('SAPISID') || cleanedCookies.contains('LOGIN_INFO') || cleanedCookies.contains('HSID')) {
-        final box = Hive.box('AppPrefs');
-        await box.put('yt_cookies', cleanedCookies);
-        await box.put('yt_logged_in', true);
-
-        if (Get.isRegistered<MusicServices>()) {
-          await Get.find<MusicServices>().updateAuthCookies(cleanedCookies);
-        }
-
-        if (mounted) {
-          Get.back(result: true);
-          Get.snackbar(
-            "YouTube Login",
-            "Successfully logged in to YouTube!",
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.grey[900],
-            colorText: Colors.white,
-          );
+      final merged = <String, String>{};
+      for (final uri in const [
+        'https://music.youtube.com',
+        'https://www.youtube.com',
+        'https://youtube.com',
+      ]) {
+        final cookies = await _cookieManager.getCookies(domain: Uri.parse(uri));
+        for (final cookie in cookies) {
+          if (cookie.name.isNotEmpty && cookie.value.isNotEmpty) {
+            merged[cookie.name] = cookie.value;
+          }
         }
       }
-    } catch (_) {}
+
+      final cookies = merged.entries
+          .map((entry) => '${entry.key}=${entry.value}')
+          .join('; ');
+      final hasSapIsid = merged.containsKey('SAPISID') ||
+          merged.containsKey('__Secure-3PAPISID') ||
+          merged.containsKey('__Secure-1PAPISID');
+      final hasSessionCookie = merged.containsKey('SID') ||
+          merged.containsKey('__Secure-3PSID') ||
+          merged.containsKey('__Secure-3PSIDTS');
+
+      if (!hasSapIsid || !hasSessionCookie || cookies.isEmpty) return;
+
+      final musicServices = Get.isRegistered<MusicServices>()
+          ? Get.find<MusicServices>()
+          : null;
+      if (musicServices == null) return;
+
+      _loginCompleting = true;
+      final authReady = await musicServices.updateAuthCookies(
+        cookies,
+        visitorData: sessionContext['visitorData']?.toString(),
+        dataSyncId: sessionContext['dataSyncId']?.toString(),
+        authUser: sessionContext['authUser']?.toString(),
+      );
+      if (!authReady) {
+        _loginCompleting = false;
+        return;
+      }
+
+      final sessionValid = await musicServices.validateYouTubeSession();
+      if (!sessionValid) {
+        await musicServices.clearAuthCookies();
+        _loginCompleting = false;
+        if (mounted) {
+          Get.snackbar(
+            "YouTube Login",
+            "The YouTube session could not be verified. Please finish signing in and try again.",
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        }
+        return;
+      }
+
+      final box = Hive.box('AppPrefs');
+      await box.put('yt_cookies', cookies);
+      await box.put('yt_logged_in', true);
+      if (sessionContext['visitorData']?.toString().trim().isNotEmpty == true) {
+        await box.put('yt_visitor_data', sessionContext['visitorData'].toString());
+      }
+      if (sessionContext['dataSyncId']?.toString().trim().isNotEmpty == true) {
+        await box.put('yt_data_sync_id', sessionContext['dataSyncId'].toString());
+      }
+      await box.put('yt_auth_user', sessionContext['authUser']?.toString() ?? '0');
+
+      if (mounted) {
+        Get.back(result: true);
+        Get.snackbar(
+          "YouTube Login",
+          "YouTube account connected and verified.",
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.grey[900],
+          colorText: Colors.white,
+        );
+      }
+    } catch (_) {
+      _loginCompleting = false;
+    }
   }
 
   @override
