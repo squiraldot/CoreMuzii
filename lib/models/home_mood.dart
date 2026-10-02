@@ -19,11 +19,7 @@ class HomeMood {
     final browse = endpoint is Map ? endpoint['browseEndpoint'] : null;
     final browseId = browse is Map ? browse['browseId']?.toString() : null;
     final params = browse is Map ? browse['params']?.toString() : null;
-    final thumbnails = renderer['icon'] is Map
-        ? renderer['icon']['musicThumbnailRenderer']?['thumbnail']?['thumbnails']
-        : renderer['thumbnail'] is Map
-            ? renderer['thumbnail']['thumbnails']
-            : null;
+    final thumbnails = _thumbnailList(renderer);
     final thumbnailUrl = thumbnails is List && thumbnails.isNotEmpty
         ? (thumbnails.last is Map ? thumbnails.last['url']?.toString() : null)
         : null;
@@ -38,6 +34,19 @@ class HomeMood {
       params: params,
       thumbnailUrl: thumbnailUrl,
     );
+  }
+
+  static dynamic _thumbnailList(Map<String, dynamic> renderer) {
+    final icon = renderer['icon'];
+    if (icon is Map) {
+      final musicThumbnail = icon['musicThumbnailRenderer'];
+      if (musicThumbnail is Map) {
+        final thumbnail = musicThumbnail['thumbnail'];
+        if (thumbnail is Map) return thumbnail['thumbnails'];
+      }
+    }
+    final thumbnail = renderer['thumbnail'];
+    return thumbnail is Map ? thumbnail['thumbnails'] : null;
   }
 
   static String? _text(dynamic value) {
