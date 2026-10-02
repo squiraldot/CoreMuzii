@@ -13,6 +13,7 @@ import '/models/playlist.dart';
 import '/services/utils.dart';
 import '../utils/helper.dart';
 import '../utils/youtube_auth.dart';
+import '/models/home_mood.dart';
 import 'constant.dart';
 import 'continuations.dart';
 import 'nav_parser.dart';
@@ -364,6 +365,98 @@ class MusicServices extends getx.GetxService {
     }
 
     return home;
+  }
+
+  Future<List<dynamic>> getNewReleases({int limit = 24}) async {
+    await ensureReady();
+    final data = Map.from(_context);
+    data['browseId'] = 'FEmusic_new_releases';
+    final response = await _sendRequest('browse', data);
+    final sections = nav(response.data, single_column_tab + section_list);
+    final parsed = parseMixedContent(sections);
+    return parsed.take(limit).toList();
+  }
+
+  Future<List<dynamic>> getMoodsAndGenres() async {
+    await ensureReady();
+    final data = Map.from(_context);
+    data['browseId'] = 'FEmusic_moods_and_genres';
+    final response = await _sendRequest('browse', data);
+    final result = <dynamic>[];
+    final seen = <String>{};
+
+    void walk(dynamic value) {
+      if (value is Map) {
+        final renderer = value['musicNavigationButtonRenderer'];
+        if (renderer is Map) {
+          final mood = HomeMood.fromRenderer(Map<String, dynamic>.from(renderer));
+          if (mood != null && seen.add(mood.browseId + '|' + mood.title)) {
+            result.add(mood);
+          }
+        }
+        for (final child in value.values) {
+          if (child is Map || child is List) walk(child);
+        }
+      } else if (value is List) {
+        for (final child in value) {
+          walk(child);
+        }
+      }
+    }
+
+    walk(response.data);
+    return result;
+  }
+
+  Future<List<dynamic>> getMoodBrowse(
+    String browseId, {
+    String? params,
+  }) async {
+    await ensureReady();
+    final data = Map.from(_context);
+    data['browseId'] = browseId;
+    if (params != null && params.isNotEmpty) {
+      data['params'] = params;
+    }
+    final response = await _sendRequest('browse', data);
+    final sections = nav(response.data, single_column_tab + section_list);
+    return parseMixedContent(sections);
+  }
+
+  Future<bool> activateYouTubeAccount(String accountKey) async {
+    await ensureReady();
+    final box = Hive.box('AppPrefs');
+    final storedAccounts = box.get('yt_accounts');
+    if (storedAccounts is! Map) return false;
+    final account = storedAccounts[accountKey];
+    if (account is! Map) return false;
+
+    final cookies = account['cookies']?.toString();
+    if (cookies == null || cookies.isEmpty) return false;
+
+    final ready = await updateAuthCookies(
+      cookies,
+      visitorData: account['visitorData']?.toString(),
+      dataSyncId: account['dataSyncId']?.toString(),
+      authUser: account['authUser']?.toString(),
+      identityToken: account['identityToken']?.toString(),
+    );
+    if (!ready) return false;
+
+    await box.put('yt_active_account_key', accountKey);
+    await box.put('yt_cookies', cookies);
+    await box.put('yt_logged_in', true);
+    if (account['visitorData'] != null) {
+      await box.put('yt_visitor_data', account['visitorData']);
+    }
+    if (account['dataSyncId'] != null) {
+      await box.put('yt_data_sync_id', account['dataSyncId']);
+    }
+    await box.put('yt_auth_user', account['authUser']?.toString() ?? '0');
+    if (account['identityToken'] != null) {
+      await box.put('yt_identity_token', account['identityToken']);
+    }
+    return await validateYouTubeSession();
   }
 
   Future<List<MediaItem>> getYouTubeHistory({int limit = 20}) async {
