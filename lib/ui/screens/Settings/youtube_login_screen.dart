@@ -52,11 +52,16 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
     try {
       final rawContext = await _webViewController.runJavaScriptReturningResult(
         '''
-          JSON.stringify({
-            visitorData: window.yt && window.yt.config_ ? window.yt.config_.VISITOR_DATA : null,
-            dataSyncId: window.yt && window.yt.config_ ? window.yt.config_.DATASYNC_ID : null,
-            authUser: window.yt && window.yt.config_ ? String(window.yt.config_.SESSION_INDEX || 0) : "0"
-          })
+          (function () {
+            var c = window.ytcfg;
+            var y = window.yt && window.yt.config_;
+            var get = c && c.get ? c.get.bind(c) : null;
+            return JSON.stringify({
+              visitorData: (get && get('VISITOR_DATA')) || (y && y.VISITOR_DATA) || null,
+              dataSyncId: (get && get('DATASYNC_ID')) || (y && y.DATASYNC_ID) || null,
+              authUser: String((get && get('SESSION_INDEX')) || (y && y.SESSION_INDEX) || 0)
+            });
+          })()
         ''',
       );
       final contextText = rawContext is String ? rawContext : rawContext.toString();
