@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:audio_service/audio_service.dart';
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' as getx;
 import 'package:hive/hive.dart';
@@ -124,6 +125,14 @@ class MusicServices extends getx.GetxService {
 
   Future<void> updateAuthCookies(String cookies) async {
     _headers['cookie'] = cookies;
+    final sapisidMatch = RegExp(r'SAPISID=([^;]+)').firstMatch(cookies);
+    if (sapisidMatch != null) {
+      final sapisid = sapisidMatch.group(1)!;
+      final time = (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
+      final input = "$time $sapisid $domain";
+      final hash = sha1.convert(utf8.encode(input)).toString();
+      _headers['authorization'] = "SAPISIDHASH ${time}_$hash";
+    }
   }
 
   void clearAuthCookies() {

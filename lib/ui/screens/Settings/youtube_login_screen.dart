@@ -48,7 +48,7 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
       // Clean string if formatted by webview json encoding
       final cleanedCookies = cookiesString.replaceAll('"', '');
 
-      if (cleanedCookies.contains('SAPISID') || cleanedCookies.contains('LOGIN_INFO')) {
+      if (cleanedCookies.contains('SAPISID') || cleanedCookies.contains('LOGIN_INFO') || cleanedCookies.contains('HSID')) {
         final box = Hive.box('AppPrefs');
         await box.put('yt_cookies', cleanedCookies);
         await box.put('yt_logged_in', true);
@@ -57,14 +57,16 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
           await Get.find<MusicServices>().updateAuthCookies(cleanedCookies);
         }
 
-        Get.back(result: true);
-        Get.snackbar(
-          "YouTube Login",
-          "Successfully logged in to YouTube!",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.grey[900],
-          colorText: Colors.white,
-        );
+        if (mounted) {
+          Get.back(result: true);
+          Get.snackbar(
+            "YouTube Login",
+            "Successfully logged in to YouTube!",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.grey[900],
+            colorText: Colors.white,
+          );
+        }
       }
     } catch (_) {}
   }
