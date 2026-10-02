@@ -121,55 +121,75 @@ class _WelcomeBackHeader extends StatelessWidget {
     final box = Hive.box('AppPrefs');
     final activeKey = box.get('yt_active_account_key')?.toString();
     final accounts = box.get('yt_accounts');
-    final account = accounts is Map && activeKey != null && accounts[activeKey] is Map
+    final account = accounts is Map &&
+            activeKey != null &&
+            accounts[activeKey] is Map
         ? Map<String, dynamic>.from(accounts[activeKey] as Map)
         : <String, dynamic>{};
-    final name = (account['accountName']?.toString().trim().isNotEmpty == true)
-        ? account['accountName'].toString().trim()
-        : 'YouTube Music';
+    final name =
+        (account['accountName']?.toString().trim().isNotEmpty == true)
+            ? account['accountName'].toString().trim()
+            : 'YouTube Music';
     final photo = account['accountPhotoUrl']?.toString();
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 34),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      padding: const EdgeInsets.only(bottom: 38),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (photo != null && photo.isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(22),
-              child: Image.network(
-                photo,
-                width: 76,
-                height: 76,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _AccountFallbackAvatar(),
-              ),
-            )
-          else
-            const _AccountFallbackAvatar(),
-          const SizedBox(width: 22),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome back,',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+          Text(
+            'Welcome back,',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.4,
                 ),
-                const SizedBox(height: 4),
-                Text(
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.primary.withAlpha(90),
+                      blurRadius: 14,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: photo != null && photo.isNotEmpty
+                      ? Image.network(
+                          photo,
+                          width: 74,
+                          height: 74,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              const _AccountFallbackAvatar(),
+                        )
+                      : const _AccountFallbackAvatar(),
+                ),
+              ),
+              const SizedBox(width: 22),
+              Expanded(
+                child: Text(
                   name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        letterSpacing: -1.2,
+                        letterSpacing: -1.4,
                       ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
