@@ -12,7 +12,7 @@ class HomeMood {
   final String? thumbnailUrl;
 
   static HomeMood? fromRenderer(Map<String, dynamic> renderer) {
-    final title = _text(renderer['title'])?.trim();
+    final title = _text(renderer['buttonText'] ?? renderer['title'])?.trim();
     final endpoint = renderer['clickCommand'] is Map
         ? renderer['clickCommand']
         : renderer['navigationEndpoint'];
