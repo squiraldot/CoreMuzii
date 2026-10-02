@@ -28,6 +28,7 @@ import '../utils/helper.dart';
 import '/models/media_Item_builder.dart';
 import '/services/utils.dart';
 import '../ui/screens/Settings/settings_screen_controller.dart';
+import '../utils/home_history.dart';
 import '../ui/screens/Library/library_controller.dart';
 // ignore: unused_import, implementation_imports, depend_on_referenced_packages
 import "package:media_kit/src/player/platform_player.dart" show MPVLogLevel;
@@ -523,6 +524,13 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
           }
         } else {
           await _player.play();
+          // Persist local listening history immediately. YouTube's remote
+          // history can lag, while Home's "Listen again" should update as
+          // soon as a track actually starts playing.
+          await saveRecentlyPlayed(currentSong);
+          if (Get.isRegistered<HomeScreenController>()) {
+            Get.find<HomeScreenController>().onTrackPlayed(currentSong);
+          }
         }
         break;
 
