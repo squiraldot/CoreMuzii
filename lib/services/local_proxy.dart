@@ -3,10 +3,20 @@ import 'package:mdlovfimusic/utils/helper.dart';
 
 class LocalProxy {
   static HttpServer? _server;
+  static Future<void>? _startFuture;
   static final Map<String, _ProxyTask> _urlMap = {};
 
-  static Future<void> start() async {
-    if (_server != null) return;
+  static Future<void> start() {
+    if (_server != null) return Future.value();
+    final existing = _startFuture;
+    if (existing != null) return existing;
+
+    final future = _bindAndServe();
+    _startFuture = future;
+    return future;
+  }
+
+  static Future<void> _bindAndServe() async {
     try {
       _server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
       printINFO("Local proxy started on port ${_server!.port}");
@@ -59,6 +69,8 @@ class LocalProxy {
       });
     } catch (e) {
       printINFO("Failed to start local proxy: $e");
+    } finally {
+      _startFuture = null;
     }
   }
 
