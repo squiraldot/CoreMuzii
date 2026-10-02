@@ -177,6 +177,8 @@ class _ContentListItemState extends State<ContentListItem> {
           ],
         ),
       ),
+        );
+      },
     );
   }
 }
