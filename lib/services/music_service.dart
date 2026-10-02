@@ -1161,26 +1161,124 @@ class MusicServices extends getx.GetxService {
   }
 
   Future<List<Playlist>> getAccountPlaylists() async {
-    final data = Map.from(_context);
-    data['browseId'] = "FEmusic_liked_playlists";
-    try {
-      final response = (await _sendRequest("browse", data)).data;
-      final results = nav(response, [...single_column_tab, ...section_list, 0, 'gridRenderer', 'items']) ??
-          nav(response, [...single_column_tab, ...section_list, 0, 'musicShelfRenderer', 'contents']) ?? [];
-      final List<Playlist> playlists = [];
-      for (dynamic item in results) {
-        final renderer = item['musicTwoRowItemRenderer'] ?? item['musicResponsiveListItemRenderer'];
-        if (renderer != null) {
-          final parsed = parsePlaylist(renderer);
-          if (parsed.playlistId.isNotEmpty) {
-            playlists.add(parsed);
-          }
+    final playlists = <Playlist>[];
+    final seen = <String>{};
+
+    dynamic parseRenderer(dynamic item) {
+      if (item is! Map) return null;
+      final renderer = item['musicTwoRowItemRenderer'] ??
+          item['gridPlaylistRenderer'] ??
+          item['playlistRenderer'] ??
+          item['musicResponsiveListItemRenderer'];
+      if (renderer is! Map) return null;
+
+      if (item['gridPlaylistRenderer'] != null ||
+          item['playlistRenderer'] != null) {
+        final title = nav(renderer, ['title', 'simpleText']) ??
+            nav(renderer, ['title', 'runs', 0, 'text']);
+        final playlistId = renderer['playlistId']?.toString();
+        final thumbs = nav(renderer, ['thumbnail', 'thumbnails']) ??
+            nav(renderer, ['thumbnailRenderer', 'playlistThumbnailRenderer', 'thumbnail', 'thumbnails']);
+        if (title != null && playlistId != null && playlistId.isNotEmpty) {
+          return Playlist.fromJson({
+            'title': title,
+            'playlistId': playlistId,
+            'thumbnails': thumbs ?? [],
+            'description': 'YouTube playlist',
+          });
         }
       }
-      return playlists;
-    } catch (e) {
-      return [];
+
+      try {
+        final parsed = parsePlaylist(Map<String, dynamic>.from(renderer));
+        return parsed.playlistId.isNotEmpty ? parsed : null;
+      } catch (_) {
+        return null;
+      }
     }
+
+    void collect(dynamic root) {
+      if (root is List) {
+        for (final item in root) {
+          collect(item);
+        }
+        return;
+      }
+      if (root is! Map) return;
+      if (root.containsKey('musicTwoRowItemRenderer') ||
+          root.containsKey('gridPlaylistRenderer') ||
+          root.containsKey('playlistRenderer') ||
+          root.containsKey('musicResponsiveListItemRenderer')) {
+        final parsed = parseRenderer(root);
+        if (parsed is Playlist && parsed.playlistId.isNotEmpty && seen.add(parsed.playlistId)) {
+          playlists.add(parsed);
+        }
+      }
+      for (final value in root.values) {
+        if (value is Map || value is List) collect(value);
+      }
+    }
+
+    String? continuation;
+    for (var page = 0; page < 10; page++) {
+      final request = Map<String, dynamic>.from(_context);
+      if (continuation == null) {
+        request['browseId'] = 'FEmusic_liked_playlists';
+      } else {
+        request['continuation'] = continuation;
+      }
+
+      try {
+        final response = (await _sendRequest('browse', request)).data;
+        if (continuation == null) {
+          collect(nav(response, single_column_tab + section_list));
+        } else {
+          collect(nav(response, [
+            'onResponseReceivedActions',
+            0,
+            'appendContinuationItemsAction',
+            'continuationItems',
+          ]));
+        }
+
+        final section = nav(response, single_column_tab + section_list);
+        continuation = nav(section, [
+          'continuations',
+          0,
+          'nextContinuationData',
+          'continuation',
+        ])?.toString();
+        if (continuation == null || continuation.isEmpty) {
+          continuation = nav(response, [
+            'onResponseReceivedActions',
+            0,
+            'appendContinuationItemsAction',
+            'continuationItems',
+          ]) is List
+              ? nav(
+                  nav(response, [
+                    'onResponseReceivedActions',
+                    0,
+                    'appendContinuationItemsAction',
+                    'continuationItems',
+                  ]),
+                  [
+                    'last',
+                    'continuationItemRenderer',
+                    'continuationEndpoint',
+                    'continuationCommand',
+                    'token',
+                  ],
+                )?.toString()
+              : null;
+        }
+        if (continuation == null || continuation.isEmpty) break;
+      } catch (_) {
+        break;
+      }
+    }
+
+    return playlists;
   }
 
   Future<bool> addSongToPlaylist(String playlistId, String videoId) async {
