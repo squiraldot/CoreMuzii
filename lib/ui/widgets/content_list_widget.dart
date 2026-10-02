@@ -1,3 +1,4 @@
+import '../screens/Search/search_result_screen_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
