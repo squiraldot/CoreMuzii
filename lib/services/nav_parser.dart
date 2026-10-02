@@ -144,67 +144,249 @@ const musicPlaylistShelfRenderer = [
 List<Map<String, dynamic>> parseMixedContent(List<dynamic> rows) {
   final items = <Map<String, dynamic>>[];
 
-  String? sectionTitle(dynamic renderer) {
-    return nav(renderer, carousel_title + ['text']) ??
-        nav(renderer, [
-          'header',
-          'gridHeaderRenderer',
-          'title',
-          'runs',
-          0,
-          'text'
+  String? readTitle(dynamic renderer) {
+    if (renderer is! Map) return null;
+    final candidates = [
+      nav(renderer, carousel_title + ['text']),
+      nav(renderer, [
+        'header',
+        'musicCarouselShelfBasicHeaderRenderer',
+        'title',
+        'simpleText'
+      ]),
+      nav(renderer, [
+        'header',
+        'musicImmersiveCarouselShelfBasicHeaderRenderer',
+        'title',
+        'runs',
+        0,
+        'text'
+      ]),
+      nav(renderer, [
+        'header',
+        'musicImmersiveCarouselShelfBasicHeaderRenderer',
+        'title',
+        'simpleText'
+      ]),
+      nav(renderer, ['title', 'runs', 0, 'text']),
+      nav(renderer, ['title', 'simpleText']),
+      nav(renderer, [
+        'header',
+        'gridHeaderRenderer',
+        'title',
+        'runs',
+        0,
+        'text'
+      ]),
+    ];
+    for (final value in candidates) {
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString().trim();
+      }
+    }
+    return null;
+  }
+
+  dynamic unwrapShelf(dynamic row) {
+    if (row is! Map) return null;
+    const shelfKeys = [
+      'musicCarouselShelfRenderer',
+      'musicImmersiveCarouselShelfRenderer',
+      'musicShelfRenderer',
+      'musicPlaylistShelfRenderer',
+      'gridRenderer',
+      'itemSectionRenderer',
+    ];
+    for (final key in shelfKeys) {
+      final value = row[key];
+      if (value is Map) return value;
+    }
+    return row;
+  }
+
+  String? browseIdFor(dynamic data) {
+    if (data is! Map) return null;
+    final candidates = [
+      nav(data, navigation_browse_id),
+      nav(data, [
+        'title',
+        'runs',
+        0,
+        ...navigation_browse_id,
+      ]),
+      nav(data, [
+        'flexColumns',
+        0,
+        'musicResponsiveListItemFlexColumnRenderer',
+        'text',
+        'runs',
+        0,
+        ...navigation_browse_id,
+      ]),
+      nav(data, [
+        'navigationEndpoint',
+        'browseEndpoint',
+        'browseId',
+      ]),
+    ];
+    for (final value in candidates) {
+      if (value != null && value.toString().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return null;
+  }
+
+  String? pageTypeFor(dynamic data) {
+    if (data is! Map) return null;
+    final candidates = [
+      nav(data, [
+        'navigationEndpoint',
+        'browseEndpoint',
+        'browseEndpointContextSupportedConfigs',
+        'browseEndpointContextMusicConfig',
+        'pageType'
+      ]),
+      nav(data, [
+        'title',
+        'runs',
+        0,
+        ...navigation_browse,
+        ...page_type,
+      ]),
+      nav(data, [
+        'flexColumns',
+        0,
+        'musicResponsiveListItemFlexColumnRenderer',
+        'text',
+        'runs',
+        0,
+        ...navigation_browse,
+        ...page_type,
+      ]),
+    ];
+    for (final value in candidates) {
+      if (value != null && value.toString().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return null;
+  }
+
+  String? titleFor(dynamic data) {
+    if (data is! Map) return null;
+    final candidates = [
+      nav(data, ['title', 'runs', 0, 'text']),
+      nav(data, ['title', 'simpleText']),
+      nav(data, [
+        'flexColumns',
+        0,
+        'musicResponsiveListItemFlexColumnRenderer',
+        'text',
+        'runs',
+        0,
+        'text'
+      ]),
+    ];
+    for (final value in candidates) {
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString().trim();
+      }
+    }
+    return null;
+  }
+
+  dynamic playlistFrom(dynamic data) {
+    if (data is! Map) return null;
+    final playlistId = data['playlistId']?.toString() ?? browseIdFor(data);
+    final title = titleFor(data);
+    if (playlistId == null ||
+        playlistId.isEmpty ||
+        title == null ||
+        title.isEmpty) {
+      return null;
+    }
+    final type = pageTypeFor(data);
+    final isPlaylist = type == 'MUSIC_PAGE_TYPE_PLAYLIST' ||
+        playlistId.startsWith('PL') ||
+        playlistId.startsWith('VL') ||
+        playlistId.startsWith('RDCLAK');
+    if (!isPlaylist) return null;
+
+    final thumbs = nav(data, ['thumbnail', 'thumbnails']) ??
+        nav(data, [
+          'thumbnailRenderer',
+          'playlistThumbnailRenderer',
+          'thumbnail',
+          'thumbnails'
         ]) ??
-        nav(renderer, [
-          'header',
-          'musicImmersiveCarouselShelfBasicHeaderRenderer',
-          'title',
-          'runs',
-          0,
-          'text'
+        nav(data, [
+          'thumbnailRenderer',
+          'musicThumbnailRenderer',
+          'thumbnail',
+          'thumbnails'
         ]);
+    return Playlist.fromJson({
+      'title': title,
+      'playlistId': playlistId,
+      'thumbnails': thumbs is List && thumbs.isNotEmpty
+          ? thumbs
+          : [{'url': Playlist.thumbPlaceholderUrl}],
+      'description': 'YouTube playlist',
+    });
   }
 
   dynamic parseHomeItem(dynamic result) {
     if (result is! Map) return null;
 
+    final directPlaylist = result['gridPlaylistRenderer'] ??
+        result['playlistRenderer'] ??
+        result['musicPlaylistRenderer'];
+    if (directPlaylist is Map) {
+      final parsed = playlistFrom(directPlaylist);
+      if (parsed != null) return parsed;
+    }
+
     dynamic data = nav(result, [mtrir]);
     if (data != null) {
-      final pageType = nav(data, n_title + navigation_browse + page_type,
-          noneIfAbsent: true, funName: "mixed1");
+      final playlist = playlistFrom(data);
+      if (playlist != null) return playlist;
 
-      if (pageType == null) {
-        return parseSong(data);
+      final pageType = pageTypeFor(data);
+      if (pageType == 'MUSIC_PAGE_TYPE_ALBUM') {
+        try {
+          return parseAlbum(data, reqAlbumObj: false);
+        } catch (_) {
+          return null;
+        }
       }
-      if (pageType == "MUSIC_PAGE_TYPE_ALBUM") {
-        return parseAlbum(data, reqAlbumObj: false);
-      }
-      if (pageType == "MUSIC_PAGE_TYPE_ARTIST") {
+      if (pageType == 'MUSIC_PAGE_TYPE_ARTIST') {
         return parseRelatedArtist(data);
       }
-      if (pageType == "MUSIC_PAGE_TYPE_PLAYLIST") {
-        return parsePlaylist(data);
+      try {
+        return parseSong(data);
+      } catch (_) {
+        return null;
       }
     }
 
     data = nav(result, [mrlir]);
     if (data != null) {
-      return parseSongFlat(data);
-    }
+      final playlist = playlistFrom(data);
+      if (playlist != null) return playlist;
 
-    final gridPlaylist = result['gridPlaylistRenderer'];
-    if (gridPlaylist is Map) {
-      final playlistId = gridPlaylist['playlistId']?.toString() ??
-          nav(gridPlaylist, navigation_browse_id)?.toString();
-      final title = nav(gridPlaylist, ['title', 'runs', 0, 'text']) ??
-          nav(gridPlaylist, ['title', 'simpleText']);
-      if (playlistId != null && title != null) {
-        return Playlist.fromJson({
-          'title': title,
-          'playlistId': playlistId,
-          'thumbnails': nav(gridPlaylist, ['thumbnail', 'thumbnails']) ??
-              [{'url': Playlist.thumbPlaceholderUrl}],
-          'description': 'YouTube playlist',
-        });
+      final pageType = pageTypeFor(data);
+      if (pageType == 'MUSIC_PAGE_TYPE_ALBUM') {
+        try {
+          return parseAlbum(data, reqAlbumObj: false);
+        } catch (_) {
+          return null;
+        }
+      }
+      try {
+        return parseSongFlat(data);
+      } catch (_) {
+        return null;
       }
     }
 
@@ -213,13 +395,14 @@ List<Map<String, dynamic>> parseMixedContent(List<dynamic> rows) {
 
   for (final row in rows) {
     if (row is! Map || row.isEmpty) continue;
-    final renderer = row.values.first;
+
+    final renderer = unwrapShelf(row);
     if (renderer is! Map) continue;
 
     final rawContents = renderer['contents'] ?? renderer['items'];
     if (rawContents is! List || rawContents.isEmpty) continue;
 
-    final title = sectionTitle(renderer);
+    final title = readTitle(renderer) ?? readTitle(row);
     final contents = <dynamic>[];
     final seen = <String>{};
 
