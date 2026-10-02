@@ -18,8 +18,17 @@ class SideNavBar extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 80),
               physics: const ClampingScrollPhysics(),
               child: IntrinsicHeight(
-                child: Obx(
-                  () => NavigationRail(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onLongPressStart: (details) {
+                    final homeStart = size.height < 750 ? 30.0 : 60.0;
+                    if (details.localPosition.dy >= homeStart &&
+                        details.localPosition.dy <= homeStart + 72) {
+                      homeScreenController.refreshHome();
+                    }
+                  },
+                  child: Obx(
+                    () => NavigationRail(
                     useIndicator: !isMobileOrTabScreen,
                     selectedIndex:
                         homeScreenController.tabIndex.value, //_selectedIndex,
