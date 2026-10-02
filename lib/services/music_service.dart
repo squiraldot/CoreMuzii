@@ -1,6 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
 import 'dart:convert';
+import 'dart:math';
 import 'package:audio_service/audio_service.dart';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
@@ -562,6 +563,63 @@ class MusicServices extends getx.GetxService {
       await box.put('yt_identity_token', account['identityToken']);
     }
     return await validateYouTubeSession();
+  }
+
+  Future<bool> recordYouTubePlayback(String videoId) async {
+    await ensureReady();
+    final appPrefs = Hive.box('AppPrefs');
+    if (appPrefs.get('yt_logged_in', defaultValue: false) != true) {
+      return false;
+    }
+
+    try {
+      final data = Map.from(_context);
+      data['videoId'] = videoId;
+      data['contentCheckOk'] = true;
+      data['racyCheckOk'] = true;
+
+      final response = (await _sendRequest('player', data)).data;
+      final playbackUrl = nav(
+        response,
+        ['playbackTracking', 'videostatsPlaybackUrl', 'baseUrl'],
+      )?.toString();
+      if (playbackUrl == null || playbackUrl.isEmpty) return false;
+
+      const alphabet =
+          'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
+      final random = Random.secure();
+      final cpn = List.generate(
+        16,
+        (_) => alphabet[random.nextInt(alphabet.length)],
+      ).join();
+
+      final trackingResponse = await dio.get(
+        playbackUrl,
+        queryParameters: {
+          'ver': 2,
+          'c': 'WEB_REMIX',
+          'cpn': cpn,
+        },
+        options: Options(
+          headers: {
+            'origin': 'https://music.youtube.com',
+            'referer': 'https://music.youtube.com/',
+            'user-agent': userAgent,
+            if (_headers['cookie'] != null) 'cookie': _headers['cookie']!,
+            if (_headers['authorization'] != null)
+              'authorization': _headers['authorization']!,
+          },
+          validateStatus: (_) => true,
+        ),
+      );
+
+      return trackingResponse.statusCode != null &&
+          trackingResponse.statusCode! >= 200 &&
+          trackingResponse.statusCode! < 300;
+    } catch (e) {
+      printINFO('YouTube playback tracking failed: $e');
+      return false;
+    }
   }
 
   Future<List<MediaItem>> getYouTubeHistory({int limit = 20}) async {
