@@ -167,18 +167,15 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
         allSections: isAuthenticatedHome,
       );
 
-      // Keep YouTube's personalized Home shelves intact, but merge the
-      // persistent local listening history into "Listen again". The local
-      // list updates immediately when playback starts; YouTube's FEmusic_history
-      // is used as a remote fallback and may arrive later.
+      // After YouTube login, Listen again must be account-scoped and
+      // server-backed. Do not merge local Hive history into the signed-in
+      // account: that can leak another account/device's listening history.
       if (isAuthenticatedHome) {
         try {
-          final localHistory = loadRecentlyPlayed();
           final remoteHistory =
               await _musicServices.getYouTubeHistory(limit: recentlyPlayedLimit);
-          final history = mergeRecentlyPlayed(localHistory, remoteHistory);
 
-          if (history.isNotEmpty) {
+          if (remoteHistory.isNotEmpty) {
             final listenAgainIndex = homeContentListMap.indexWhere((section) {
               if (section is! Map) return false;
               final title = (section["title"] ?? "").toString().toLowerCase();
@@ -188,15 +185,12 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
 
             final historySection = {
               "title": "Listen again",
-              "contents": history,
+              "contents": remoteHistory,
             };
 
             if (listenAgainIndex >= 0) {
               homeContentListMap[listenAgainIndex] = historySection;
             } else {
-              // Keep YouTube's first Home shelf in its original position; add
-              // local Listen again immediately after it when YouTube did not
-              // provide a dedicated shelf.
               homeContentListMap.insert(
                 homeContentListMap.isEmpty ? 0 : 1,
                 historySection,
@@ -204,7 +198,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
             }
           }
         } catch (e) {
-          printINFO("YouTube/local history unavailable: $e");
+          printINFO("YouTube history unavailable: $e");
         }
       }
 
