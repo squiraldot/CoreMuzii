@@ -485,6 +485,49 @@ class MusicServices extends getx.GetxService {
     return parseMixedContent(uniqueRows);
   }
 
+  Future<Map<String, String?>> getYouTubeAccountInfo() async {
+    await ensureReady();
+    final response = await _sendRequest('account/account_menu', {});
+    dynamic navValue(dynamic root, List<dynamic> path) {
+      dynamic current = root;
+      for (final key in path) {
+        if (current is! Map || !current.containsKey(key)) return null;
+        current = current[key];
+      }
+      return current;
+    }
+
+    final header = navValue(response.data, [
+      'actions',
+      0,
+      'openPopupAction',
+      'popup',
+      'multiPageMenuRenderer',
+      'header',
+      'activeAccountHeaderRenderer',
+    ]);
+
+    String? text(dynamic value) {
+      if (value is Map) {
+        final runs = value['runs'];
+        if (runs is List && runs.isNotEmpty) {
+          return runs.map((run) => run['text']?.toString() ?? '').join().trim();
+        }
+        final simple = value['simpleText'];
+        if (simple is String) return simple.trim();
+      }
+      return value is String ? value.trim() : null;
+    }
+
+    return {
+      'accountName': header is Map ? text(header['accountName']) : null,
+      'channelHandle': header is Map ? text(header['channelHandle']) : null,
+      'accountPhotoUrl': header is Map
+          ? navValue(header, ['accountPhoto', 'thumbnails', 0, 'url'])?.toString()
+          : null,
+    };
+  }
+
   Future<bool> activateYouTubeAccount(String accountKey) async {
     await ensureReady();
     final box = Hive.box('AppPrefs');
