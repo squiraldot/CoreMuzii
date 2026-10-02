@@ -628,39 +628,38 @@ class MusicServices extends getx.GetxService {
     data['browseId'] = 'FEmusic_history';
     final response = (await _sendRequest('browse', data)).data;
 
-    dynamic findRenderer(dynamic root, String key) {
+    final shelves = <Map<String, dynamic>>[];
+
+    void collectShelves(dynamic root) {
       if (root is Map) {
-        final direct = root[key];
-        if (direct is Map) return direct;
+        final shelf = root['musicShelfRenderer'];
+        if (shelf is Map) {
+          shelves.add(Map<String, dynamic>.from(shelf));
+        }
         for (final value in root.values) {
-          final found = findRenderer(value, key);
-          if (found != null) return found;
+          if (value is Map || value is List) collectShelves(value);
         }
       } else if (root is List) {
         for (final value in root) {
-          final found = findRenderer(value, key);
-          if (found != null) return found;
+          if (value is Map || value is List) collectShelves(value);
         }
       }
-      return null;
     }
 
-    List<MediaItem> parseHistoryContents(dynamic contents) {
-      if (contents is! List) return <MediaItem>[];
-      final parsed = parsePlaylistItems(contents);
-      final result = <MediaItem>[];
-      final seen = <String>{};
-      for (final item in parsed) {
-        if (item is! MediaItem) continue;
-        if (seen.add(item.id)) result.add(item);
-        if (result.length >= limit) break;
+    collectShelves(response);
+
+    final result = <MediaItem>[];
+    final seen = <String>{};
+    for (final shelf in shelves) {
+      final contents = shelf['contents'];
+      if (contents is! List) continue;
+      for (final item in parsePlaylistItems(contents)) {
+        if (item is! MediaItem || !seen.add(item.id)) continue;
+        result.add(item);
+        if (result.length >= limit) return result;
       }
-      return result;
     }
-
-    final shelf = findRenderer(response, 'musicShelfRenderer');
-    final contents = shelf is Map ? shelf['contents'] : null;
-    return parseHistoryContents(contents);
+    return result;
   }
 
   Future<List<Artist>> getYouTubeSubscriptions({int limit = 200}) async {
