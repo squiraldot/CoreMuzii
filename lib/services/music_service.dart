@@ -95,12 +95,14 @@ class MusicServices extends getx.GetxService {
     final storedVisitorData = appPrefsBox.get('yt_visitor_data')?.toString();
     final storedDataSyncId = appPrefsBox.get('yt_data_sync_id')?.toString();
     final storedAuthUser = appPrefsBox.get('yt_auth_user')?.toString();
+    final storedIdentityToken = appPrefsBox.get('yt_identity_token')?.toString();
     if (storedCookies != null && storedCookies.toString().isNotEmpty) {
       await updateAuthCookies(
         storedCookies.toString(),
         visitorData: storedVisitorData,
         dataSyncId: storedDataSyncId,
         authUser: storedAuthUser,
+        identityToken: storedIdentityToken,
       );
     }
 
@@ -137,6 +139,7 @@ class MusicServices extends getx.GetxService {
     String? visitorData,
     String? dataSyncId,
     String? authUser,
+    String? identityToken,
   }) async {
     final normalizedCookies = cookies.trim();
     if (normalizedCookies.isEmpty) {
@@ -178,6 +181,11 @@ class MusicServices extends getx.GetxService {
     }
 
     _headers['X-Youtube-Bootstrap-Logged-In'] = 'true';
+    if (identityToken != null && identityToken.trim().isNotEmpty) {
+      _headers['X-Youtube-Identity-Token'] = identityToken.trim();
+    } else {
+      _headers.remove('X-Youtube-Identity-Token');
+    }
     _headers['X-Origin'] = 'https://music.youtube.com';
 
     final sapisid = _extractCookie(normalizedCookies, 'SAPISID') ??
