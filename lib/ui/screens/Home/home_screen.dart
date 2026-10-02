@@ -112,6 +112,87 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+class _WelcomeBackHeader extends StatelessWidget {
+  const _WelcomeBackHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final box = Hive.box('AppPrefs');
+    final activeKey = box.get('yt_active_account_key')?.toString();
+    final accounts = box.get('yt_accounts');
+    final account = accounts is Map && activeKey != null && accounts[activeKey] is Map
+        ? Map<String, dynamic>.from(accounts[activeKey] as Map)
+        : <String, dynamic>{};
+    final name = (account['accountName']?.toString().trim().isNotEmpty == true)
+        ? account['accountName'].toString().trim()
+        : 'YouTube Music';
+    final photo = account['accountPhotoUrl']?.toString();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 34),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (photo != null && photo.isNotEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: Image.network(
+                photo,
+                width: 76,
+                height: 76,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const _AccountFallbackAvatar(),
+              ),
+            )
+          else
+            const _AccountFallbackAvatar(),
+          const SizedBox(width: 22),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome back,',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -1.2,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AccountFallbackAvatar extends StatelessWidget {
+  const _AccountFallbackAvatar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 76,
+      height: 76,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
+      child: const Icon(Icons.person, size: 38),
+    );
+  }
+}
+
 class Body extends StatelessWidget {
   const Body({
     super.key,
@@ -130,7 +211,7 @@ class Body extends StatelessWidget {
                 ? 80.0
                 : 85.0;
     final leftPadding =
-        settingsScreenController.isBottomNavBarEnabled.isTrue ? 20.0 : 5.0;
+        settingsScreenController.isBottomNavBarEnabled.isTrue ? 20.0 : 28.0;
     if (homeScreenController.tabIndex.value == 0) {
       return Padding(
         padding: EdgeInsets.only(left: leftPadding),
@@ -208,6 +289,10 @@ class Body extends StatelessWidget {
                         final items = homeScreenController
                                 .isContentFetched.value
                             ? [
+                                if (Hive.box('AppPrefs').get('yt_logged_in',
+                                        defaultValue: false) ==
+                                    true)
+                                  _WelcomeBackHeader(),
                                 Obx(() {
                                   if (homeScreenController
                                       .quickPicks.value.songList.isEmpty) {
@@ -217,9 +302,9 @@ class Body extends StatelessWidget {
                                   homeScreenController.contentScrollControllers
                                       .add(scrollController);
                                   return QuickPicksWidget(
-                                      content:
-                                          homeScreenController.quickPicks.value,
-                                      scrollController: scrollController);
+                                    content: homeScreenController.quickPicks.value,
+                                    scrollController: scrollController,
+                                  );
                                 }),
                                 if (homeScreenController.homeMoods.isNotEmpty)
                                   HomeMoodWidget(
@@ -242,9 +327,12 @@ class Body extends StatelessWidget {
 
                             physics: const AlwaysScrollableScrollPhysics(),
 
-                            padding:
-
-                                EdgeInsets.only(bottom: 200, top: topPadding),
+                            padding: EdgeInsets.fromLTRB(
+                              leftPadding,
+                              topPadding,
+                              28,
+                              200,
+                            ),
 
                             itemCount: items.length,
 
