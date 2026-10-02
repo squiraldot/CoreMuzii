@@ -200,14 +200,10 @@ class MusicServices extends getx.GetxService {
     }
 
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final syncParts = syncId?.split('||') ?? const <String>[];
-    final userSessionId = syncParts.length > 1 && syncParts[1].isNotEmpty
-        ? syncParts[1]
-        : (syncParts.isNotEmpty ? syncParts.first : '');
-        final hash = sha1.convert(
+    final hash = sha1.convert(
       utf8.encode('$timestamp $sapisid https://music.youtube.com'),
     ).toString();
-    final auth = 'SAPISIDHASH $timestamp' + '_' + hash;
+    final auth = 'SAPISIDHASH ${timestamp}_$hash';
 
     final sapisid1p = _extractCookie(normalizedCookies, '__Secure-1PAPISID');
     final sapisid3p = _extractCookie(normalizedCookies, '__Secure-3PAPISID');
