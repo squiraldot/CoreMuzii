@@ -157,7 +157,13 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
             if (listenAgainIndex >= 0) {
               homeContentListMap[listenAgainIndex] = historySection;
             } else {
-              homeContentListMap.insert(0, historySection);
+              // Keep YouTube's first Home shelf in its original position; add
+              // local Listen again immediately after it when YouTube did not
+              // provide a dedicated shelf.
+              homeContentListMap.insert(
+                homeContentListMap.isEmpty ? 0 : 1,
+                historySection,
+              );
             }
           }
         } catch (e) {
