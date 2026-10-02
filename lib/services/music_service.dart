@@ -1183,7 +1183,9 @@ class MusicServices extends getx.GetxService {
           return Playlist.fromJson({
             'title': title,
             'playlistId': playlistId,
-            'thumbnails': thumbs ?? [],
+            'thumbnails': thumbs is List && thumbs.isNotEmpty
+                ? thumbs
+                : [{'url': Playlist.thumbPlaceholderUrl}],
             'description': 'YouTube playlist',
           });
         }
@@ -1249,28 +1251,26 @@ class MusicServices extends getx.GetxService {
           'continuation',
         ])?.toString();
         if (continuation == null || continuation.isEmpty) {
-          continuation = nav(response, [
+          final continuationItems = nav(response, [
             'onResponseReceivedActions',
             0,
             'appendContinuationItemsAction',
             'continuationItems',
-          ]) is List
-              ? nav(
-                  nav(response, [
-                    'onResponseReceivedActions',
-                    0,
-                    'appendContinuationItemsAction',
-                    'continuationItems',
-                  ]),
-                  [
-                    'last',
-                    'continuationItemRenderer',
-                    'continuationEndpoint',
-                    'continuationCommand',
-                    'token',
-                  ],
-                )?.toString()
-              : null;
+          ]);
+          if (continuationItems is List) {
+            for (final item in continuationItems.reversed) {
+              final token = nav(item, [
+                'continuationItemRenderer',
+                'continuationEndpoint',
+                'continuationCommand',
+                'token',
+              ]);
+              if (token != null && token.toString().isNotEmpty) {
+                continuation = token.toString();
+                break;
+              }
+            }
+          }
         }
         if (continuation == null || continuation.isEmpty) break;
       } catch (_) {
