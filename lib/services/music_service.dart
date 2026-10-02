@@ -546,39 +546,41 @@ class MusicServices extends getx.GetxService {
     final Map<String, dynamic> response =
         (await _sendRequest('browse', data)).data;
     if (playlistId != null) {
-      final Map<String, dynamic> header =
-          nav(response, ['header', "musicDetailHeaderRenderer"]) ??
-              nav(response, [
-                'contents',
-                "twoColumnBrowseResultsRenderer",
-                'tabs',
-                0,
-                "tabRenderer",
-                "content",
-                "sectionListRenderer",
-                "contents",
-                0,
-                "musicResponsiveHeaderRenderer"
-              ]);
+      Map<String, dynamic>? findRenderer(dynamic root, String key) {
+        if (root is Map) {
+          final direct = root[key];
+          if (direct is Map) return Map<String, dynamic>.from(direct);
+          for (final value in root.values) {
+            final found = findRenderer(value, key);
+            if (found != null) return found;
+          }
+        } else if (root is List) {
+          for (final value in root) {
+            final found = findRenderer(value, key);
+            if (found != null) return found;
+          }
+        }
+        return null;
+      }
 
-      final Map<String, dynamic> results =
-          nav(response, musicPlaylistShelfRenderer) ??
-              nav(
-                response,
-                [
-                  'contents',
-                  "singleColumnBrowseResultsRenderer",
-                  "tabs",
-                  0,
-                  "tabRenderer",
-                  "content",
-                  'sectionListRenderer',
-                  'contents',
-                  0,
-                  "musicPlaylistShelfRenderer"
-                ],
-              );
-      final Map<String, dynamic> playlist = {'id': results['playlistId']};
+      final header = findRenderer(response, 'musicDetailHeaderRenderer') ??
+          findRenderer(response, 'musicResponsiveHeaderRenderer') ??
+          <String, dynamic>{};
+      final results = findRenderer(response, 'musicPlaylistShelfRenderer');
+
+      if (results == null) {
+        return {
+          'id': playlistId,
+          'title': nav(header, title_text) ?? '',
+          'thumbnails': nav(header, thumnail_cropped) ?? [],
+          'description': nav(header, description) ?? '',
+          'tracks': <MediaItem>[],
+        };
+      }
+
+      final Map<String, dynamic> playlist = {
+        'id': results['playlistId'] ?? playlistId,
+      };
 
       playlist['title'] = nav(header, title_text);
       playlist['thumbnails'] = nav(header, thumnail_cropped) ??
