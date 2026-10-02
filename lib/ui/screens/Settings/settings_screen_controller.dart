@@ -132,11 +132,17 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> setAppLanguage(String? val) async {
-    Get.updateLocale(Locale(val!));
-    Get.find<MusicServices>().hlCode = val;
-    Get.find<HomeScreenController>().loadContentFromNetwork(silent: true);
+    if (val == null || val.isEmpty) return;
+    Get.updateLocale(Locale(val));
+    final musicServices = Get.find<MusicServices>();
+    musicServices.hlCode = val;
+    final country = Get.deviceLocale?.countryCode ?? 'US';
+    musicServices.glCode = country;
     currentAppLanguageCode.value = val;
     await setBox.put('currentAppLanguageCode', val);
+    await setBox.put('contentLanguage', val);
+    await setBox.put('contentCountryCode', country);
+    await Get.find<HomeScreenController>().refreshHome();
   }
 
   Future<void> setContentNumber(int? no) async {
