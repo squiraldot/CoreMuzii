@@ -7,6 +7,7 @@ import 'package:get/get.dart' as getx;
 import 'package:hive/hive.dart';
 
 import '/models/album.dart';
+import '/models/playlist.dart';
 import '/services/utils.dart';
 import '../utils/helper.dart';
 import 'constant.dart';
@@ -1022,6 +1023,50 @@ class MusicServices extends getx.GetxService {
               .toList();
     }
     return result;
+  }
+
+  Future<Map<String, dynamic>> getLikedSongs({int limit = 100}) async {
+    return await getPlaylistOrAlbumSongs(playlistId: "LM", limit: limit);
+  }
+
+  Future<List<Playlist>> getAccountPlaylists() async {
+    final data = Map.from(_context);
+    data['browseId'] = "FEmusic_liked_playlists";
+    try {
+      final response = (await _sendRequest("browse", data)).data;
+      final results = nav(response, [...single_column_tab, ...section_list, 0, 'gridRenderer', 'items']) ??
+          nav(response, [...single_column_tab, ...section_list, 0, 'musicShelfRenderer', 'contents']) ?? [];
+      final List<Playlist> playlists = [];
+      for (dynamic item in results) {
+        final renderer = item['musicTwoRowItemRenderer'] ?? item['musicResponsiveListItemRenderer'];
+        if (renderer != null) {
+          final parsed = parsePlaylist(renderer);
+          if (parsed.playlistId.isNotEmpty) {
+            playlists.add(parsed);
+          }
+        }
+      }
+      return playlists;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> addSongToPlaylist(String playlistId, String videoId) async {
+    final data = Map.from(_context);
+    data['playlistId'] = playlistId;
+    data['actions'] = [
+      {
+        'action': 'ACTION_ADD_VIDEO',
+        'addedVideoId': videoId,
+      }
+    ];
+    try {
+      final response = await _sendRequest("browse/edit_playlist", data);
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<String?> getSongYear(String songId) async {

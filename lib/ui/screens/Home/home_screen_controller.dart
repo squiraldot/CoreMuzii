@@ -95,6 +95,22 @@ class HomeScreenController extends GetxController {
       final homeContentListMap = await _musicServices.getHome(
           limit:
               Get.find<SettingsScreenController>().noOfHomeScreenContent.value);
+
+      // If user is logged into YouTube, fetch account-personalized content
+      if (box.get('yt_logged_in', defaultValue: false) == true) {
+        try {
+          final personalizedHome = await _musicServices.getHome(limit: 6);
+          if (personalizedHome is List && personalizedHome.isNotEmpty) {
+            final firstSection = personalizedHome.first;
+            if (firstSection is Map && firstSection.containsKey("contents")) {
+              quickPicks.value = QuickPicks(
+                  List<MediaItem>.from(firstSection["contents"]),
+                  title: firstSection["title"] ?? "Listen Again");
+            }
+            middleContentTemp.addAll(personalizedHome.skip(1));
+          }
+        } catch (_) {}
+      }
       if (contentType == "TR") {
         final index = homeContentListMap
             .indexWhere((element) => element['title'] == "Trending");
