@@ -154,15 +154,22 @@ class MusicServices extends getx.GetxService {
     final syncId = dataSyncId?.trim();
     if (syncId != null && syncId.isNotEmpty) {
       final parts = syncId.split('||');
-      final delegatedSessionId = parts.isNotEmpty && parts.first.isNotEmpty ? parts.first : null;
-      final userSessionId = parts.length > 1 && parts[1].isNotEmpty ? parts[1] : null;
-      if (delegatedSessionId != null) {
+      final isDelegatedAccount =
+          parts.length > 1 && parts[1].trim().isNotEmpty;
+      final delegatedSessionId =
+          isDelegatedAccount ? parts.first.trim() : null;
+      final userSessionId = isDelegatedAccount
+          ? parts[1].trim()
+          : (parts.first.trim().isNotEmpty ? parts.first.trim() : null);
+
+      if (delegatedSessionId != null && delegatedSessionId.isNotEmpty) {
         _headers['X-Goog-PageId'] = delegatedSessionId;
       } else {
         _headers.remove('X-Goog-PageId');
       }
-      if (userSessionId != null) {
-        _headers['X-Goog-AuthUser'] = authUser?.trim().isNotEmpty == true ? authUser!.trim() : '0';
+      if (userSessionId != null && userSessionId.isNotEmpty) {
+        _headers['X-Goog-AuthUser'] =
+            authUser?.trim().isNotEmpty == true ? authUser!.trim() : '0';
       }
     } else if (authUser?.trim().isNotEmpty == true) {
       _headers['X-Goog-AuthUser'] = authUser!.trim();
@@ -183,12 +190,10 @@ class MusicServices extends getx.GetxService {
 
     final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     final parts = <String>[];
-    final userSessionId = syncId != null && syncId.contains('||')
-        ? syncId.split('||').skip(1).firstWhere(
-            (value) => value.isNotEmpty,
-            orElse: () => '',
-          )
-        : '';
+    final syncParts = syncId?.split('||') ?? const <String>[];
+    final userSessionId = syncParts.length > 1 && syncParts[1].isNotEmpty
+        ? syncParts[1]
+        : (syncParts.isNotEmpty ? syncParts.first : '');
     if (userSessionId.isNotEmpty) {
       parts.add('u:$userSessionId');
     }
