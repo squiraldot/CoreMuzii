@@ -158,7 +158,7 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
 
       try {
         if (Get.isRegistered<HomeScreenController>()) {
-          await Get.find<HomeScreenController>().loadContentFromNetwork(silent: true);
+          await Get.find<HomeScreenController>().refreshHome();
         }
         if (Get.isRegistered<LibraryPlaylistsController>()) {
           Get.find<LibraryPlaylistsController>().refreshLib();
