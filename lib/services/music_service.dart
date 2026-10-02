@@ -291,7 +291,19 @@ class MusicServices extends getx.GetxService {
 
   Future<Response> _sendRequest(String action, Map<dynamic, dynamic> data,
       {additionalParams = ""}) async {
-    //print("$baseUrl$action$fixedParms$additionalParams          data:$data");
+    // SAPISIDHASH is timestamped; rebuild it for every request so a
+    // long-lived signed-in session does not start returning 401.
+    final cookies = _headers['cookie'] ?? '';
+    final sapisid = _extractCookie(cookies, 'SAPISID') ??
+        _extractCookie(cookies, '__Secure-3PAPISID') ??
+        _extractCookie(cookies, '__Secure-1PAPISID');
+    if (sapisid != null && sapisid.isNotEmpty) {
+      final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      final hash = sha1
+          .convert(utf8.encode('$timestamp $sapisid https://music.youtube.com'))
+          .toString();
+      _headers['authorization'] = 'SAPISIDHASH ${timestamp}_$hash';
+    }
     try {
       final response =
           await dio.post("$baseUrl$action$fixedParms$additionalParams",
