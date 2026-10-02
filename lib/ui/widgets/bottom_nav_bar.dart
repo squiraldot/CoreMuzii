@@ -8,7 +8,15 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final homeScreenController = Get.find<HomeScreenController>();
-    return Obx(() => NavigationBar(
+    return Obx(() => GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onLongPressStart: (details) {
+            final homeWidth = MediaQuery.sizeOf(context).width / 4;
+            if (details.localPosition.dx <= homeWidth) {
+              homeScreenController.refreshHome();
+            }
+          },
+          child: NavigationBar(
             onDestinationSelected: homeScreenController.onBottonBarTabSelected,
             selectedIndex: homeScreenController.tabIndex.toInt(),
             backgroundColor: Theme.of(context).primaryColor,
@@ -32,7 +40,9 @@ class BottomNavBar extends StatelessWidget {
                 icon: const Icon(Icons.settings),
                 label: modifyNgetlabel('settings'.tr),
               ),
-            ]));
+            ],
+          ),
+        ));
   }
 
   String modifyNgetlabel(String label) {
