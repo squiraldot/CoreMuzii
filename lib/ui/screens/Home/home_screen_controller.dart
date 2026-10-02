@@ -10,6 +10,7 @@ import '../../../utils/helper.dart';
 import '/models/album.dart';
 import '/models/playlist.dart';
 import '/models/quick_picks.dart';
+import '../../../utils/home_history.dart';
 import '/services/music_service.dart';
 import '../Settings/settings_screen_controller.dart';
 import '/ui/widgets/new_version_dialog.dart';
@@ -129,14 +130,17 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
         allSections: isAuthenticatedHome,
       );
 
-      // YouTube's Home "Listen again" / current Speed dial is a
-      // personalized carousel, but its renderer can contain playlist/album
-      // cards instead of the actual recent playback list. For MDLovFi we want
-      // the useful "last played music" behavior, so use the authenticated
-      // FEmusic_history list for that shelf when it is available.
+      // Keep YouTube's personalized Home shelves intact, but merge the
+      // persistent local listening history into "Listen again". The local
+      // list updates immediately when playback starts; YouTube's FEmusic_history
+      // is used as a remote fallback and may arrive later.
       if (isAuthenticatedHome) {
         try {
-          final history = await _musicServices.getYouTubeHistory(limit: 20);
+          final localHistory = loadRecentlyPlayed();
+          final remoteHistory =
+              await _musicServices.getYouTubeHistory(limit: recentlyPlayedLimit);
+          final history = mergeRecentlyPlayed(localHistory, remoteHistory);
+
           if (history.isNotEmpty) {
             final listenAgainIndex = homeContentListMap.indexWhere((section) {
               if (section is! Map) return false;
@@ -157,7 +161,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
             }
           }
         } catch (e) {
-          printINFO("YouTube history unavailable: $e");
+          printINFO("YouTube/local history unavailable: $e");
         }
       }
 
@@ -248,6 +252,9 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
           isAuthenticatedHome ? [] : _setContentList(homeContentListMap);
 
       isContentFetched.value = true;
+      if (isAuthenticatedHome) {
+        _lastAuthenticatedHomeRefresh = DateTime.now();
+      }
 
       // Account-scoped Home shelves must not be written into the anonymous
       // Home cache. They can contain private recommendations and QuickPicks
@@ -384,6 +391,30 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   void onSideBarTabSelected(int index) {
     reverseAnimationtransiton = index > tabIndex.value;
     tabIndex.value = index;
+    // Match SimpMusic's Home reload behavior: returning to Home requests a
+    // fresh FEmusic_home response instead of showing the previous shelf list.
+    if (index == 0) {
+      refreshHome();
+    }
+  }
+
+  void onTrackPlayed(MediaItem item) {
+    final localHistory = loadRecentlyPlayed();
+    final history = mergeRecentlyPlayed([item], localHistory);
+    final listenAgainIndex = middleContent.indexWhere((section) {
+      return section is QuickPicks &&
+          (section.title.toLowerCase().contains('listen again') ||
+              section.title.toLowerCase().contains('speed dial'));
+    });
+
+    final updated = QuickPicks(history, title: 'Listen again');
+    if (listenAgainIndex >= 0) {
+      final copy = List<dynamic>.from(middleContent);
+      copy[listenAgainIndex] = updated;
+      middleContent.value = copy;
+    } else {
+      middleContent.insert(0, updated);
+    }
   }
 
   void onBottonBarTabSelected(int index) {
@@ -501,10 +532,9 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     if (state != AppLifecycleState.resumed || _homeRefreshInProgress) return;
     final box = Hive.box("AppPrefs");
     final loggedIn = box.get('yt_logged_in', defaultValue: false) == true;
-    final lastRefresh = _lastAuthenticatedHomeRefresh;
-    if (loggedIn &&
-        (lastRefresh == null ||
-            DateTime.now().difference(lastRefresh).inSeconds >= 15)) {
+    if (loggedIn) {
+      // Do not rely on a time threshold. Returning to the foreground should
+      // behave like SimpMusic's Home reload and fetch the current feed.
       refreshHome(showLoading: false);
     }
   }
