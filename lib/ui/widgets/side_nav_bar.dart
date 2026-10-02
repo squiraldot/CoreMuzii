@@ -61,7 +61,9 @@ class SideNavBar extends StatelessWidget {
                       ],
                     ),
                   ),
-              ))
+                ),
+              ),
+            )
           : Padding(
               padding: const EdgeInsets.only(bottom: 100.0),
               child: SideBarAnimated(
