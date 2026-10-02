@@ -108,6 +108,38 @@ class HomeScreenController extends GetxController {
         allSections: isAuthenticatedHome,
       );
 
+      // YouTube's Home "Listen again" / current Speed dial is a
+      // personalized carousel, but its renderer can contain playlist/album
+      // cards instead of the actual recent playback list. For MDLovFi we want
+      // the useful "last played music" behavior, so use the authenticated
+      // FEmusic_history list for that shelf when it is available.
+      if (isAuthenticatedHome) {
+        try {
+          final history = await _musicServices.getYouTubeHistory(limit: 20);
+          if (history.isNotEmpty) {
+            final listenAgainIndex = homeContentListMap.indexWhere((section) {
+              if (section is! Map) return false;
+              final title = (section["title"] ?? "").toString().toLowerCase();
+              return title.contains("listen again") ||
+                  title.contains("speed dial");
+            });
+
+            final historySection = {
+              "title": "Listen again",
+              "contents": history,
+            };
+
+            if (listenAgainIndex >= 0) {
+              homeContentListMap[listenAgainIndex] = historySection;
+            } else {
+              homeContentListMap.insert(0, historySection);
+            }
+          }
+        } catch (e) {
+          printINFO("YouTube history unavailable: $e");
+        }
+      }
+
       // For a signed-in YouTube Music account, use the complete personalized
       // Home feed exactly as returned by FEmusic_home. This includes every
       // shelf returned through section continuations (Quick picks, Listen
