@@ -387,7 +387,11 @@ class MusicServices extends getx.GetxService {
     await ensureReady();
     final data = Map.from(_context);
     data['browseId'] = 'FEmusic_charts';
-    data['params'] = country.toUpperCase();
+    if (country.isNotEmpty) {
+      data['formData'] = {
+        'selectedValues': [country.toUpperCase()],
+      };
+    }
     final response = await _sendRequest('browse', data);
     final sections = nav(response.data, single_column_tab + section_list);
     final parsed = parseMixedContent(sections);
