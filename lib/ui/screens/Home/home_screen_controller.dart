@@ -178,7 +178,7 @@ class HomeScreenController extends GetxController {
         }
       }
 
-      if (quickPicks.value.songList.isEmpty) {
+      if (!isAuthenticatedHome && quickPicks.value.songList.isEmpty) {
         final index = homeContentListMap
             .indexWhere((element) => element['title'] == "Quick picks");
         if (index != -1) {
