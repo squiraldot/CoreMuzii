@@ -53,9 +53,8 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     }
     try {
       await loadContentFromNetwork(silent: false);
-      final box = Hive.box("AppPrefs");
-      if (box.get('yt_logged_in', defaultValue: false) == true) {
-      }
+      // Authentication state is persisted by the login flow; Home refresh
+      // itself does not need to track a separate timestamp.
     } finally {
       _homeRefreshInProgress = false;
     }
