@@ -322,7 +322,15 @@ class LibraryPlaylistsController extends GetxController
         final canonicalId =
             rawId.startsWith('VL') ? rawId.substring(2) : rawId;
         if (canonicalId.isEmpty || !currentIds.add(canonicalId)) continue;
-        libraryPlaylists.add(playlist.copyWith(playlistId: canonicalId));
+        libraryPlaylists.add(Playlist(
+          title: playlist.title,
+          playlistId: canonicalId,
+          description: playlist.description,
+          thumbnailUrl: playlist.thumbnailUrl,
+          songCount: playlist.songCount,
+          isPipedPlaylist: playlist.isPipedPlaylist,
+          isCloudPlaylist: playlist.isCloudPlaylist,
+        ));
       }
       await appPrefsBox.put('yt_account_playlist_ids', currentIds.toList());
     } catch (_) {
