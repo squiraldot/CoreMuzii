@@ -17,6 +17,7 @@ import '/models/album.dart';
 import '/models/playlist.dart';
 import '/models/quick_picks.dart';
 import '../../widgets/quickpickswidget.dart';
+import '../../widgets/home_mood_widget.dart';
 import '../../widgets/shimmer_widgets/home_shimmer.dart';
 import 'home_screen_controller.dart';
 import '../Settings/settings_screen.dart';
@@ -220,6 +221,11 @@ class Body extends StatelessWidget {
                                           homeScreenController.quickPicks.value,
                                       scrollController: scrollController);
                                 }),
+                                if (homeScreenController.homeMoods.isNotEmpty)
+                                  HomeMoodWidget(
+                                    moods: homeScreenController.homeMoods,
+                                    scrollController: ScrollController(),
+                                  ),
                                 ...getWidgetList(
                                     homeScreenController.middleContent,
                                     homeScreenController),
