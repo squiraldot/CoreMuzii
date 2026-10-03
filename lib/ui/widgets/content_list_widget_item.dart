@@ -50,7 +50,7 @@ class _ContentListItemState extends State<ContentListItem> {
       child: Container(
         width: double.infinity,
         height: cardWidth + 92,
-        padding: const EdgeInsets.symmetric(horizontal: 5),
+        padding: EdgeInsets.zero,
         decoration: BoxDecoration(
           border: _hasFocus
               ? Border.all(color: Theme.of(context).primaryColor, width: 2)
