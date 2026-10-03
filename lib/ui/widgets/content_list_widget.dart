@@ -64,14 +64,13 @@ class ContentListWidget extends StatelessWidget {
               itemCount: isAlbumContent
                   ? content.albumList.length
                   : content.playlistList.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 0),
+              separatorBuilder: (_, __) => const SizedBox(width: 16),
               itemBuilder: (_, index) => SizedBox(
                 width: 160,
                 child: ContentListItem(
-                    content: isAlbumContent
-                        ? content.albumList[index]
-                        : content.playlistList[index],
-                  ),
+                  content: isAlbumContent
+                      ? content.albumList[index]
+                      : content.playlistList[index],
                 ),
               ),
             ),
