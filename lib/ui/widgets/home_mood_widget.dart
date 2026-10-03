@@ -21,10 +21,15 @@ class HomeMoodWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Mood & Moments', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 8),
+        Text(
+          'Mood & Moments',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 14),
         SizedBox(
-          height: 92,
+          height: 72,
           child: ListView.separated(
             controller: scrollController,
             scrollDirection: Axis.horizontal,
