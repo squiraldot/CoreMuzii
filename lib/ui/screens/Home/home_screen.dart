@@ -18,7 +18,7 @@ import '/models/album.dart';
 import '/models/playlist.dart';
 import '/models/quick_picks.dart';
 import '../../widgets/quickpickswidget.dart';
-import '../../widgets/home_mood_widget.dart';
+import '/models/home_mood.dart';
 import 'mood_browse_screen.dart';
 import '../../widgets/shimmer_widgets/home_shimmer.dart';
 import 'home_screen_controller.dart';
