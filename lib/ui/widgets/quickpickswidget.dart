@@ -77,7 +77,7 @@ class QuickPicksWidget extends StatelessWidget {
         final wide = constraints.maxWidth >= 760;
         final rowHeight = wide ? 92.0 : 76.0;
         final artwork = wide ? 78.0 : 62.0;
-        final rowCount = content.songList.length.clamp(1, 4).toInt();
+        const rowCount = 4;
         // Match SimpMusic: portrait quick-pick cells use the full content width,
         // so four songs form one vertical page and the next page peeks in.
         final itemWidth = wide ? widthClamp(constraints.maxWidth, 430.0) : constraints.maxWidth;
