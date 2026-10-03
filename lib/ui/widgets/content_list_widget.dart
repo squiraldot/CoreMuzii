@@ -21,10 +21,12 @@ class ContentListWidget extends StatelessWidget {
     final isAlbumContent = content.runtimeType.toString() == "AlbumContent";
 
     return SizedBox(
-      height: 270,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      height: 320,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 12, bottom: 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -33,9 +35,10 @@ class ContentListWidget extends StatelessWidget {
                   content.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        letterSpacing: -0.35,
+                        letterSpacing: -0.25,
                       ),
                 ),
               ),
@@ -52,7 +55,7 @@ class ContentListWidget extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           Expanded(
             child: ListView.separated(
               controller: scrollController,
@@ -63,10 +66,8 @@ class ContentListWidget extends StatelessWidget {
                   : content.playlistList.length,
               separatorBuilder: (_, __) => const SizedBox(width: 0),
               itemBuilder: (_, index) => SizedBox(
-                width: 180,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: ContentListItem(
+                width: 160,
+                child: ContentListItem(
                     content: isAlbumContent
                         ? content.albumList[index]
                         : content.playlistList[index],
@@ -75,7 +76,8 @@ class ContentListWidget extends StatelessWidget {
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
