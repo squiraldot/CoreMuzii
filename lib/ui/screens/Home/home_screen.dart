@@ -257,9 +257,8 @@ class _WelcomeBackHeader extends StatelessWidget {
         children: [
           Text(
             'Welcome back,',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.4,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
                 ),
           ),
           const SizedBox(height: 6),
