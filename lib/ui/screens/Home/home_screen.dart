@@ -450,9 +450,9 @@ class Body extends StatelessWidget {
                           child: ListView.builder(
                             physics: const AlwaysScrollableScrollPhysics(),
                             padding: EdgeInsets.fromLTRB(
-                              20,
+                              15,
                               topPadding,
-                              20,
+                              15,
                               180,
                             ),
                             itemCount: items.length,
