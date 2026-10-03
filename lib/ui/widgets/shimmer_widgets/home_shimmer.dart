@@ -20,7 +20,7 @@ class HomeShimmer extends StatelessWidget {
 
   Widget _discoverWidget() {
     return SizedBox(
-      height: 320,
+      height: 285,
       width: double.infinity,
       child: Column(
         children: [
@@ -31,7 +31,7 @@ class HomeShimmer extends StatelessWidget {
               child: BasicShimmerContainer(Size(220, 30)),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Expanded(
             child: GridView.builder(
                 scrollDirection: Axis.horizontal,
@@ -51,7 +51,7 @@ class HomeShimmer extends StatelessWidget {
                   );
                 }),
           ),
-          const SizedBox(height: 20)
+          const SizedBox(height: 10)
         ],
       ),
     );
@@ -67,20 +67,20 @@ class HomeShimmer extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 200,
+          height: 175,
           //color: Colors.blueAccent,
           child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: 5,
               itemBuilder: (_, index) {
                 return Container(
-                  width: 140,
+                  width: 132,
                   padding: const EdgeInsets.only(left: 5.0),
                   child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(
-                          height: 120,
+                          height: 112,
                           child: BasicShimmerContainer(Size(120, 120))),
                       SizedBox(height: 5),
                       BasicShimmerContainer(Size(115, 20)),
