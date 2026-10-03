@@ -19,13 +19,9 @@ class ContentListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAlbumContent = content.runtimeType.toString() == "AlbumContent";
-    final width = MediaQuery.of(context).size.width;
-    final cardWidth = (width * 0.40).clamp(190.0, 430.0);
-    final imageSize = cardWidth;
-    final sectionHeight = imageSize + 100;
 
     return SizedBox(
-      height: sectionHeight,
+      height: 250,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -37,9 +33,9 @@ class ContentListWidget extends StatelessWidget {
                   content.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
-                        letterSpacing: -0.8,
+                        letterSpacing: -0.35,
                       ),
                 ),
               ),
@@ -56,7 +52,7 @@ class ContentListWidget extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 10),
           Expanded(
             child: ListView.separated(
               controller: scrollController,
@@ -65,14 +61,16 @@ class ContentListWidget extends StatelessWidget {
               itemCount: isAlbumContent
                   ? content.albumList.length
                   : content.playlistList.length,
-              separatorBuilder: (_, __) =>
-                  SizedBox(width: width >= 760 ? 36 : 18),
+              separatorBuilder: (_, __) => const SizedBox(width: 0),
               itemBuilder: (_, index) => SizedBox(
-                width: cardWidth,
-                child: ContentListItem(
-                  content: isAlbumContent
-                      ? content.albumList[index]
-                      : content.playlistList[index],
+                width: 160,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: ContentListItem(
+                    content: isAlbumContent
+                        ? content.albumList[index]
+                        : content.playlistList[index],
+                  ),
                 ),
               ),
             ),
