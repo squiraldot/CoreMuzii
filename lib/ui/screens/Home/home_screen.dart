@@ -418,13 +418,19 @@ class Body extends StatelessWidget {
                     : Obx(() {
                         // dispose all detachached scroll controllers
                         homeScreenController.disposeDetachedScrollControllers();
-                        final items = homeScreenController
-                                .isContentFetched.value
+                        final items = homeScreenController.isContentFetched.value
                             ? [
-                                if (Hive.box('AppPrefs').get('yt_logged_in',
-                                        defaultValue: false) ==
+                                const _HomeHeader(),
+                                if (Hive.box('AppPrefs').get(
+                                      'yt_logged_in',
+                                      defaultValue: false,
+                                    ) ==
                                     true)
-                                  _WelcomeBackHeader(),
+                                  const _WelcomeBackHeader(),
+                                if (homeScreenController.homeMoods.isNotEmpty)
+                                  _HomeMoodChips(
+                                    moods: homeScreenController.homeMoods,
+                                  ),
                                 Obx(() {
                                   if (homeScreenController
                                       .quickPicks.value.songList.isEmpty) {
@@ -438,17 +444,14 @@ class Body extends StatelessWidget {
                                     scrollController: scrollController,
                                   );
                                 }),
-                                if (homeScreenController.homeMoods.isNotEmpty)
-                                  HomeMoodWidget(
-                                    moods: homeScreenController.homeMoods,
-                                    scrollController: ScrollController(),
-                                  ),
                                 ...getWidgetList(
-                                    homeScreenController.middleContent,
-                                    homeScreenController),
+                                  homeScreenController.middleContent,
+                                  homeScreenController,
+                                ),
                                 ...getWidgetList(
-                                    homeScreenController.fixedContent,
-                                    homeScreenController)
+                                  homeScreenController.fixedContent,
+                                  homeScreenController,
+                                ),
                               ]
                             : [const HomeShimmer()];
                         return RefreshIndicator(
