@@ -63,7 +63,7 @@ class ContentListWidget extends StatelessWidget {
                   : content.playlistList.length,
               separatorBuilder: (_, __) => const SizedBox(width: 0),
               itemBuilder: (_, index) => SizedBox(
-                width: 160,
+                width: 180,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: ContentListItem(
