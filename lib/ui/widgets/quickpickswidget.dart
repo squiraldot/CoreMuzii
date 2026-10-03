@@ -78,6 +78,9 @@ class QuickPicksWidget extends StatelessWidget {
         final rowHeight = wide ? 92.0 : 76.0;
         final artwork = wide ? 78.0 : 62.0;
         final rowCount = content.songList.length.clamp(1, 4).toInt();
+        // Match SimpMusic: portrait quick-pick cells use the full content width,
+        // so four songs form one vertical page and the next page peeks in.
+        final itemWidth = wide ? widthClamp(constraints.maxWidth, 430.0) : constraints.maxWidth;
 
         return SizedBox(
           height: rowHeight * rowCount + 48,
@@ -96,7 +99,7 @@ class QuickPicksWidget extends StatelessWidget {
                 itemCount: content.songList.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
-                  childAspectRatio: artwork / (rowHeight - 4),
+                  childAspectRatio: itemWidth / (rowHeight - 4),
                   crossAxisSpacing: wide ? 8 : 4,
                   mainAxisSpacing: wide ? 14 : 8,
                 ),
@@ -162,6 +165,9 @@ class QuickPicksWidget extends StatelessWidget {
       },
     );
   }
+
+  double widthClamp(double width, double maxWidth) =>
+      width < maxWidth ? width : maxWidth;
 
   Widget _cardShelf(BuildContext context, {required bool wideCards}) {
     return LayoutBuilder(
