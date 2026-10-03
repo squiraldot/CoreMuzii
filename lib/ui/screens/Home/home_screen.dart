@@ -421,16 +421,16 @@ class Body extends StatelessWidget {
                         final items = homeScreenController.isContentFetched.value
                             ? [
                                 const _HomeHeader(),
+                                if (homeScreenController.homeMoods.isNotEmpty)
+                                  _HomeMoodChips(
+                                    moods: homeScreenController.homeMoods,
+                                  ),
                                 if (Hive.box('AppPrefs').get(
                                       'yt_logged_in',
                                       defaultValue: false,
                                     ) ==
                                     true)
                                   const _WelcomeBackHeader(),
-                                if (homeScreenController.homeMoods.isNotEmpty)
-                                  _HomeMoodChips(
-                                    moods: homeScreenController.homeMoods,
-                                  ),
                                 Obx(() {
                                   if (homeScreenController
                                       .quickPicks.value.songList.isEmpty) {
