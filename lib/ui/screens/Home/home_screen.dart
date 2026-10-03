@@ -193,20 +193,20 @@ class _HomeMoodChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final visibleMoods = moods.take(8).toList();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8),
       child: SizedBox(
-        height: 44,
+        height: 36,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           itemCount: visibleMoods.length + 1,
-          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          separatorBuilder: (_, __) => const SizedBox(width: 4),
           itemBuilder: (context, index) {
             final selected = index == 0;
             final label = selected ? 'All' : visibleMoods[index - 1].title;
-            return ActionChip(
-              label: Text(label),
-              avatar: selected ? const Icon(Icons.check, size: 18) : null,
+            return FilterChip(
+              label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+              showCheckmark: false,
               onPressed: () {
                 if (selected) return;
                 final mood = visibleMoods[index - 1];
@@ -220,8 +220,9 @@ class _HomeMoodChips extends StatelessWidget {
               backgroundColor: selected
                   ? Theme.of(context).colorScheme.surfaceContainerHighest
                   : Colors.transparent,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              labelStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              visualDensity: VisualDensity.compact,
+              labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
             );
