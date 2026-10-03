@@ -95,21 +95,139 @@ class HomeScreen extends StatelessWidget {
               Expanded(
                 child: FocusScope(
                   node: playerController.centerPanelFocus,
-                  child: Obx(() => AnimatedScreenTransition(
+                  child: Obx(
+                    () => AnimatedScreenTransition(
                       enabled: settingsScreenController
                           .isTransitionAnimationDisabled.isFalse,
                       resverse: homeScreenController.reverseAnimationtransiton,
                       horizontalTransition:
                           settingsScreenController.isBottomNavBarEnabled.isTrue,
-                      child: Center(
+                      child: SizedBox.expand(
                         key: ValueKey<int>(homeScreenController.tabIndex.value),
                         child: const Body(),
-                      ))),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ));
+  }
+}
+
+class _HomeHeader extends StatelessWidget {
+  const _HomeHeader();
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 6 && hour <= 12) return 'Good Morning';
+    if (hour >= 13 && hour <= 17) return 'Good Afternoon';
+    if (hour >= 18 && hour <= 23) return 'Good Evening';
+    return 'Good Night';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final home = Get.find<HomeScreenController>();
+    return Padding(
+      padding: const EdgeInsets.only(top: 2, bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'MuziNap',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _greeting(),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'History',
+            visualDensity: VisualDensity.compact,
+            onPressed: () {
+              Get.snackbar(
+                'History',
+                'Your listening history is shown in Listen again.',
+                snackPosition: SnackPosition.BOTTOM,
+                duration: const Duration(seconds: 2),
+              );
+            },
+            icon: const Icon(Icons.history_rounded),
+          ),
+          IconButton(
+            tooltip: 'Settings',
+            visualDensity: VisualDensity.compact,
+            onPressed: () => home.onBottonBarTabSelected(3),
+            icon: const Icon(Icons.settings_outlined),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeMoodChips extends StatelessWidget {
+  const _HomeMoodChips({required this.moods});
+
+  final List<HomeMood> moods;
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleMoods = moods.take(8).toList();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: SizedBox(
+        height: 44,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          itemCount: visibleMoods.length + 1,
+          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          itemBuilder: (context, index) {
+            final selected = index == 0;
+            final label = selected ? 'All' : visibleMoods[index - 1].title;
+            return ActionChip(
+              label: Text(label),
+              avatar: selected ? const Icon(Icons.check, size: 18) : null,
+              onPressed: () {
+                if (selected) return;
+                final mood = visibleMoods[index - 1];
+                Get.to(() => MoodBrowseScreen(mood: mood));
+              },
+              side: BorderSide(
+                color: selected
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest
+                    : Theme.of(context).colorScheme.outline,
+              ),
+              backgroundColor: selected
+                  ? Theme.of(context).colorScheme.surfaceContainerHighest
+                  : Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              labelStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }
 
@@ -224,16 +342,13 @@ class Body extends StatelessWidget {
     final homeScreenController = Get.find<HomeScreenController>();
     final settingsScreenController = Get.find<SettingsScreenController>();
     final topPadding = GetPlatform.isDesktop
-        ? 28.0
+        ? 20.0
         : context.isLandscape
-            ? 24.0
-            : 28.0;
-    final leftPadding =
-        settingsScreenController.isBottomNavBarEnabled.isTrue ? 20.0 : 28.0;
+            ? 14.0
+            : 16.0;
+
     if (homeScreenController.tabIndex.value == 0) {
-      return Padding(
-        padding: EdgeInsets.only(left: leftPadding),
-        child: Stack(
+      return Stack(
           children: [
             GestureDetector(
               onTap: () {
@@ -338,26 +453,18 @@ class Body extends StatelessWidget {
                               ]
                             : [const HomeShimmer()];
                         return RefreshIndicator(
-
                           onRefresh: homeScreenController.refreshHome,
-
                           child: ListView.builder(
-
                             physics: const AlwaysScrollableScrollPhysics(),
-
                             padding: EdgeInsets.fromLTRB(
-                              leftPadding,
+                              20,
                               topPadding,
-                              leftPadding,
-                              200,
+                              20,
+                              180,
                             ),
-
                             itemCount: items.length,
-
                             itemBuilder: (context, index) => items[index],
-
                           ),
-
                         );
                       }),
               ),
