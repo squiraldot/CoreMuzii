@@ -135,6 +135,41 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     );
   }
 
+  Future<void> _ensureActiveYouTubeAccountInfo() async {
+    final box = Hive.box('AppPrefs');
+    final activeKey = box.get('yt_active_account_key')?.toString();
+    final stored = box.get('yt_accounts');
+    if (activeKey == null || stored is! Map) return;
+
+    final accounts = <String, dynamic>{
+      ...stored.map((key, value) => MapEntry(key.toString(), value)),
+    };
+    final current = accounts[activeKey];
+    if (current is! Map) return;
+
+    final currentName = current['accountName']?.toString().trim() ?? '';
+    final currentPhoto = current['accountPhotoUrl']?.toString().trim() ?? '';
+    if (currentName.isNotEmpty && currentPhoto.isNotEmpty) return;
+
+    try {
+      final info = await _musicServices.getYouTubeAccountInfo();
+      final updated = <String, dynamic>{
+        ...Map<String, dynamic>.from(current),
+        if (info['accountName']?.toString().trim().isNotEmpty == true)
+          'accountName': info['accountName'],
+        if (info['channelHandle']?.toString().trim().isNotEmpty == true)
+          'channelHandle': info['channelHandle'],
+        if (info['accountPhotoUrl']?.toString().trim().isNotEmpty == true)
+          'accountPhotoUrl': info['accountPhotoUrl'],
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      };
+      accounts[activeKey] = updated;
+      await box.put('yt_accounts', accounts);
+    } catch (e) {
+      printINFO('YouTube account profile unavailable: $e');
+    }
+  }
+
   Future<void> loadContentFromNetwork({bool silent = false}) async {
     final box = Hive.box("AppPrefs");
     String contentType = box.get("discoverContentType") ?? "QP";
@@ -144,6 +179,10 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
       List middleContentTemp = [];
       final isAuthenticatedHome =
           box.get('yt_logged_in', defaultValue: false) == true;
+
+      if (isAuthenticatedHome) {
+        await _ensureActiveYouTubeAccountInfo();
+      }
 
       final independentSources = await Future.wait<dynamic>([
         _musicServices.getNewReleases(limit: 12).catchError((_) => <dynamic>[]),
