@@ -58,14 +58,14 @@ class QuickPicksWidget extends StatelessWidget {
 
   Widget _heading(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Text(
         content.title.trim().isEmpty ? 'YouTube Music' : content.title.trim(),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
-              letterSpacing: -0.8,
+              letterSpacing: -0.35,
             ),
       ),
     );
@@ -74,181 +74,198 @@ class QuickPicksWidget extends StatelessWidget {
   Widget _quickPicksList(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 760;
-        final rowHeight = wide ? 92.0 : 76.0;
-        final artwork = wide ? 78.0 : 62.0;
-        const rowCount = 4;
-        // Match SimpMusic: portrait quick-pick cells use the full content width,
-        // so four songs form one vertical page and the next page peeks in.
-        final itemWidth = wide ? widthClamp(constraints.maxWidth, 430.0) : constraints.maxWidth;
+        final availableWidth = constraints.maxWidth;
+        final isLandscape = availableWidth >= 760;
+        // SimpMusic uses a 4-row, 256dp-high horizontal grid. Each item is
+        // widthDp - 30dp, and landscape rows are capped at 400dp so they do
+        // not stretch across a wide window.
+        final itemWidth = (isLandscape
+                ? availableWidth.clamp(0.0, 430.0)
+                : availableWidth)
+            .clamp(0.0, double.infinity) -
+            30.0;
 
-        return SizedBox(
-          height: rowHeight * rowCount + 48,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _heading(context),
-          Expanded(
-            child: Scrollbar(
-              thickness: GetPlatform.isDesktop ? null : 0,
-              controller: scrollController,
-              child: GridView.builder(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _heading(context),
+            SizedBox(
+              height: 256,
+              child: Scrollbar(
+                thickness: GetPlatform.isDesktop ? null : 0,
                 controller: scrollController,
-                physics: const BouncingScrollPhysics(),
-                scrollDirection: Axis.horizontal,
-                itemCount: content.songList.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  childAspectRatio: itemWidth / (rowHeight - 4),
-                  crossAxisSpacing: wide ? 8 : 4,
-                  mainAxisSpacing: wide ? 14 : 8,
-                ),
-                itemBuilder: (_, index) {
-                  final song = content.songList[index];
-                  return Listener(
-                    onPointerDown: (event) {
-                      if (event.buttons == kSecondaryMouseButton) {
-                        _showSongMenu(context, song);
-                      }
-                    },
-                    child: InkWell(
-                      onTap: () => _play(context, index),
-                      onLongPress: () => _showSongMenu(context, song),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: ImageWidget(song: song, size: artwork),
-                          ),
-                          const SizedBox(width: 18),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  song.title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: -0.15,
-                                      ),
-                                ),
-                                if ((song.artist ?? '').trim().isNotEmpty) ...[
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    song.artist ?? '',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
+                child: GridView.builder(
+                  controller: scrollController,
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: content.songList.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    mainAxisExtent: itemWidth,
+                    crossAxisSpacing: 0,
+                    mainAxisSpacing: 0,
+                  ),
+                  itemBuilder: (_, index) {
+                    final song = content.songList[index];
+                    return Listener(
+                      onPointerDown: (event) {
+                        if (event.buttons == kSecondaryMouseButton) {
+                          _showSongMenu(context, song);
+                        }
+                      },
+                      child: InkWell(
+                        onTap: () => _play(context, index),
+                        onLongPress: () => _showSongMenu(context, song),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: ImageWidget(song: song, size: 44),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      song.title,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                    if ((song.artist ?? '').trim().isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 3),
+                                        child: Text(
+                                          song.artist ?? '',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
                                         ),
-                                  ),
-                                ],
-                              ],
-                            ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-        ],
-          ),
+          ],
         );
       },
     );
   }
 
-  double widthClamp(double width, double maxWidth) =>
-      width < maxWidth ? width : maxWidth;
-
   Widget _cardShelf(BuildContext context, {required bool wideCards}) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final cardWidth = wideCards
-            ? (width * 0.74).clamp(260.0, 540.0)
-            : (width * 0.46).clamp(170.0, 320.0);
-        final imageHeight = wideCards ? cardWidth * 9 / 16 : cardWidth;
-        final imageRadius = wideCards ? 18.0 : 16.0;
-        // Keep the title area compact so the next Home shelf never overlaps it.
-        final sectionHeight = imageHeight + (wideCards ? 150.0 : 142.0);
+        // SimpMusic uses fixed home card widths: 160dp for square
+        // playlist/album cards and 284.5dp for 16:9 video cards.
+        final cardWidth = wideCards ? 284.5 : 160.0;
+        final imageHeight = wideCards ? 160.0 : 160.0;
+        final imageRadius = wideCards ? 10.0 : 10.0;
+        final sectionHeight = wideCards ? 250.0 : 250.0;
 
         return SizedBox(
           height: sectionHeight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _heading(context),
-          Expanded(
-            child: ListView.separated(
-              controller: scrollController,
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: content.songList.length,
-              separatorBuilder: (_, __) => SizedBox(width: width >= 760 ? 36 : 18),
-              itemBuilder: (_, index) {
-                final song = content.songList[index];
-                return SizedBox(
-                  width: cardWidth,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(imageRadius),
-                    onTap: () => _play(context, index),
-                    onLongPress: () => _showSongMenu(context, song),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _heading(context),
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollController,
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: content.songList.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 0),
+                  itemBuilder: (_, index) {
+                    final song = content.songList[index];
+                    return SizedBox(
+                      width: cardWidth,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: InkWell(
                           borderRadius: BorderRadius.circular(imageRadius),
-                          child: SizedBox(
-                            width: cardWidth,
-                            height: imageHeight,
-                            child: Image.network(
-                              song.artUri.toString(),
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Image.asset(
-                                'assets/icons/song.png',
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          song.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.2,
-                              ),
-                        ),
-                        if ((song.artist ?? '').trim().isNotEmpty) ...[
-                          const SizedBox(height: 3),
-                          Text(
-                            song.artist ?? '',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          onTap: () => _play(context, index),
+                          onLongPress: () => _showSongMenu(context, song),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(imageRadius),
+                                child: SizedBox(
+                                  width: cardWidth - 20,
+                                  height: imageHeight,
+                                  child: Image.network(
+                                    song.artUri.toString(),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Image.asset(
+                                      'assets/icons/song.png',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
                                 ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                song.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
+                              if ((song.artist ?? '').trim().isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(
+                                    song.artist ?? '',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
+                                  ),
+                                ),
+                            ],
                           ),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         );
       },
