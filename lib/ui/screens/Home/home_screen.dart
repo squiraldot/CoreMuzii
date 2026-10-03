@@ -478,7 +478,7 @@ class Body extends StatelessWidget {
                         )),
                   );
                 }),
-              )
+              ),
           ],
       );
     } else if (homeScreenController.tabIndex.value == 1) {
