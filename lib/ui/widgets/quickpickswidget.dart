@@ -77,7 +77,7 @@ class QuickPicksWidget extends StatelessWidget {
         final wide = constraints.maxWidth >= 760;
         final rowHeight = wide ? 112.0 : 84.0;
         final artwork = wide ? 96.0 : 70.0;
-        final rowCount = content.songList.length.clamp(1, 4);
+        final rowCount = content.songList.length.clamp(1, 4).toInt();
 
         return SizedBox(
           height: rowHeight * rowCount + 48,
