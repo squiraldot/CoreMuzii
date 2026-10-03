@@ -1,6 +1,9 @@
 name: MDLovFi Android APK
 
 on:
+  push:
+    branches:
+      - youtube-account-integration-fix
   workflow_dispatch:
 
 concurrency:
