@@ -251,7 +251,7 @@ class _WelcomeBackHeader extends StatelessWidget {
     final photo = account['accountPhotoUrl']?.toString();
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 38),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -262,16 +262,16 @@ class _WelcomeBackHeader extends StatelessWidget {
                   letterSpacing: -0.4,
                 ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 6),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(3),
+                padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: Theme.of(context).colorScheme.primary,
-                    width: 3,
+                    width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -286,8 +286,8 @@ class _WelcomeBackHeader extends StatelessWidget {
                   child: photo != null && photo.isNotEmpty
                       ? Image.network(
                           photo,
-                          width: 74,
-                          height: 74,
+                          width: 42,
+                          height: 42,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) =>
                               const _AccountFallbackAvatar(),
@@ -295,15 +295,15 @@ class _WelcomeBackHeader extends StatelessWidget {
                       : const _AccountFallbackAvatar(),
                 ),
               ),
-              const SizedBox(width: 22),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        letterSpacing: -1.4,
+                        letterSpacing: -0.5,
                       ),
                 ),
               ),
@@ -321,13 +321,13 @@ class _AccountFallbackAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 76,
-      height: 76,
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(14),
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
-      child: const Icon(Icons.person, size: 38),
+      child: const Icon(Icons.person, size: 24),
     );
   }
 }
