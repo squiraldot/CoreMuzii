@@ -84,8 +84,11 @@ class SettingsScreenController extends GetxController {
         : appLang == "zh_Hans"
             ? "zh-CN"
             : appLang;
-    isBottomNavBarEnabled.value =
-        isDesktop ? false : (setBox.get("isBottomNavBarEnabled") ?? false);
+    // Mobile uses the bottom navigation as the default layout. Keep desktop
+    // on its existing layout until the desktop navigation is redesigned.
+    isBottomNavBarEnabled.value = isDesktop
+        ? false
+        : (setBox.get("isBottomNavBarEnabled") ?? true);
     noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 3;
     isTransitionAnimationDisabled.value =
         setBox.get("isTransitionAnimationDisabled") ?? false;
