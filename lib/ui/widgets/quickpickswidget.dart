@@ -79,11 +79,11 @@ class QuickPicksWidget extends StatelessWidget {
         // SimpMusic uses a 4-row, 256dp-high horizontal grid. Each item is
         // widthDp - 30dp, and landscape rows are capped at 400dp so they do
         // not stretch across a wide window.
-        final itemWidth = (isLandscape
-                ? availableWidth.clamp(0.0, 430.0)
-                : availableWidth)
-            .clamp(0.0, double.infinity) -
-            30.0;
+        final itemWidth = ((isLandscape
+                    ? availableWidth.clamp(0.0, 430.0)
+                    : availableWidth) -
+                30.0)
+            .toDouble();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,9 +183,9 @@ class QuickPicksWidget extends StatelessWidget {
         // SimpMusic uses fixed home card widths: 160dp for square
         // playlist/album cards and 284.5dp for 16:9 video cards.
         final cardWidth = wideCards ? 284.5 : 160.0;
-        final imageHeight = wideCards ? 160.0 : 160.0;
-        final imageRadius = wideCards ? 10.0 : 10.0;
-        final sectionHeight = wideCards ? 250.0 : 250.0;
+        final imageHeight = wideCards ? 149.0 : 160.0;
+        const imageRadius = 10.0;
+        const sectionHeight = 270.0;
 
         return SizedBox(
           height: sectionHeight,
