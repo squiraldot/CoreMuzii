@@ -72,12 +72,15 @@ class QuickPicksWidget extends StatelessWidget {
   }
 
   Widget _quickPicksList(BuildContext context) {
-    final wide = MediaQuery.of(context).size.width >= 760;
-    final rowHeight = wide ? 112.0 : 84.0;
-    final artwork = wide ? 96.0 : 70.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 760;
+        final rowHeight = wide ? 112.0 : 84.0;
+        final artwork = wide ? 96.0 : 70.0;
+        final rowCount = content.songList.length.clamp(1, 4);
 
-    return SizedBox(
-      height: rowHeight * content.songList.length + 44,
+        return SizedBox(
+          height: rowHeight * rowCount + 48,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -153,20 +156,26 @@ class QuickPicksWidget extends StatelessWidget {
             ),
           ),
         ],
-      ),
+          ),
+        );
+      },
     );
   }
 
   Widget _cardShelf(BuildContext context, {required bool wideCards}) {
-    final width = MediaQuery.of(context).size.width;
-    final cardWidth = wideCards
-        ? (width * 0.72).clamp(300.0, 760.0)
-        : (width * 0.40).clamp(190.0, 430.0);
-    final imageHeight = wideCards ? cardWidth * 9 / 16 : cardWidth;
-    final imageRadius = wideCards ? 20.0 : 18.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final cardWidth = wideCards
+            ? (width * 0.72).clamp(240.0, 760.0)
+            : (width * 0.40).clamp(150.0, 430.0);
+        final imageHeight = wideCards ? cardWidth * 9 / 16 : cardWidth;
+        final imageRadius = wideCards ? 20.0 : 18.0;
+        // Reserve space for heading + artwork + two title/artist lines.
+        final sectionHeight = imageHeight + (wideCards ? 188.0 : 176.0);
 
-    return SizedBox(
-      height: imageHeight + 94,
+        return SizedBox(
+          height: sectionHeight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -233,7 +242,9 @@ class QuickPicksWidget extends StatelessWidget {
             ),
           ),
         ],
-      ),
+          ),
+        );
+      },
     );
   }
 
