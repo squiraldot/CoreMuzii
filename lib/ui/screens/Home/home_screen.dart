@@ -341,10 +341,8 @@ class Body extends StatelessWidget {
     final homeScreenController = Get.find<HomeScreenController>();
     final settingsScreenController = Get.find<SettingsScreenController>();
     final topPadding = GetPlatform.isDesktop
-        ? 20.0
-        : context.isLandscape
-            ? 14.0
-            : 16.0;
+        ? 12.0
+        : MediaQuery.paddingOf(context).top + (context.isLandscape ? 4.0 : 8.0);
 
     if (homeScreenController.tabIndex.value == 0) {
       return Stack(
