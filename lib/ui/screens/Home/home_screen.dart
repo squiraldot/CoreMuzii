@@ -223,6 +223,7 @@ class _HomeMoodChips extends StatelessWidget {
                   : Colors.transparent,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
