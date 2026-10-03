@@ -207,6 +207,7 @@ class _HomeMoodChips extends StatelessWidget {
             return FilterChip(
               label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
               showCheckmark: false,
+              selected: selected,
               onSelected: (_) {
                 if (selected) return;
                 final mood = visibleMoods[index - 1];
