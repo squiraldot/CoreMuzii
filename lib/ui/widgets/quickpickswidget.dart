@@ -75,8 +75,8 @@ class QuickPicksWidget extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 760;
-        final rowHeight = wide ? 112.0 : 84.0;
-        final artwork = wide ? 96.0 : 70.0;
+        final rowHeight = wide ? 92.0 : 76.0;
+        final artwork = wide ? 78.0 : 62.0;
         final rowCount = content.songList.length.clamp(1, 4).toInt();
 
         return SizedBox(
@@ -127,17 +127,18 @@ class QuickPicksWidget extends StatelessWidget {
                                   song.title,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                         fontWeight: FontWeight.w700,
+                                        letterSpacing: -0.15,
                                       ),
                                 ),
                                 if ((song.artist ?? '').trim().isNotEmpty) ...[
-                                  const SizedBox(height: 5),
+                                  const SizedBox(height: 3),
                                   Text(
                                     song.artist ?? '',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onSurfaceVariant,
@@ -167,12 +168,12 @@ class QuickPicksWidget extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final cardWidth = wideCards
-            ? (width * 0.72).clamp(240.0, 760.0)
-            : (width * 0.40).clamp(150.0, 430.0);
+            ? (width * 0.74).clamp(260.0, 540.0)
+            : (width * 0.46).clamp(170.0, 320.0);
         final imageHeight = wideCards ? cardWidth * 9 / 16 : cardWidth;
-        final imageRadius = wideCards ? 20.0 : 18.0;
-        // Reserve space for heading + artwork + two title/artist lines.
-        final sectionHeight = imageHeight + (wideCards ? 188.0 : 176.0);
+        final imageRadius = wideCards ? 18.0 : 16.0;
+        // Keep the title area compact so the next Home shelf never overlaps it.
+        final sectionHeight = imageHeight + (wideCards ? 150.0 : 142.0);
 
         return SizedBox(
           height: sectionHeight,
@@ -213,23 +214,23 @@ class QuickPicksWidget extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 10),
                         Text(
                           song.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                letterSpacing: -0.3,
+                                letterSpacing: -0.2,
                               ),
                         ),
                         if ((song.artist ?? '').trim().isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 3),
                           Text(
                             song.artist ?? '',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                           ),
