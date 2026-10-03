@@ -42,7 +42,7 @@ class SettingsScreenController extends GetxController {
   final downloadingFormat = "".obs;
   final autoDownloadFavoriteSongEnabled = false.obs;
   final isTransitionAnimationDisabled = false.obs;
-  final isBottomNavBarEnabled = false.obs;
+  final isBottomNavBarEnabled = (!GetPlatform.isDesktop).obs;
   final backgroundPlayEnabled = true.obs;
   final keepScreenAwake = false.obs;
   final restorePlaybackSession = false.obs;
