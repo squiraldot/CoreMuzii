@@ -267,21 +267,13 @@ class _WelcomeBackHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
+                  shape: BoxShape.circle,
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 2,
+                    color: Theme.of(context).colorScheme.outline,
+                    width: 1.5,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withAlpha(90),
-                      blurRadius: 14,
-                      spreadRadius: 1,
-                    ),
-                  ],
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
+                child: ClipOval(
                   child: photo != null && photo.isNotEmpty
                       ? Image.network(
                           photo,
@@ -323,7 +315,7 @@ class _AccountFallbackAvatar extends StatelessWidget {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        shape: BoxShape.circle,
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
       ),
       child: const Icon(Icons.person, size: 24),
