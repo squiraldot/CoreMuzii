@@ -182,8 +182,9 @@ class QuickPicksWidget extends StatelessWidget {
       builder: (context, constraints) {
         // SimpMusic uses fixed home card widths: 160dp for square
         // playlist/album cards and 284.5dp for 16:9 video cards.
-        final cardWidth = wideCards ? 284.5 : 160.0;
-        final imageHeight = wideCards ? 149.0 : 160.0;
+        final cardWidth = wideCards ? 304.5 : 180.0;
+        final imageWidth = wideCards ? 284.5 : 160.0;
+        final imageHeight = wideCards ? 160.0 : 160.0;
         const imageRadius = 10.0;
         const sectionHeight = 270.0;
 
@@ -216,7 +217,7 @@ class QuickPicksWidget extends StatelessWidget {
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(imageRadius),
                                 child: SizedBox(
-                                  width: cardWidth - 20,
+                                  width: imageWidth,
                                   height: imageHeight,
                                   child: Image.network(
                                     song.artUri.toString(),
