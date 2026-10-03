@@ -8,37 +8,100 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final homeScreenController = Get.find<HomeScreenController>();
-    return Obx(() => NavigationBar(
-            onDestinationSelected: homeScreenController.onBottonBarTabSelected,
-            selectedIndex: homeScreenController.tabIndex.toInt(),
-            backgroundColor: Theme.of(context).primaryColor,
-            indicatorColor: Theme.of(context).colorScheme.secondary,
-            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-            destinations: [
-              NavigationDestination(
-                selectedIcon: const Icon(Icons.home),
-                icon: const Icon(Icons.home_outlined),
-                label: modifyNgetlabel('home'.tr),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.search),
-                label: modifyNgetlabel('search'.tr),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.library_music),
-                label: modifyNgetlabel('library'.tr),
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.settings),
-                label: modifyNgetlabel('settings'.tr),
-              ),
-            ]));
-  }
 
-  String modifyNgetlabel(String label) {
-    if (label.length > 9) {
-      return "${label.substring(0, 8)}..";
-    }
-    return label;
+    return Obx(
+      () => SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _NavItem(
+              label: 'Home',
+              icon: Icons.home_outlined,
+              selectedIcon: Icons.home,
+              selected: homeScreenController.tabIndex.value == 0,
+              onTap: () => homeScreenController.onBottonBarTabSelected(0),
+            ),
+            _NavItem(
+              label: 'Search',
+              icon: Icons.search,
+              selected: homeScreenController.tabIndex.value == 1,
+              onTap: () => homeScreenController.onBottonBarTabSelected(1),
+            ),
+            _NavItem(
+              label: 'Library',
+              icon: Icons.library_music_outlined,
+              selectedIcon: Icons.library_music,
+              selected: homeScreenController.tabIndex.value == 2,
+              onTap: () => homeScreenController.onBottonBarTabSelected(2),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    this.selectedIcon,
+  });
+
+  final String label;
+  final IconData icon;
+  final IconData? selectedIcon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final foreground =
+        selected ? colorScheme.onSurface : colorScheme.onSurfaceVariant;
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+          decoration: BoxDecoration(
+            color: selected
+                ? colorScheme.surfaceContainerHighest
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                selected ? (selectedIcon ?? icon) : icon,
+                size: 28,
+                color: foreground,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                maxLines: 1,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: foreground,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

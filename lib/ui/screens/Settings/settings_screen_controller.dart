@@ -42,7 +42,7 @@ class SettingsScreenController extends GetxController {
   final downloadingFormat = "".obs;
   final autoDownloadFavoriteSongEnabled = false.obs;
   final isTransitionAnimationDisabled = false.obs;
-  final isBottomNavBarEnabled = false.obs;
+  final isBottomNavBarEnabled = (!GetPlatform.isDesktop).obs;
   final backgroundPlayEnabled = true.obs;
   final keepScreenAwake = false.obs;
   final restorePlaybackSession = false.obs;
@@ -84,8 +84,14 @@ class SettingsScreenController extends GetxController {
         : appLang == "zh_Hans"
             ? "zh-CN"
             : appLang;
-    isBottomNavBarEnabled.value =
-        isDesktop ? false : (setBox.get("isBottomNavBarEnabled") ?? false);
+    // Mobile uses the bottom navigation as the default layout. Keep desktop
+    // on its existing layout until the desktop navigation is redesigned.
+    isBottomNavBarEnabled.value = isDesktop ? false : true;
+    if (!isDesktop) {
+      // Bottom navigation is now the default mobile shell.
+      // Persist it so existing installs also migrate away from the legacy rail.
+      await setBox.put("isBottomNavBarEnabled", true);
+    }
     noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 3;
     isTransitionAnimationDisabled.value =
         setBox.get("isTransitionAnimationDisabled") ?? false;
@@ -131,27 +137,33 @@ class SettingsScreenController extends GetxController {
         setBox.get("autoDownloadFavoriteSongEnabled") ?? false;
   }
 
-  void setAppLanguage(String? val) {
-    Get.updateLocale(Locale(val!));
-    Get.find<MusicServices>().hlCode = val;
-    Get.find<HomeScreenController>().loadContentFromNetwork(silent: true);
+  Future<void> setAppLanguage(String? val) async {
+    if (val == null || val.isEmpty) return;
+    Get.updateLocale(Locale(val));
+    final musicServices = Get.find<MusicServices>();
+    musicServices.hlCode = val;
+    final country = Get.deviceLocale?.countryCode ?? 'US';
+    musicServices.glCode = country;
     currentAppLanguageCode.value = val;
-    setBox.put('currentAppLanguageCode', val);
+    await setBox.put('currentAppLanguageCode', val);
+    await setBox.put('contentLanguage', val);
+    await setBox.put('contentCountryCode', country);
+    await Get.find<HomeScreenController>().refreshHome();
   }
 
-  void setContentNumber(int? no) {
+  Future<void> setContentNumber(int? no) async {
     noOfHomeScreenContent.value = no!;
-    setBox.put("noOfHomeScreenContent", no);
+    await setBox.put("noOfHomeScreenContent", no);
   }
 
-  void setStreamingQuality(dynamic val) {
-    setBox.put("streamingQuality", AudioQuality.values.indexOf(val));
+  Future<void> setStreamingQuality(dynamic val) async {
+    await setBox.put("streamingQuality", AudioQuality.values.indexOf(val));
     streamingQuality.value = val;
   }
 
-  void setPlayerUi(dynamic val) {
+  Future<void> setPlayerUi(dynamic val) async {
     final playerCon = Get.find<PlayerController>();
-    setBox.put("playerUi", val);
+    await setBox.put("playerUi", val);
     if (val == 1 && playerCon.gesturePlayerStateAnimationController == null) {
       playerCon.initGesturePlayerStateAnimationController();
     }
@@ -159,7 +171,7 @@ class SettingsScreenController extends GetxController {
     playerUi.value = val;
   }
 
-  void enableBottomNavBar(bool val) {
+  Future<void> enableBottomNavBar(bool val) async {
     final homeScrCon = Get.find<HomeScreenController>();
     final playerCon = Get.find<PlayerController>();
     if (val) {
@@ -173,16 +185,16 @@ class SettingsScreenController extends GetxController {
       playerCon.playerPanelMinHeight.value =
           val ? 75.0 : 75.0 + Get.mediaQuery.viewPadding.bottom;
     }
-    setBox.put("isBottomNavBarEnabled", val);
+    await setBox.put("isBottomNavBarEnabled", val);
   }
 
-  void toggleSlidableAction(bool val) {
-    setBox.put("slidableActionEnabled", val);
+  Future<void> toggleSlidableAction(bool val) async {
+    await setBox.put("slidableActionEnabled", val);
     slidableActionEnabled.value = val;
   }
 
-  void changeDownloadingFormat(String? val) {
-    setBox.put("downloadingFormat", val);
+  Future<void> changeDownloadingFormat(String? val) async {
+    await setBox.put("downloadingFormat", val);
     downloadingFormat.value = val!;
   }
 
@@ -197,7 +209,7 @@ class SettingsScreenController extends GetxController {
       return;
     }
 
-    setBox.put("exportLocationPath", pickedFolderPath);
+    await setBox.put("exportLocationPath", pickedFolderPath);
     exportLocationPath.value = pickedFolderPath;
   }
 
@@ -212,12 +224,12 @@ class SettingsScreenController extends GetxController {
       return;
     }
 
-    setBox.put("downloadLocationPath", pickedFolderPath);
+    await setBox.put("downloadLocationPath", pickedFolderPath);
     downloadLocationPath.value = pickedFolderPath;
   }
 
-  void disableTransitionAnimation(bool val) {
-    setBox.put('isTransitionAnimationDisabled', val);
+  Future<void> disableTransitionAnimation(bool val) async {
+    await setBox.put('isTransitionAnimationDisabled', val);
     isTransitionAnimationDisabled.value = val;
   }
 
@@ -233,48 +245,48 @@ class SettingsScreenController extends GetxController {
     } catch (e) {}
   }
 
-  void resetDownloadLocation() {
+  Future<void> resetDownloadLocation() async {
     final defaultPath = "$_supportDir/Music";
-    setBox.put("downloadLocationPath", defaultPath);
+    await setBox.put("downloadLocationPath", defaultPath);
     downloadLocationPath.value = defaultPath;
   }
 
-  void onThemeChange(dynamic val) {
-    setBox.put('themeModeType', ThemeType.values.indexOf(val));
+  Future<void> onThemeChange(dynamic val) async {
+    await setBox.put('themeModeType', ThemeType.values.indexOf(val));
     themeModetype.value = val;
     Get.find<ThemeController>().changeThemeModeType(val);
   }
 
-  void onContentChange(dynamic value) {
-    setBox.put('discoverContentType', value);
+  Future<void> onContentChange(dynamic value) async {
+    await setBox.put('discoverContentType', value);
     discoverContentType.value = value;
     Get.find<HomeScreenController>().changeDiscoverContent(value);
   }
 
-  void toggleCachingSongsValue(bool value) {
-    setBox.put("cacheSongs", value);
+  Future<void> toggleCachingSongsValue(bool value) async {
+    await setBox.put("cacheSongs", value);
     cacheSongs.value = value;
   }
 
-  void toggleSkipSilence(bool val) {
+  Future<void> toggleSkipSilence(bool val) async {
     Get.find<PlayerController>().toggleSkipSilence(val);
-    setBox.put('skipSilenceEnabled', val);
+    await setBox.put('skipSilenceEnabled', val);
     skipSilenceEnabled.value = val;
   }
 
-  void toggleLoudnessNormalization(bool val) {
+  Future<void> toggleLoudnessNormalization(bool val) async {
     Get.find<PlayerController>().toggleLoudnessNormalization(val);
-    setBox.put("loudnessNormalizationEnabled", val);
+    await setBox.put("loudnessNormalizationEnabled", val);
     loudnessNormalizationEnabled.value = val;
   }
 
-  void toggleRestorePlaybackSession(bool val) {
-    setBox.put("restrorePlaybackSession", val);
+  Future<void> toggleRestorePlaybackSession(bool val) async {
+    await setBox.put("restrorePlaybackSession", val);
     restorePlaybackSession.value = val;
   }
 
   Future<void> toggleCacheHomeScreenData(bool val) async {
-    setBox.put("cacheHomeScreenData", val);
+    await setBox.put("cacheHomeScreenData", val);
     cacheHomeScreenData.value = val;
     if (!val) {
       Hive.openBox("homeScreenData").then((box) async {
@@ -287,18 +299,18 @@ class SettingsScreenController extends GetxController {
     }
   }
 
-  void toggleAutoDownloadFavoriteSong(bool val) {
-    setBox.put("autoDownloadFavoriteSongEnabled", val);
+  Future<void> toggleAutoDownloadFavoriteSong(bool val) async {
+    await setBox.put("autoDownloadFavoriteSongEnabled", val);
     autoDownloadFavoriteSongEnabled.value = val;
   }
 
-  void toggleBackgroundPlay(bool val) {
-    setBox.put('backgroundPlayEnabled', val);
+  Future<void> toggleBackgroundPlay(bool val) async {
+    await setBox.put('backgroundPlayEnabled', val);
     backgroundPlayEnabled.value = val;
   }
 
-  void toggleKeepScreenAwake(bool val) {
-    setBox.put('keepScreenAwake', val);
+  Future<void> toggleKeepScreenAwake(bool val) async {
+    await setBox.put('keepScreenAwake', val);
     keepScreenAwake.value = val;
     try {
         if (val) {
@@ -322,8 +334,8 @@ class SettingsScreenController extends GetxController {
         await Permission.ignoreBatteryOptimizations.isGranted;
   }
 
-  void toggleAutoOpenPlayer(bool val) {
-    setBox.put('autoOpenPlayer', val);
+  Future<void> toggleAutoOpenPlayer(bool val) async {
+    await setBox.put('autoOpenPlayer', val);
     autoOpenPlayer.value = val;
   }
 
@@ -342,8 +354,8 @@ class SettingsScreenController extends GetxController {
     await setBox.clear();
   }
 
-  void toggleStopPlyabackOnSwipeAway(bool val) {
-    setBox.put('stopPlyabackOnSwipeAway', val);
+  Future<void> toggleStopPlyabackOnSwipeAway(bool val) async {
+    await setBox.put('stopPlyabackOnSwipeAway', val);
     stopPlyabackOnSwipeAway.value = val;
   }
 

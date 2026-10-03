@@ -10,11 +10,14 @@ import '../../../utils/helper.dart';
 import '/models/album.dart';
 import '/models/playlist.dart';
 import '/models/quick_picks.dart';
+import '../../../utils/home_history.dart';
+import '../../../utils/youtube_auth.dart';
+import '/models/home_mood.dart';
 import '/services/music_service.dart';
 import '../Settings/settings_screen_controller.dart';
 import '/ui/widgets/new_version_dialog.dart';
 
-class HomeScreenController extends GetxController {
+class HomeScreenController extends GetxController with WidgetsBindingObserver {
   final MusicServices _musicServices = Get.find<MusicServices>();
   final isContentFetched = false.obs;
   final tabIndex = 0.obs;
@@ -27,18 +30,55 @@ class HomeScreenController extends GetxController {
   final isHomeSreenOnTop = true.obs;
   final List<ScrollController> contentScrollControllers = [];
   bool reverseAnimationtransiton = false;
+  bool _homeRefreshInProgress = false;
+  String _homeContextSignature = '';
+  List<HomeMood> homeMoods = <HomeMood>[];
 
   @override
   onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
+    _homeContextSignature = _currentHomeContextSignature();
     loadContent();
     if (updateCheckFlag) _checkNewVersion();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && tabIndex.value == 0) {
+      final signature = _currentHomeContextSignature();
+      final contextChanged = signature != _homeContextSignature;
+      if (contextChanged) _homeContextSignature = signature;
+      refreshHome(showLoading: contextChanged);
+    }
+  }
+
+  Future<void> refreshHome({bool showLoading = true}) async {
+    if (_homeRefreshInProgress) return;
+    _homeRefreshInProgress = true;
+    if (showLoading) {
+      isContentFetched.value = false;
+    }
+    try {
+      await loadContentFromNetwork(silent: false);
+      // Authentication state is persisted by the login flow; Home refresh
+      // itself does not need to track a separate timestamp.
+    } finally {
+      _homeRefreshInProgress = false;
+    }
   }
 
   Future<void> loadContent() async {
     final box = Hive.box("AppPrefs");
     final isCachedHomeScreenDataEnabled =
         box.get("cacheHomeScreenData") ?? true;
+    final hasYouTubeSession =
+        box.get('yt_logged_in', defaultValue: false) == true;
+    if (hasYouTubeSession) {
+      // Account-scoped home must never reuse anonymous/stale cached shelves.
+      await loadContentFromNetwork();
+      return;
+    }
     if (isCachedHomeScreenDataEnabled) {
       final loaded = await loadContentFromDb();
 
@@ -85,6 +125,51 @@ class HomeScreenController extends GetxController {
     }
   }
 
+  String _currentHomeContextSignature() {
+    final settings = Get.find<SettingsScreenController>();
+    final language = settings.currentAppLanguageCode.value;
+    final country = Get.deviceLocale?.countryCode ?? 'US';
+    return YouTubeHomeContextSignature.build(
+      language: language,
+      country: country,
+    );
+  }
+
+  Future<void> _ensureActiveYouTubeAccountInfo() async {
+    final box = Hive.box('AppPrefs');
+    final activeKey = box.get('yt_active_account_key')?.toString();
+    final stored = box.get('yt_accounts');
+    if (activeKey == null || stored is! Map) return;
+
+    final accounts = <String, dynamic>{
+      ...stored.map((key, value) => MapEntry(key.toString(), value)),
+    };
+    final current = accounts[activeKey];
+    if (current is! Map) return;
+
+    final currentName = current['accountName']?.toString().trim() ?? '';
+    final currentPhoto = current['accountPhotoUrl']?.toString().trim() ?? '';
+    if (currentName.isNotEmpty && currentPhoto.isNotEmpty) return;
+
+    try {
+      final info = await _musicServices.getYouTubeAccountInfo();
+      final updated = <String, dynamic>{
+        ...Map<String, dynamic>.from(current),
+        if (info['accountName']?.toString().trim().isNotEmpty == true)
+          'accountName': info['accountName'],
+        if (info['channelHandle']?.toString().trim().isNotEmpty == true)
+          'channelHandle': info['channelHandle'],
+        if (info['accountPhotoUrl']?.toString().trim().isNotEmpty == true)
+          'accountPhotoUrl': info['accountPhotoUrl'],
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      };
+      accounts[activeKey] = updated;
+      await box.put('yt_accounts', accounts);
+    } catch (e) {
+      printINFO('YouTube account profile unavailable: $e');
+    }
+  }
+
   Future<void> loadContentFromNetwork({bool silent = false}) async {
     final box = Hive.box("AppPrefs");
     String contentType = box.get("discoverContentType") ?? "QP";
@@ -92,10 +177,93 @@ class HomeScreenController extends GetxController {
     networkError.value = false;
     try {
       List middleContentTemp = [];
+      final isAuthenticatedHome =
+          box.get('yt_logged_in', defaultValue: false) == true;
+
+      if (isAuthenticatedHome) {
+        await _ensureActiveYouTubeAccountInfo();
+      }
+
+      final independentSources = await Future.wait<dynamic>([
+        _musicServices.getNewReleases(limit: 12).catchError((_) => <dynamic>[]),
+        _musicServices.getHomeCharts(country: 'TR').catchError((_) => <dynamic>[]),
+        _musicServices.getMoodsAndGenres().catchError((_) => <dynamic>[]),
+      ]);
+      final newReleaseSections = independentSources[0] is List
+          ? List<dynamic>.from(independentSources[0] as List)
+          : <dynamic>[];
+      final chartSections = independentSources[1] is List
+          ? List<dynamic>.from(independentSources[1] as List)
+          : <dynamic>[];
+      homeMoods = independentSources[2] is List
+          ? (independentSources[2] as List).whereType<HomeMood>().toList()
+          : <HomeMood>[];
+
       final homeContentListMap = await _musicServices.getHome(
-          limit:
-              Get.find<SettingsScreenController>().noOfHomeScreenContent.value);
-      if (contentType == "TR") {
+        limit: Get.find<SettingsScreenController>()
+            .noOfHomeScreenContent
+            .value,
+        allSections: isAuthenticatedHome,
+      );
+
+      // After YouTube login, Listen again must be account-scoped and
+      // server-backed. Do not merge local Hive history into the signed-in
+      // account: that can leak another account/device's listening history.
+      if (isAuthenticatedHome) {
+        try {
+          final remoteHistory =
+              await _musicServices.getYouTubeHistory(limit: recentlyPlayedLimit);
+
+          if (remoteHistory.isNotEmpty) {
+            final listenAgainIndex = homeContentListMap.indexWhere((section) {
+              if (section is! Map) return false;
+              final title = (section["title"] ?? "").toString().toLowerCase();
+              return title.contains("listen again") ||
+                  title.contains("speed dial");
+            });
+
+            final historySection = {
+              "title": "Listen again",
+              "contents": remoteHistory,
+            };
+
+            if (listenAgainIndex >= 0) {
+              homeContentListMap[listenAgainIndex] = historySection;
+            } else {
+              homeContentListMap.insert(
+                homeContentListMap.isEmpty ? 0 : 1,
+                historySection,
+              );
+            }
+          }
+        } catch (e) {
+          printINFO("YouTube history unavailable: $e");
+        }
+      }
+
+      // For a signed-in YouTube Music account, use the complete personalized
+      // Home feed exactly as returned by FEmusic_home. This includes every
+      // shelf returned through section continuations (Quick picks, Listen
+      // again, mixes, community playlists, new releases, videos, regional
+      // shelves, and any account-specific shelves YouTube adds later).
+      if (isAuthenticatedHome && homeContentListMap.isNotEmpty) {
+        final parsedHome = _setAuthenticatedHomeContent(homeContentListMap);
+        if (parsedHome.isNotEmpty && parsedHome.first is QuickPicks) {
+          quickPicks.value = parsedHome.first as QuickPicks;
+          middleContentTemp.addAll(parsedHome.skip(1));
+        } else {
+          quickPicks.value = QuickPicks([]);
+          middleContentTemp.addAll(parsedHome);
+        }
+      }
+      if (isAuthenticatedHome && middleContentTemp.isEmpty) {
+        // If YouTube's personalized Home response is temporarily empty, keep
+        // the independent public shelves as a safe fallback.
+        middleContentTemp.addAll(newReleaseSections);
+        middleContentTemp.addAll(chartSections);
+      }
+
+      if (!isAuthenticatedHome && contentType == "TR") {
         final index = homeContentListMap
             .indexWhere((element) => element['title'] == "Trending");
         if (index != -1 && index != 0) {
@@ -114,7 +282,7 @@ class HomeScreenController extends GetxController {
             middleContentTemp.addAll(charts);
           }
         }
-      } else if (contentType == "TMV") {
+      } else if (!isAuthenticatedHome && contentType == "TMV") {
         final index = homeContentListMap
             .indexWhere((element) => element['title'] == "Top music videos");
         if (index != -1 && index != 0) {
@@ -133,7 +301,7 @@ class HomeScreenController extends GetxController {
             middleContentTemp.addAll(charts);
           }
         }
-      } else if (contentType == "BOLI") {
+      } else if (!isAuthenticatedHome && contentType == "BOLI") {
         try {
           final songId = box.get("recentSongId");
           if (songId != null) {
@@ -150,7 +318,7 @@ class HomeScreenController extends GetxController {
         }
       }
 
-      if (quickPicks.value.songList.isEmpty) {
+      if (!isAuthenticatedHome && quickPicks.value.songList.isEmpty) {
         final index = homeContentListMap
             .indexWhere((element) => element['title'] == "Quick picks");
         if (index != -1) {
@@ -160,15 +328,26 @@ class HomeScreenController extends GetxController {
         }
       }
 
-      middleContent.value = _setContentList(middleContentTemp);
-      fixedContent.value = _setContentList(homeContentListMap);
+      if (!isAuthenticatedHome) {
+        middleContentTemp.addAll(newReleaseSections);
+        middleContentTemp.addAll(chartSections);
+      }
+
+      middleContent.value = isAuthenticatedHome
+          ? middleContentTemp
+          : _setContentList(middleContentTemp);
+      fixedContent.value =
+          isAuthenticatedHome ? [] : _setContentList(homeContentListMap);
 
       isContentFetched.value = true;
-
-      // set home content last update time
-      cachedHomeScreenData(updateAll: true);
-      await Hive.box("AppPrefs")
-          .put("homeScreenDataTime", DateTime.now().millisecondsSinceEpoch);
+      // Account-scoped Home shelves must not be written into the anonymous
+      // Home cache. They can contain private recommendations and QuickPicks
+      // sections that the legacy cache serializer does not model.
+      if (!isAuthenticatedHome) {
+        await cachedHomeScreenData(updateAll: true);
+        await Hive.box("AppPrefs")
+            .put("homeScreenDataTime", DateTime.now().millisecondsSinceEpoch);
+      }
       // ignore: unused_catch_stack
     } on NetworkError catch (r, e) {
       printERROR("Home Content not loaded due to ${r.message}");
@@ -177,26 +356,75 @@ class HomeScreenController extends GetxController {
     }
   }
 
+  List<dynamic> _setAuthenticatedHomeContent(
+      List<dynamic> sections) {
+    final result = <dynamic>[];
+
+    for (final section in sections) {
+      if (section is! Map) continue;
+      final title = (section["title"] ?? "").toString().trim();
+      final contents = section["contents"];
+      if (contents is! List || contents.isEmpty) continue;
+
+      final songs = contents.whereType<MediaItem>().toList();
+      final playlists = contents.whereType<Playlist>().toList();
+      final albums = contents.whereType<Album>().toList();
+
+      // Prefer the content type that matches the shelf. Mixed shelves can
+      // occasionally contain one non-primary item; keep the dominant useful
+      // type instead of dropping the whole YouTube section.
+      if (playlists.isNotEmpty) {
+        result.add(PlaylistContent(
+          title: title.isEmpty ? "YouTube Music" : title,
+          playlistList: playlists,
+        ));
+      } else if (albums.isNotEmpty) {
+        result.add(AlbumContent(
+          title: title.isEmpty ? "YouTube Music" : title,
+          albumList: albums,
+        ));
+      } else if (songs.isNotEmpty) {
+        result.add(QuickPicks(
+          songs,
+          title: title.isEmpty ? "YouTube Music" : title,
+        ));
+      }
+    }
+
+    return result;
+  }
+
   List _setContentList(
     List<dynamic> contents,
   ) {
-    List contentTemp = [];
-    for (var content in contents) {
-      if((content["contents"]).isEmpty) continue;
-      if ((content["contents"][0]).runtimeType == Playlist) {
+    final contentTemp = <dynamic>[];
+    for (final content in contents) {
+      if (content is QuickPicks ||
+          content is PlaylistContent ||
+          content is AlbumContent) {
+        contentTemp.add(content);
+        continue;
+      }
+      if (content is! Map || content["contents"] is! List) continue;
+      final items = content["contents"] as List;
+      if (items.isEmpty) continue;
+      if (items.first is Playlist) {
         final tmp = PlaylistContent(
-            playlistList: (content["contents"]).whereType<Playlist>().toList(),
+            playlistList: items.whereType<Playlist>().toList(),
             title: content["title"]);
-        if (tmp.playlistList.length >= 2) {
-          contentTemp.add(tmp);
-        }
-      } else if ((content["contents"][0]).runtimeType == Album) {
+        if (tmp.playlistList.length >= 2) contentTemp.add(tmp);
+      } else if (items.first is Album) {
         final tmp = AlbumContent(
-            albumList: (content["contents"]).whereType<Album>().toList(),
+            albumList: items.whereType<Album>().toList(),
             title: content["title"]);
-        if (tmp.albumList.length >= 2) {
-          contentTemp.add(tmp);
-        }
+        if (tmp.albumList.length >= 2) contentTemp.add(tmp);
+      } else if (items.first is MediaItem) {
+        contentTemp.add(
+          QuickPicks(
+            items.whereType<MediaItem>().toList(),
+            title: content["title"]?.toString() ?? "YouTube Music",
+          ),
+        );
       }
     }
     return contentTemp;
@@ -258,11 +486,67 @@ class HomeScreenController extends GetxController {
   void onSideBarTabSelected(int index) {
     reverseAnimationtransiton = index > tabIndex.value;
     tabIndex.value = index;
+    // Match SimpMusic's Home reload behavior: returning to Home requests a
+    // fresh FEmusic_home response instead of showing the previous shelf list.
+    if (index == 0) {
+      refreshHome();
+    }
+  }
+
+  Future<void> onTrackPlayed(MediaItem item) async {
+    final appPrefs = Hive.box('AppPrefs');
+    final isYouTubeAuthenticated =
+        appPrefs.get('yt_logged_in', defaultValue: false) == true;
+
+    if (isYouTubeAuthenticated) {
+      try {
+        final history = await _musicServices.getYouTubeHistory(
+          limit: recentlyPlayedLimit,
+        );
+        if (history.isEmpty) return;
+
+        final listenAgainIndex = middleContent.indexWhere((section) {
+          return section is QuickPicks &&
+              (section.title.toLowerCase().contains('listen again') ||
+                  section.title.toLowerCase().contains('speed dial'));
+        });
+        final updated = QuickPicks(history, title: 'Listen again');
+
+        if (listenAgainIndex >= 0) {
+          final copy = List<dynamic>.from(middleContent);
+          copy[listenAgainIndex] = updated;
+          middleContent.value = copy;
+        }
+      } catch (e) {
+        printINFO('Unable to refresh YouTube Listen again: $e');
+      }
+      return;
+    }
+
+    final localHistory = loadRecentlyPlayed();
+    final history = mergeRecentlyPlayed([item], localHistory);
+    final listenAgainIndex = middleContent.indexWhere((section) {
+      return section is QuickPicks &&
+          (section.title.toLowerCase().contains('listen again') ||
+              section.title.toLowerCase().contains('speed dial'));
+    });
+
+    final updated = QuickPicks(history, title: 'Listen again');
+    if (listenAgainIndex >= 0) {
+      final copy = List<dynamic>.from(middleContent);
+      copy[listenAgainIndex] = updated;
+      middleContent.value = copy;
+    } else {
+      middleContent.insert(0, updated);
+    }
   }
 
   void onBottonBarTabSelected(int index) {
     reverseAnimationtransiton = index > tabIndex.value;
     tabIndex.value = index;
+    if (index == 0) {
+      refreshHome();
+    }
   }
 
   void _checkNewVersion() {
@@ -372,6 +656,7 @@ class HomeScreenController extends GetxController {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     disposeDetachedScrollControllers(disposeAll: true);
     super.dispose();
   }

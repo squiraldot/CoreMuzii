@@ -18,6 +18,7 @@ import '/models/album.dart';
 import '/models/artist.dart';
 import '/models/media_Item_builder.dart';
 import '/models/playlist.dart';
+import '/services/music_service.dart';
 
 class LibrarySongsController extends GetxController {
   late RxList<MediaItem> librarySongsList = RxList();
@@ -254,21 +255,87 @@ class LibraryPlaylistsController extends GetxController
 
   void refreshLib() async {
     final box = await Hive.openBox("LibraryPlaylists");
-    libraryPlaylists.value = [
-      ...initPlst,
-      ...(box.values
-          .map<Playlist?>((item) => Playlist.fromJson(item))
-          .whereType<Playlist>()
-          .toList())
-    ];
+    final mergedPlaylists = <String, Playlist>{};
+    for (final playlist in initPlst) {
+      mergedPlaylists[playlist.playlistId] = playlist;
+    }
+    for (final item in box.values) {
+      final playlist = Playlist.fromJson(item);
+      mergedPlaylists[playlist.playlistId] = playlist;
+    }
+    libraryPlaylists.value = mergedPlaylists.values.toList();
 
     final appPrefsBox = Hive.box("AppPrefs");
     if (appPrefsBox.containsKey("piped")) {
       if (appPrefsBox.get("piped")['isLoggedIn']) await syncPipedPlaylist();
     }
 
+    if (appPrefsBox.get('yt_logged_in', defaultValue: false) == true) {
+      await syncYouTubeAccountLibrary();
+    } else {
+      libraryPlaylists.removeWhere((playlist) =>
+          playlist.playlistId == 'LM' || playlist.playlistId.startsWith('YT:'));
+    }
+
     isContentFetched.value = true;
     await box.close();
+  }
+
+  Future<void> syncYouTubeAccountLibrary() async {
+    final appPrefsBox = Hive.box("AppPrefs");
+    final previousIds = (appPrefsBox.get('yt_account_playlist_ids') as List?)
+            ?.map((e) => e.toString())
+            .toSet() ??
+        <String>{};
+
+    try {
+      final musicServices = Get.find<MusicServices>();
+      if (!await musicServices.validateYouTubeSession()) {
+        await appPrefsBox.put('yt_logged_in', false);
+        libraryPlaylists.removeWhere(
+            (playlist) => previousIds.contains(playlist.playlistId) || playlist.playlistId == 'LM');
+        return;
+      }
+
+      final ytPlaylists = await musicServices.getAccountPlaylists();
+      libraryPlaylists.removeWhere((playlist) {
+        final id = playlist.playlistId;
+        return id == 'LM' ||
+            id == 'VLLM' ||
+            previousIds.contains(id) ||
+            previousIds.contains(id.startsWith('VL') ? id.substring(2) : id);
+      });
+
+      final likedMusic = Playlist(
+        title: 'Liked Music',
+        playlistId: 'LM',
+        description: 'YouTube Music liked songs',
+        thumbnailUrl: Playlist.thumbPlaceholderUrl,
+        isCloudPlaylist: true,
+      );
+      libraryPlaylists.add(likedMusic);
+
+      final currentIds = <String>{'LM'};
+      for (final playlist in ytPlaylists) {
+        final rawId = playlist.playlistId;
+        if (rawId == 'LM' || rawId == 'VLLM') continue;
+        final canonicalId =
+            rawId.startsWith('VL') ? rawId.substring(2) : rawId;
+        if (canonicalId.isEmpty || !currentIds.add(canonicalId)) continue;
+        libraryPlaylists.add(Playlist(
+          title: playlist.title,
+          playlistId: canonicalId,
+          description: playlist.description,
+          thumbnailUrl: playlist.thumbnailUrl,
+          songCount: playlist.songCount,
+          isPipedPlaylist: playlist.isPipedPlaylist,
+          isCloudPlaylist: playlist.isCloudPlaylist,
+        ));
+      }
+      await appPrefsBox.put('yt_account_playlist_ids', currentIds.toList());
+    } catch (_) {
+      // Keep the last valid account playlists visible if the network temporarily fails.
+    }
   }
 
   void updatePlaylistIntoDb(Playlist playlist) async {
@@ -687,14 +754,75 @@ class LibraryArtistsController extends GetxController {
     super.onInit();
   }
 
-  void refreshLib() async {
+  Future<void> refreshLib() async {
     final box = await Hive.openBox("LibraryArtists");
     libraryArtists.value = box.values
         .map<Artist?>((item) => Artist.fromJson(item))
         .whereType<Artist>()
         .toList();
+
+    await syncYouTubeSubscribedArtists(box);
     isContentFetched.value = true;
-    box.close();
+    await box.close();
+  }
+
+  Future<void> syncYouTubeSubscribedArtists(Box<dynamic> artistsBox) async {
+    final appPrefsBox = Hive.box("AppPrefs");
+    final previousIds =
+        (appPrefsBox.get('yt_account_artist_ids') as List?)
+                ?.map((e) => e.toString())
+                .toSet() ??
+            <String>{};
+
+    // Remove the previous account snapshot from the in-memory/library box.
+    for (final id in previousIds) {
+      await artistsBox.delete('YT:' + id);
+    }
+    libraryArtists.removeWhere((artist) => previousIds.contains(artist.browseId));
+
+    if (appPrefsBox.get('yt_logged_in', defaultValue: false) != true) {
+      await appPrefsBox.delete('yt_account_artist_ids');
+      return;
+    }
+
+    try {
+      final musicServices = Get.find<MusicServices>();
+      if (!await musicServices.validateYouTubeSession()) {
+        await appPrefsBox.put('yt_logged_in', false);
+        await appPrefsBox.delete('yt_account_artist_ids');
+        return;
+      }
+
+      // FEmusic_library_corpus_artists is the authenticated YouTube Music
+      // "Subscriptions" library. It includes followed music artists/channels.
+      final subscribedArtists =
+          await musicServices.getYouTubeSubscriptions(limit: 200);
+
+      final currentIds = <String>{};
+      for (final artist in subscribedArtists) {
+        if (!currentIds.add(artist.browseId)) continue;
+        final key = 'YT:' + artist.browseId;
+        await artistsBox.put(key, artist.toJson());
+        libraryArtists.add(artist);
+      }
+
+      await appPrefsBox.put(
+          'yt_account_artist_ids', currentIds.toList());
+    } catch (e) {
+      // Keep any persisted YT artists that were loaded before the network
+      // request failed; do not wipe the user's Artists tab on a transient error.
+      printINFO("YouTube subscribed artists unavailable: $e");
+      final persisted = artistsBox.values
+          .map<Artist?>((item) => Artist.fromJson(item))
+          .whereType<Artist>()
+          .where((artist) => previousIds.contains(artist.browseId))
+          .toList();
+      for (final artist in persisted) {
+        if (!libraryArtists.any((item) => item.browseId == artist.browseId)) {
+          libraryArtists.add(artist);
+        }
+      }
+    }
   }
 
   void onSort(SortType sortType, bool isAscending) {
