@@ -348,7 +348,7 @@ class Body extends StatelessWidget {
                             padding: EdgeInsets.fromLTRB(
                               leftPadding,
                               topPadding,
-                              28,
+                              leftPadding,
                               200,
                             ),
 
