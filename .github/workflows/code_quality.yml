@@ -1,4 +1,4 @@
-name: Code quality check
+name: Code quality check # branch validation
 
 on:
   push:
