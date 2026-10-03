@@ -86,9 +86,12 @@ class SettingsScreenController extends GetxController {
             : appLang;
     // Mobile uses the bottom navigation as the default layout. Keep desktop
     // on its existing layout until the desktop navigation is redesigned.
-    isBottomNavBarEnabled.value = isDesktop
-        ? false
-        : (setBox.get("isBottomNavBarEnabled") ?? true);
+    isBottomNavBarEnabled.value = isDesktop ? false : true;
+    if (!isDesktop) {
+      // Bottom navigation is now the default mobile shell.
+      // Persist it so existing installs also migrate away from the legacy rail.
+      await setBox.put("isBottomNavBarEnabled", true);
+    }
     noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 3;
     isTransitionAnimationDisabled.value =
         setBox.get("isTransitionAnimationDisabled") ?? false;
