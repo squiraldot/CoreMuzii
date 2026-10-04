@@ -1,3 +1,4 @@
+import 'constant.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
@@ -13,7 +14,7 @@ class PipedServices extends GetxService {
 
   PipedServices() {
     if (Hive.isBoxOpen('AppPrefs')) {
-      final appPrefsBox = Hive.box('AppPrefs');
+      final appPrefsBox = Hive.box(appPrefsBoxName);
       final piped = appPrefsBox.get('piped') ??
           {"isLoggedIn": false, "token": "", "instApiUrl": ""};
       _isLoggedIn = piped["isLoggedIn"];
@@ -33,7 +34,7 @@ class PipedServices extends GetxService {
       final response = await _dio
           .post(url, data: {"username": userName, "password": password});
       final data = response.data;
-      final appPrefsBox = Hive.box('AppPrefs');
+      final appPrefsBox = Hive.box(appPrefsBoxName);
       appPrefsBox.put("piped", {
         "isLoggedIn": true,
         "token": data['token'],
@@ -57,7 +58,7 @@ class PipedServices extends GetxService {
   }
 
   void logout() {
-    final appPrefsBox = Hive.box('AppPrefs');
+    final appPrefsBox = Hive.box(appPrefsBoxName);
     appPrefsBox
         .put("piped", {"isLoggedIn": false, "token": "", "instApiUrl": ""});
     _headers["Authorization"] = "";

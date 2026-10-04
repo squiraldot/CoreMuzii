@@ -1,3 +1,4 @@
+import '../../../services/constant.dart';
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
@@ -265,7 +266,7 @@ class LibraryPlaylistsController extends GetxController
     }
     libraryPlaylists.value = mergedPlaylists.values.toList();
 
-    final appPrefsBox = Hive.box("AppPrefs");
+    final appPrefsBox = Hive.box(appPrefsBoxName);
     if (appPrefsBox.containsKey("piped")) {
       if (appPrefsBox.get("piped")['isLoggedIn']) await syncPipedPlaylist();
     }
@@ -282,7 +283,7 @@ class LibraryPlaylistsController extends GetxController
   }
 
   Future<void> syncYouTubeAccountLibrary() async {
-    final appPrefsBox = Hive.box("AppPrefs");
+    final appPrefsBox = Hive.box(appPrefsBoxName);
     final previousIds = (appPrefsBox.get('yt_account_playlist_ids') as List?)
             ?.map((e) => e.toString())
             .toSet() ??
@@ -767,7 +768,7 @@ class LibraryArtistsController extends GetxController {
   }
 
   Future<void> syncYouTubeSubscribedArtists(Box<dynamic> artistsBox) async {
-    final appPrefsBox = Hive.box("AppPrefs");
+    final appPrefsBox = Hive.box(appPrefsBoxName);
     final previousIds =
         (appPrefsBox.get('yt_account_artist_ids') as List?)
                 ?.map((e) => e.toString())

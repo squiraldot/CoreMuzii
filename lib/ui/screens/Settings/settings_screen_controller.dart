@@ -1,3 +1,4 @@
+import '../../../services/constant.dart';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -24,7 +25,7 @@ import 'settings_preferences.dart';
 class SettingsScreenController extends GetxController {
   late String _supportDir;
   final cacheSongs = false.obs;
-  final setBox = Hive.box("AppPrefs");
+  final setBox = Hive.box(appPrefsBoxName);
   final themeModetype = ThemeType.dynamic.obs;
   final skipSilenceEnabled = false.obs;
   final loudnessNormalizationEnabled = false.obs;
@@ -102,7 +103,7 @@ class SettingsScreenController extends GetxController {
     cacheSongs.value = setBox.get('cacheSongs') ?? false;
     themeModetype.value = ThemeType.values[setBox.get('themeModeType') ?? 0];
     skipSilenceEnabled.value =
-        isDesktop ? false : setBox.get("skipSilenceEnabled");
+        isDesktop ? false : (setBox.get("skipSilenceEnabled") ?? false);
     loudnessNormalizationEnabled.value = isDesktop
         ? false
         : (setBox.get("loudnessNormalizationEnabled") ?? false);
@@ -115,7 +116,7 @@ class SettingsScreenController extends GetxController {
     playerUi.value = isDesktop ? 0 : (setBox.get('playerUi') ?? 0);
     backgroundPlayEnabled.value = setBox.get("backgroundPlayEnabled") ?? true;
     keepScreenAwake.value =
-        setBox.get("keepScreenAwake") ?? GetPlatform.isDesktop ? true : false;
+        setBox.get("keepScreenAwake") ?? (GetPlatform.isDesktop ? true : false);
     final downloadPath =
         setBox.get('downloadLocationPath') ?? await _createInAppSongDownDir();
     downloadLocationPath.value =
@@ -356,6 +357,7 @@ class SettingsScreenController extends GetxController {
 
   Future<void> resetAppSettingsToDefault() async {
     await setBox.clear();
+    await _setInitValue();
   }
 
   Future<void> toggleStopPlyabackOnSwipeAway(bool val) async {

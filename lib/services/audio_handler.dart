@@ -1,3 +1,4 @@
+import '/services/constant.dart';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
@@ -90,13 +91,13 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     _notifyAudioHandlerAboutPlaybackEvents();
     _listenToPlaybackForNextSong();
     _listenForSequenceStateChanges();
-    final appPrefsBox = Hive.box("AppPrefs");
+    final appPrefsBox = Hive.box(appPrefsBoxName);
     _player
         .setSkipSilenceEnabled(appPrefsBox.get("skipSilenceEnabled") ?? false);
     loopModeEnabled = appPrefsBox.get("isLoopModeEnabled") ?? false;
     shuffleModeEnabled = appPrefsBox.get("isShuffleModeEnabled") ?? false;
     queueLoopModeEnabled =
-        Hive.box("AppPrefs").get("queueLoopModeEnabled") ?? false;
+        Hive.box(appPrefsBoxName).get("queueLoopModeEnabled") ?? false;
     loudnessNormalizationEnabled =
         appPrefsBox.get("loudnessNormalizationEnabled") ?? false;
     _listenForDurationChanges();
@@ -537,7 +538,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         } else {
           await _player.play();
 
-          final appPrefs = Hive.box('AppPrefs');
+          final appPrefs = Hive.box(appPrefsBoxName);
           final isYouTubeAuthenticated =
               appPrefs.get('yt_logged_in', defaultValue: false) == true;
 
@@ -582,7 +583,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
                 ? [
                     true,
                     dbStreamData[
-                        Hive.box('AppPrefs').get('streamingQuality') == 0
+                        Hive.box(appPrefsBoxName).get('streamingQuality') == 0
                             ? 'lowQualityAudio'
                             : "highQualityAudio"]
                   ]
@@ -913,7 +914,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     } else {
       //check if song stream url is cached and allocate url accordingly
       final songsUrlCacheBox = Hive.box("SongsUrlCache");
-      final qualityIndex = Hive.box('AppPrefs').get('streamingQuality') ?? 1;
+      final qualityIndex = Hive.box(appPrefsBoxName).get('streamingQuality') ?? 1;
       HMStreamingData? streamInfo;
       if (songsUrlCacheBox.containsKey(songId) && !generateNewUrl) {
         final streamInfoJson = songsUrlCacheBox.get(songId);
