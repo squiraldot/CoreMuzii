@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../services/constant.dart';
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:convert';
@@ -158,7 +159,7 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
         return;
       }
 
-      final box = Hive.box('AppPrefs');
+      final box = Hive.box(appPrefsBoxName);
       Map<String, String?> accountInfo = {};
       try {
         accountInfo = await musicServices.getYouTubeAccountInfo();
