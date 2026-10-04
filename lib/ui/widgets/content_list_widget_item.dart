@@ -49,7 +49,7 @@ class _ContentListItemState extends State<ContentListItem> {
       },
       child: Container(
         width: double.infinity,
-        height: cardWidth + 92,
+        height: cardWidth + 80,
         padding: EdgeInsets.zero,
         decoration: BoxDecoration(
           border: _hasFocus
