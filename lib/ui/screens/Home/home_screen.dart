@@ -240,73 +240,72 @@ class _WelcomeBackHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final box = Hive.box('AppPrefs');
-    final activeKey = box.get('yt_active_account_key')?.toString();
-    final accounts = box.get('yt_accounts');
-    final account = accounts is Map &&
-            activeKey != null &&
-            accounts[activeKey] is Map
-        ? Map<String, dynamic>.from(accounts[activeKey] as Map)
-        : <String, dynamic>{};
-    final name =
-        (account['accountName']?.toString().trim().isNotEmpty == true)
-            ? account['accountName'].toString().trim()
-            : 'YouTube Music';
-    final photo = account['accountPhotoUrl']?.toString();
+    final homeController = Get.find<HomeScreenController>();
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome back,',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline,
-                    width: 1.5,
+    return Obx(() {
+      final account = Map<String, dynamic>.from(
+        homeController.youtubeAccount,
+      );
+      final name =
+          (account['accountName']?.toString().trim().isNotEmpty == true)
+              ? account['accountName'].toString().trim()
+              : 'YouTube Music';
+      final photo = account['accountPhotoUrl']?.toString().trim();
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome back,',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: ClipOval(
+                    child: photo != null && photo.isNotEmpty
+                        ? Image.network(
+                            photo,
+                            width: 42,
+                            height: 42,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                const _AccountFallbackAvatar(),
+                          )
+                        : const _AccountFallbackAvatar(),
                   ),
                 ),
-                child: ClipOval(
-                  child: photo != null && photo.isNotEmpty
-                      ? Image.network(
-                          photo,
-                          width: 42,
-                          height: 42,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              const _AccountFallbackAvatar(),
-                        )
-                      : const _AccountFallbackAvatar(),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.5,
+                        ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.5,
-                      ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
