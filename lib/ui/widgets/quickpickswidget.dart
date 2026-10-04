@@ -206,7 +206,7 @@ class QuickPicksWidget extends StatelessWidget {
                     return SizedBox(
                       width: cardWidth,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(imageRadius),
                           onTap: () => _play(context, index),
