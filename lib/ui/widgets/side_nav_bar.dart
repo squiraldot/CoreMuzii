@@ -18,47 +18,59 @@ class SideNavBar extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 80),
               physics: const ClampingScrollPhysics(),
               child: IntrinsicHeight(
-                child: Obx(
-                  () => NavigationRail(
-                    useIndicator: !isMobileOrTabScreen,
-                    selectedIndex:
-                        homeScreenController.tabIndex.value, //_selectedIndex,
-                    onDestinationSelected:
-                        homeScreenController.onSideBarTabSelected,
-                    minWidth: 60,
-                    leading: SizedBox(height: size.height < 750 ? 30 : 60),
-                    minExtendedWidth: 250,
-                    extended: !isMobileOrTabScreen,
-                    labelType: isMobileOrTabScreen
-                        ? NavigationRailLabelType.all
-                        : NavigationRailLabelType.none,
-                    //backgroundColor: Colors.green,
-                    destinations: <NavigationRailDestination>[
-                      railDestination(
-                          "home".tr, isMobileOrTabScreen, Icons.home),
-                      railDestination(
-                          "songs".tr, isMobileOrTabScreen, Icons.art_track),
-                      railDestination("playlists".tr, isMobileOrTabScreen,
-                          Icons.featured_play_list),
-                      railDestination(
-                          "albums".tr, isMobileOrTabScreen, Icons.album),
-                      railDestination(
-                          "artists".tr, isMobileOrTabScreen, Icons.people),
-                      //railDestination("Settings")
-                      const NavigationRailDestination(
-                        padding: EdgeInsets.only(top: 10, bottom: 10),
-                        icon: Icon(Icons.settings),
-                        label: SizedBox.shrink(),
-                        selectedIcon: Icon(Icons.settings),
-                      )
-                    ],
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onLongPressStart: (details) {
+                    final homeStart = size.height < 750 ? 30.0 : 60.0;
+                    if (details.localPosition.dy >= homeStart &&
+                        details.localPosition.dy <= homeStart + 72) {
+                      homeScreenController.refreshHome();
+                    }
+                  },
+                  child: Obx(
+                    () => NavigationRail(
+                      useIndicator: !isMobileOrTabScreen,
+                      selectedIndex: homeScreenController.tabIndex.value,
+                      onDestinationSelected:
+                          homeScreenController.onSideBarTabSelected,
+                      minWidth: 60,
+                      leading:
+                          SizedBox(height: size.height < 750 ? 30 : 60),
+                      minExtendedWidth: 250,
+                      extended: !isMobileOrTabScreen,
+                      labelType: isMobileOrTabScreen
+                          ? NavigationRailLabelType.all
+                          : NavigationRailLabelType.none,
+                      destinations: <NavigationRailDestination>[
+                        railDestination(
+                            "home".tr, isMobileOrTabScreen, Icons.home),
+                        railDestination(
+                            "songs".tr, isMobileOrTabScreen, Icons.art_track),
+                        railDestination("playlists".tr, isMobileOrTabScreen,
+                            Icons.featured_play_list),
+                        railDestination(
+                            "albums".tr, isMobileOrTabScreen, Icons.album),
+                        railDestination(
+                            "artists".tr, isMobileOrTabScreen, Icons.people),
+                        const NavigationRailDestination(
+                          padding: EdgeInsets.only(top: 10, bottom: 10),
+                          icon: Icon(Icons.settings),
+                          label: SizedBox.shrink(),
+                          selectedIcon: Icon(Icons.settings),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ))
+              ),
+            )
           : Padding(
               padding: const EdgeInsets.only(bottom: 100.0),
               child: SideBarAnimated(
                 onTap: homeScreenController.onSideBarTabSelected,
+                onLongPress: (index) {
+                  if (index == 0) homeScreenController.refreshHome();
+                },
                 sideBarColor: Theme.of(context).primaryColor.withAlpha(250),
                 animatedContainerColor: Theme.of(context).colorScheme.secondary,
                 hoverColor:

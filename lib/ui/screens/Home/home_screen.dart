@@ -1,3 +1,4 @@
+import 'package:hive/hive.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,7 +14,12 @@ import '/ui/player/player_controller.dart';
 import '/ui/widgets/create_playlist_dialog.dart';
 import '../../navigator.dart';
 import '../../widgets/content_list_widget.dart';
+import '/models/album.dart';
+import '/models/playlist.dart';
+import '/models/quick_picks.dart';
 import '../../widgets/quickpickswidget.dart';
+import '/models/home_mood.dart';
+import 'mood_browse_screen.dart';
 import '../../widgets/shimmer_widgets/home_shimmer.dart';
 import 'home_screen_controller.dart';
 import '../Settings/settings_screen.dart';
@@ -90,21 +96,233 @@ class HomeScreen extends StatelessWidget {
               Expanded(
                 child: FocusScope(
                   node: playerController.centerPanelFocus,
-                  child: Obx(() => AnimatedScreenTransition(
+                  child: Obx(
+                    () => AnimatedScreenTransition(
                       enabled: settingsScreenController
                           .isTransitionAnimationDisabled.isFalse,
                       resverse: homeScreenController.reverseAnimationtransiton,
                       horizontalTransition:
                           settingsScreenController.isBottomNavBarEnabled.isTrue,
-                      child: Center(
+                      child: SizedBox.expand(
                         key: ValueKey<int>(homeScreenController.tabIndex.value),
                         child: const Body(),
-                      ))),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ));
+  }
+}
+
+class _HomeHeader extends StatelessWidget {
+  const _HomeHeader();
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 6 && hour <= 12) return 'Good Morning';
+    if (hour >= 13 && hour <= 17) return 'Good Afternoon';
+    if (hour >= 18 && hour <= 23) return 'Good Evening';
+    return 'Good Night';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final home = Get.find<HomeScreenController>();
+    return Padding(
+      padding: const EdgeInsets.only(top: 2, bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'MuziNap',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _greeting(),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'History',
+            visualDensity: VisualDensity.compact,
+            onPressed: () {
+              Get.snackbar(
+                'History',
+                'Your listening history is shown in Listen again.',
+                snackPosition: SnackPosition.BOTTOM,
+                duration: const Duration(seconds: 2),
+              );
+            },
+            icon: const Icon(Icons.history_rounded),
+          ),
+          IconButton(
+            tooltip: 'Settings',
+            visualDensity: VisualDensity.compact,
+            onPressed: () => home.onBottonBarTabSelected(3),
+            icon: const Icon(Icons.settings_outlined),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeMoodChips extends StatelessWidget {
+  const _HomeMoodChips({required this.moods});
+
+  final List<HomeMood> moods;
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleMoods = moods.take(8).toList();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SizedBox(
+        height: 36,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          itemCount: visibleMoods.length + 1,
+          separatorBuilder: (_, __) => const SizedBox(width: 4),
+          itemBuilder: (context, index) {
+            final selected = index == 0;
+            final label = selected ? 'All' : visibleMoods[index - 1].title;
+            return FilterChip(
+              label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+              showCheckmark: false,
+              selected: selected,
+              onSelected: (_) {
+                if (selected) return;
+                final mood = visibleMoods[index - 1];
+                Get.to(() => MoodBrowseScreen(mood: mood));
+              },
+              side: BorderSide(
+                color: selected
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest
+                    : Theme.of(context).colorScheme.outline,
+              ),
+              backgroundColor: selected
+                  ? Theme.of(context).colorScheme.surfaceContainerHighest
+                  : Colors.transparent,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _WelcomeBackHeader extends StatelessWidget {
+  const _WelcomeBackHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final homeController = Get.find<HomeScreenController>();
+
+    return Obx(() {
+      final account = Map<String, dynamic>.from(
+        homeController.youtubeAccount,
+      );
+      final name =
+          (account['accountName']?.toString().trim().isNotEmpty == true)
+              ? account['accountName'].toString().trim()
+              : 'YouTube Music';
+      final photo = account['accountPhotoUrl']?.toString().trim();
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome back,',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: ClipOval(
+                    child: photo != null && photo.isNotEmpty
+                        ? Image.network(
+                            photo,
+                            width: 42,
+                            height: 42,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                const _AccountFallbackAvatar(),
+                          )
+                        : const _AccountFallbackAvatar(),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.5,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class _AccountFallbackAvatar extends StatelessWidget {
+  const _AccountFallbackAvatar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
+      child: const Icon(Icons.person, size: 24),
+    );
   }
 }
 
@@ -117,20 +335,12 @@ class Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final homeScreenController = Get.find<HomeScreenController>();
     final settingsScreenController = Get.find<SettingsScreenController>();
-    final size = MediaQuery.of(context).size;
     final topPadding = GetPlatform.isDesktop
-        ? 85.0
-        : context.isLandscape
-            ? 50.0
-            : size.height < 750
-                ? 80.0
-                : 85.0;
-    final leftPadding =
-        settingsScreenController.isBottomNavBarEnabled.isTrue ? 20.0 : 5.0;
+        ? 12.0
+        : MediaQuery.paddingOf(context).top + (context.isLandscape ? 4.0 : 8.0);
+
     if (homeScreenController.tabIndex.value == 0) {
-      return Padding(
-        padding: EdgeInsets.only(left: leftPadding),
-        child: Stack(
+      return Stack(
           children: [
             GestureDetector(
               onTap: () {
@@ -201,9 +411,19 @@ class Body extends StatelessWidget {
                     : Obx(() {
                         // dispose all detachached scroll controllers
                         homeScreenController.disposeDetachedScrollControllers();
-                        final items = homeScreenController
-                                .isContentFetched.value
+                        final items = homeScreenController.isContentFetched.value
                             ? [
+                                const _HomeHeader(),
+                                if (homeScreenController.homeMoods.isNotEmpty)
+                                  _HomeMoodChips(
+                                    moods: homeScreenController.homeMoods,
+                                  ),
+                                if (Hive.box('AppPrefs').get(
+                                      'yt_logged_in',
+                                      defaultValue: false,
+                                    ) ==
+                                    true)
+                                  const _WelcomeBackHeader(),
                                 Obx(() {
                                   if (homeScreenController
                                       .quickPicks.value.songList.isEmpty) {
@@ -213,23 +433,33 @@ class Body extends StatelessWidget {
                                   homeScreenController.contentScrollControllers
                                       .add(scrollController);
                                   return QuickPicksWidget(
-                                      content:
-                                          homeScreenController.quickPicks.value,
-                                      scrollController: scrollController);
+                                    content: homeScreenController.quickPicks.value,
+                                    scrollController: scrollController,
+                                  );
                                 }),
                                 ...getWidgetList(
-                                    homeScreenController.middleContent,
-                                    homeScreenController),
+                                  homeScreenController.middleContent,
+                                  homeScreenController,
+                                ),
                                 ...getWidgetList(
-                                    homeScreenController.fixedContent,
-                                    homeScreenController)
+                                  homeScreenController.fixedContent,
+                                  homeScreenController,
+                                ),
                               ]
                             : [const HomeShimmer()];
-                        return ListView.builder(
-                          padding:
-                              EdgeInsets.only(bottom: 200, top: topPadding),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) => items[index],
+                        return RefreshIndicator(
+                          onRefresh: homeScreenController.refreshHome,
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.fromLTRB(
+                              15,
+                              topPadding,
+                              15,
+                              180,
+                            ),
+                            itemCount: items.length,
+                            itemBuilder: (context, index) => items[index],
+                          ),
                         );
                       }),
               ),
@@ -250,9 +480,8 @@ class Body extends StatelessWidget {
                         )),
                   );
                 }),
-              )
+              ),
           ],
-        ),
       );
     } else if (homeScreenController.tabIndex.value == 1) {
       return settingsScreenController.isBottomNavBarEnabled.isTrue
@@ -283,8 +512,22 @@ class Body extends StatelessWidget {
         .map((content) {
           final scrollController = ScrollController();
           homeScreenController.contentScrollControllers.add(scrollController);
-          return ContentListWidget(
-              content: content, scrollController: scrollController);
+
+          if (content is QuickPicks) {
+            return QuickPicksWidget(
+              content: content,
+              scrollController: scrollController,
+            );
+          }
+
+          if (content is PlaylistContent || content is AlbumContent) {
+            return ContentListWidget(
+              content: content,
+              scrollController: scrollController,
+            );
+          }
+
+          return null;
         })
         .whereType<Widget>()
         .toList();

@@ -142,53 +142,296 @@ const musicPlaylistShelfRenderer = [
 ];
 
 List<Map<String, dynamic>> parseMixedContent(List<dynamic> rows) {
-  List<Map<String, dynamic>> items = [];
-  //inspect(rows);
+  final items = <Map<String, dynamic>>[];
 
-  for (var row in rows) {
-    dynamic title;
-    dynamic contents = [];
-    if (description_shelf[0] == row.keys.first.toString()) {
-      var results = nav(row, description_shelf);
-      title = nav(results, ['header', 'runs', 0, 'text']);
-      contents = nav(results, description);
-    } else {
-      var results = row.values.first;
-      if (!results.containsKey('contents')) {
-        continue;
+  String? readTitle(dynamic renderer) {
+    if (renderer is! Map) return null;
+    final candidates = [
+      nav(renderer, carousel_title + ['text']),
+      nav(renderer, [
+        'header',
+        'musicCarouselShelfBasicHeaderRenderer',
+        'title',
+        'simpleText'
+      ]),
+      nav(renderer, [
+        'header',
+        'musicImmersiveCarouselShelfBasicHeaderRenderer',
+        'title',
+        'runs',
+        0,
+        'text'
+      ]),
+      nav(renderer, [
+        'header',
+        'musicImmersiveCarouselShelfBasicHeaderRenderer',
+        'title',
+        'simpleText'
+      ]),
+      nav(renderer, ['title', 'runs', 0, 'text']),
+      nav(renderer, ['title', 'simpleText']),
+      nav(renderer, [
+        'header',
+        'gridHeaderRenderer',
+        'title',
+        'runs',
+        0,
+        'text'
+      ]),
+    ];
+    for (final value in candidates) {
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString().trim();
       }
-      title = nav(results, carousel_title + ['text']);
+    }
+    return null;
+  }
 
-      for (var result in results['contents']) {
-        var data = nav(result, [mtrir]);
-        dynamic content;
-        if (data != null) {
-          var pageType = nav(data, n_title + navigation_browse + page_type,
-              noneIfAbsent: true, funName: "mixed1");
-          if (pageType == null) {
-            if (nav(data, navigation_watch_playlist_id) != null) {
-              //  content = parseWatchPlaylistHome(data);
-            } else {
-              content = parseSong(data);
-            }
-          } else if (pageType == "MUSIC_PAGE_TYPE_ALBUM") {
-            content = parseAlbum(data, reqAlbumObj: false);
-          } else if (pageType == "MUSIC_PAGE_TYPE_ARTIST") {
-            content = parseRelatedArtist(data);
-          } else if (pageType == "MUSIC_PAGE_TYPE_PLAYLIST") {
-            content = parsePlaylist(data);
-          }
-        } else {
-          data = nav(result, [mrlir]);
-          content = parseSongFlat(data);
+  dynamic unwrapShelf(dynamic row) {
+    if (row is! Map) return null;
+    const shelfKeys = [
+      'musicCarouselShelfRenderer',
+      'musicImmersiveCarouselShelfRenderer',
+      'musicShelfRenderer',
+      'musicPlaylistShelfRenderer',
+      'gridRenderer',
+      'itemSectionRenderer',
+    ];
+    for (final key in shelfKeys) {
+      final value = row[key];
+      if (value is Map) return value;
+    }
+    return row;
+  }
+
+  String? browseIdFor(dynamic data) {
+    if (data is! Map) return null;
+    final candidates = [
+      nav(data, navigation_browse_id),
+      nav(data, [
+        'title',
+        'runs',
+        0,
+        ...navigation_browse_id,
+      ]),
+      nav(data, [
+        'flexColumns',
+        0,
+        'musicResponsiveListItemFlexColumnRenderer',
+        'text',
+        'runs',
+        0,
+        ...navigation_browse_id,
+      ]),
+      nav(data, [
+        'navigationEndpoint',
+        'browseEndpoint',
+        'browseId',
+      ]),
+    ];
+    for (final value in candidates) {
+      if (value != null && value.toString().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return null;
+  }
+
+  String? pageTypeFor(dynamic data) {
+    if (data is! Map) return null;
+    final candidates = [
+      nav(data, [
+        'navigationEndpoint',
+        'browseEndpoint',
+        'browseEndpointContextSupportedConfigs',
+        'browseEndpointContextMusicConfig',
+        'pageType'
+      ]),
+      nav(data, [
+        'title',
+        'runs',
+        0,
+        ...navigation_browse,
+        ...page_type,
+      ]),
+      nav(data, [
+        'flexColumns',
+        0,
+        'musicResponsiveListItemFlexColumnRenderer',
+        'text',
+        'runs',
+        0,
+        ...navigation_browse,
+        ...page_type,
+      ]),
+    ];
+    for (final value in candidates) {
+      if (value != null && value.toString().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return null;
+  }
+
+  String? titleFor(dynamic data) {
+    if (data is! Map) return null;
+    final candidates = [
+      nav(data, ['title', 'runs', 0, 'text']),
+      nav(data, ['title', 'simpleText']),
+      nav(data, [
+        'flexColumns',
+        0,
+        'musicResponsiveListItemFlexColumnRenderer',
+        'text',
+        'runs',
+        0,
+        'text'
+      ]),
+    ];
+    for (final value in candidates) {
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString().trim();
+      }
+    }
+    return null;
+  }
+
+  dynamic playlistFrom(dynamic data) {
+    if (data is! Map) return null;
+    final playlistId = data['playlistId']?.toString() ?? browseIdFor(data);
+    final title = titleFor(data);
+    if (playlistId == null ||
+        playlistId.isEmpty ||
+        title == null ||
+        title.isEmpty) {
+      return null;
+    }
+    final type = pageTypeFor(data);
+    final isPlaylist = type == 'MUSIC_PAGE_TYPE_PLAYLIST' ||
+        playlistId.startsWith('PL') ||
+        playlistId.startsWith('VL') ||
+        playlistId.startsWith('RDCLAK');
+    if (!isPlaylist) return null;
+
+    final thumbs = nav(data, ['thumbnail', 'thumbnails']) ??
+        nav(data, [
+          'thumbnailRenderer',
+          'playlistThumbnailRenderer',
+          'thumbnail',
+          'thumbnails'
+        ]) ??
+        nav(data, [
+          'thumbnailRenderer',
+          'musicThumbnailRenderer',
+          'thumbnail',
+          'thumbnails'
+        ]);
+    return Playlist.fromJson({
+      'title': title,
+      'playlistId': playlistId,
+      'thumbnails': thumbs is List && thumbs.isNotEmpty
+          ? thumbs
+          : [{'url': Playlist.thumbPlaceholderUrl}],
+      'description': 'YouTube playlist',
+    });
+  }
+
+  dynamic parseHomeItem(dynamic result) {
+    if (result is! Map) return null;
+
+    final directPlaylist = result['gridPlaylistRenderer'] ??
+        result['playlistRenderer'] ??
+        result['musicPlaylistRenderer'];
+    if (directPlaylist is Map) {
+      final parsed = playlistFrom(directPlaylist);
+      if (parsed != null) return parsed;
+    }
+
+    dynamic data = nav(result, [mtrir]);
+    if (data != null) {
+      final playlist = playlistFrom(data);
+      if (playlist != null) return playlist;
+
+      final pageType = pageTypeFor(data);
+      if (pageType == 'MUSIC_PAGE_TYPE_ALBUM') {
+        try {
+          return parseAlbum(data, reqAlbumObj: false);
+        } catch (_) {
+          return null;
         }
+      }
+      if (pageType == 'MUSIC_PAGE_TYPE_ARTIST') {
+        return parseRelatedArtist(data);
+      }
+      try {
+        return parseSong(data);
+      } catch (_) {
+        return null;
+      }
+    }
 
-        contents.add(content);
+    data = nav(result, [mrlir]);
+    if (data != null) {
+      final playlist = playlistFrom(data);
+      if (playlist != null) return playlist;
+
+      final pageType = pageTypeFor(data);
+      if (pageType == 'MUSIC_PAGE_TYPE_ALBUM') {
+        try {
+          return parseAlbum(data, reqAlbumObj: false);
+        } catch (_) {
+          return null;
+        }
+      }
+      try {
+        return parseSongFlat(data);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    return null;
+  }
+
+  for (final row in rows) {
+    if (row is! Map || row.isEmpty) continue;
+
+    final renderer = unwrapShelf(row);
+    if (renderer is! Map) continue;
+
+    final rawContents = renderer['contents'] ?? renderer['items'];
+    if (rawContents is! List || rawContents.isEmpty) continue;
+
+    final title = readTitle(renderer) ?? readTitle(row);
+    final contents = <dynamic>[];
+    final seen = <String>{};
+
+    for (final result in rawContents) {
+      final content = parseHomeItem(result);
+      if (content == null) continue;
+
+      String key;
+      if (content is MediaItem) {
+        key = 'song:${content.id}';
+      } else if (content is Playlist) {
+        key = 'playlist:${content.playlistId}';
+      } else if (content is Album) {
+        key = 'album:${content.browseId}';
+      } else {
+        key = '${content.runtimeType}:${content.toString()}';
       }
 
-      items.add({'title': title, 'contents': contents});
+      if (seen.add(key)) contents.add(content);
+    }
+
+    if (contents.isNotEmpty) {
+      items.add({
+        'title': title ?? '',
+        'contents': contents,
+      });
     }
   }
+
   return items;
 }
 
@@ -240,6 +483,7 @@ MediaItem parseSong(Map<dynamic, dynamic> result) {
     'playlistId': nav(result, navigation_playlist_id,
         noneIfAbsent: true, funName: "parseSong"),
     'thumbnails': nav(result, thumbnail_renderer),
+    'videoType': nav(result, navigation_video_type),
   };
 
   song.addAll(parseSongRuns(result['subtitle']['runs']));
@@ -364,6 +608,7 @@ MediaItem parseSongFlat(Map<String, dynamic> data) {
             noneIfAbsent: true, funName: "parseSongFlat"),
     'artists': parseSongArtists(data, 1),
     'thumbnails': nav(data, thumbnails),
+    'videoType': nav(data, navigation_video_type),
     //'isExplicit': nav(data, badge_label, noneIfAbsent: true) != null
   };
 //checkpoint .contains

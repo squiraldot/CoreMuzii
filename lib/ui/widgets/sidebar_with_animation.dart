@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 ///ignore: must_be_immutable
 class SideBarAnimated extends StatefulWidget {
   final ValueChanged<int>? onTap;
+  final ValueChanged<int>? onLongPress;
   Color sideBarColor;
   Duration sideBarAnimationDuration;
   Duration floatingAnimationDuration;
@@ -50,6 +51,7 @@ class SideBarAnimated extends StatefulWidget {
     required this.sidebarItems,
     required this.widthSwitch,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -184,7 +186,8 @@ class _SideBarAnimatedState extends State<SideBarAnimated> {
                                         widget.sidebarItems[index].iconUnselected ??
                                             widget.sidebarItems[index].iconSelected,
                                     text: widget.sidebarItems[index].text,
-                                    onTap: () => moveToNewIndex(index));
+                                    onTap: () => moveToNewIndex(index),
+                                    onLongPress: () => widget.onLongPress?.call(index));
                               },
                               separatorBuilder: (context, index) {
                                 if (index == widget.sidebarItems.length - 2 &&
@@ -284,6 +287,7 @@ Widget sideBarItem({
   required Color highlightColor,
   required Color unSelectedTextColor,
   required Function() onTap,
+  VoidCallback? onLongPress,
   required TextStyle textStyle,
 }) {
   return Material(
@@ -292,6 +296,7 @@ Widget sideBarItem({
     clipBehavior: Clip.antiAliasWithSaveLayer,
     child: InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       hoverColor: hoverColor,
       splashColor: splashColor,
       highlightColor: highlightColor,

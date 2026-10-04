@@ -13,6 +13,7 @@ import '../../widgets/restore_dialog.dart';
 import '../Library/library_controller.dart';
 import '../../widgets/snackbar.dart';
 import '/ui/widgets/link_piped.dart';
+import '../Home/home_screen_controller.dart';
 import '/services/music_service.dart';
 import '/ui/player/player_controller.dart';
 import '/ui/utils/theme_controller.dart';
@@ -214,45 +215,138 @@ class SettingsScreen extends StatelessWidget {
                     StatefulBuilder(
                       builder: (context, setState) {
                         final box = Hive.box('AppPrefs');
-                        final bool isLoggedIn = box.get('yt_logged_in', defaultValue: false);
-                        return ListTile(
-                          contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                          title: Text(isLoggedIn ? "Connected to YouTube" : "Sign in to YouTube"),
-                          subtitle: Text(
-                            isLoggedIn
-                                ? "Logged in with YouTube account cookies"
-                                : "Log in to sync account preferences & personalized recommendations",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          trailing: TextButton(
-                            child: Text(
-                              isLoggedIn ? "Logout" : "Login",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium!
-                                  .copyWith(fontSize: 15),
+                        final isLoggedIn =
+                            box.get('yt_logged_in', defaultValue: false) == true;
+                        final activeKey =
+                            box.get('yt_active_account_key')?.toString();
+                        final rawAccounts = box.get('yt_accounts');
+                        final accounts = rawAccounts is Map
+                            ? rawAccounts.map(
+                                (key, value) => MapEntry(key.toString(), value),
+                              )
+                            : <String, dynamic>{};
+
+                        return Column(
+                          children: [
+                            if (accounts.isNotEmpty)
+                              ...accounts.keys.map((key) {
+                                final accountNumber =
+                                    accounts.keys.toList().indexOf(key) + 1;
+                                final isActive = key == activeKey;
+                                return ListTile(
+                                  contentPadding: const EdgeInsets.only(
+                                      left: 5, right: 10),
+                                  leading: Icon(
+                                    isActive
+                                        ? Icons.check_circle
+                                        : Icons.account_circle_outlined,
+                                  ),
+                                  title: Text(
+                                    'YouTube account $accountNumber',
+                                  ),
+                                  subtitle: Text(
+                                    isActive
+                                        ? 'Active account'
+                                        : 'Saved account',
+                                  ),
+                                  trailing: isActive
+                                      ? const SizedBox.shrink()
+                                      : TextButton(
+                                          child: const Text('Switch'),
+                                          onPressed: () async {
+                                            final service =
+                                                Get.find<MusicServices>();
+                                            final switched = await service
+                                                .activateYouTubeAccount(key);
+                                            if (!switched) {
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  snackbar(
+                                                    context,
+                                                    'Could not activate this YouTube account',
+                                                    size: SanckBarSize.BIG,
+                                                  ),
+                                                );
+                                              }
+                                              return;
+                                            }
+                                            if (Get.isRegistered<
+                                                HomeScreenController>()) {
+                                              await Get.find<
+                                                      HomeScreenController>()
+                                                  .refreshHome();
+                                            }
+                                            if (Get.isRegistered<
+                                                LibraryPlaylistsController>()) {
+                                              Get.find<
+                                                      LibraryPlaylistsController>()
+                                                  .refreshLib();
+                                            }
+                                            setState(() {});
+                                          },
+                                        ),
+                                );
+                              }),
+                            ListTile(
+                              contentPadding:
+                                  const EdgeInsets.only(left: 5, right: 10),
+                              title: Text(
+                                isLoggedIn
+                                    ? "Connected to YouTube"
+                                    : "Sign in to YouTube",
+                              ),
+                              subtitle: Text(
+                                isLoggedIn
+                                    ? "Account sessions are saved for quick switching"
+                                    : "Log in to sync account preferences & personalized recommendations",
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              trailing: TextButton(
+                                child: Text(
+                                  isLoggedIn ? "Disconnect" : "Login",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium!
+                                      .copyWith(fontSize: 15),
+                                ),
+                                onPressed: () async {
+                                  if (isLoggedIn) {
+                                    await box.delete('yt_accounts');
+                                    await box.delete('yt_active_account_key');
+                                    await box.delete('yt_cookies');
+                                    await box.put('yt_logged_in', false);
+                                    if (Get.isRegistered<MusicServices>()) {
+                                      Get.find<MusicServices>()
+                                          .clearAuthCookies();
+                                    }
+                                    if (Get.isRegistered<
+                                        HomeScreenController>()) {
+                                      await Get.find<HomeScreenController>()
+                                          .refreshHome();
+                                    }
+                                    setState(() {});
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        snackbar(
+                                          context,
+                                          "Disconnected from YouTube",
+                                          size: SanckBarSize.BIG,
+                                        ),
+                                      );
+                                    }
+                                  } else {
+                                    final result = await Get.to(
+                                        () => const YoutubeLoginScreen());
+                                    if (result == true) {
+                                      setState(() {});
+                                    }
+                                  }
+                                },
+                              ),
                             ),
-                            onPressed: () async {
-                              if (isLoggedIn) {
-                                await box.delete('yt_cookies');
-                                await box.put('yt_logged_in', false);
-                                if (Get.isRegistered<MusicServices>()) {
-                                  Get.find<MusicServices>().clearAuthCookies();
-                                }
-                                setState(() {});
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      snackbar(context, "Logged out from YouTube",
-                                          size: SanckBarSize.BIG));
-                                }
-                              } else {
-                                final result = await Get.to(() => const YoutubeLoginScreen());
-                                if (result == true) {
-                                  setState(() {});
-                                }
-                              }
-                            },
-                          ),
+                          ],
                         );
                       },
                     ),

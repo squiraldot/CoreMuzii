@@ -18,6 +18,7 @@ import '/models/album.dart';
 import '../models/playlist.dart';
 import '/services/equalizer.dart';
 import '/services/stream_service.dart';
+import '/services/music_service.dart';
 import '/models/hm_streaming_data.dart';
 import '/ui/player/player_controller.dart';
 import '/services/local_proxy.dart';
@@ -28,6 +29,7 @@ import '../utils/helper.dart';
 import '/models/media_Item_builder.dart';
 import '/services/utils.dart';
 import '../ui/screens/Settings/settings_screen_controller.dart';
+import '../utils/home_history.dart';
 import '../ui/screens/Library/library_controller.dart';
 // ignore: unused_import, implementation_imports, depend_on_referenced_packages
 import "package:media_kit/src/player/platform_player.dart" show MPVLogLevel;
@@ -88,7 +90,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     _notifyAudioHandlerAboutPlaybackEvents();
     _listenToPlaybackForNextSong();
     _listenForSequenceStateChanges();
-    final appPrefsBox = Hive.box("appPrefs");
+    final appPrefsBox = Hive.box("AppPrefs");
     _player
         .setSkipSilenceEnabled(appPrefsBox.get("skipSilenceEnabled") ?? false);
     loopModeEnabled = appPrefsBox.get("isLoopModeEnabled") ?? false;
@@ -270,16 +272,26 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     queue.add(newQueue);
   }
 
-  AudioSource _createAudioSource(MediaItem mediaItem) {
+  Future<AudioSource> _createAudioSource(MediaItem mediaItem) async {
     final originalUrl = mediaItem.extras!['url'] as String;
-    final streamHeaders = (mediaItem.extras!['streamHeaders'] as Map?)?.cast<String, String>();
-    
-    // YouTube now strictly checks User-Agent which MPV/media_kit strips.
-    // So we use LocalProxy on ALL platforms to guarantee header injection.
-    final isDesktop = GetPlatform.isWindows || GetPlatform.isLinux || GetPlatform.isMacOS;
+    final streamHeaders =
+        (mediaItem.extras!['streamHeaders'] as Map?)?.cast<String, String>();
+
+    final isDesktop =
+        GetPlatform.isWindows || GetPlatform.isLinux || GetPlatform.isMacOS;
+
+    // Android/iOS support request headers natively when
+    // useProxyForRequestHeaders=false. Avoiding our own proxy here removes
+    // the first-play race where the proxy server had not finished binding.
+    // Desktop media backends still use our proxy so YouTube headers survive.
     final url = (!originalUrl.startsWith('http'))
-        ? originalUrl 
-        : LocalProxy.addUrl(originalUrl, headers: streamHeaders);
+        ? originalUrl
+        : isDesktop
+            ? await LocalProxy.addUrlAsync(
+                originalUrl,
+                headers: streamHeaders,
+              )
+            : originalUrl;
 
     // LockCachingAudioSource is broken on just_audio_media_kit (it ignores cache and drops headers).
     // So we disable it on Desktop.
@@ -291,6 +303,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       // ignore: experimental_member_use
       return LockCachingAudioSource(
         Uri.parse(url),
+        headers: streamHeaders,
         cacheFile: File("$_cacheDir/cachedSongs/${mediaItem.id}.mp3"),
         tag: mediaItem,
       );
@@ -306,7 +319,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
     return AudioSource.uri(
       uri,
-      headers: isDesktop ? streamHeaders : null, 
+      headers: isDesktop ? null : streamHeaders,
       tag: mediaItem,
     );
   }
@@ -499,7 +512,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         currentSong.extras!['streamHeaders'] = streamInfo.streamHeaders;
         playbackState
             .add(playbackState.value.copyWith(queueIndex: currentIndex));
-        await _player.setAudioSource(_createAudioSource(currentSong));
+        await _player.setAudioSource(await _createAudioSource(currentSong));
 
         isSongLoading = false;
         if (loudnessNormalizationEnabled && GetPlatform.isAndroid) {
@@ -523,6 +536,33 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
           }
         } else {
           await _player.play();
+
+          final appPrefs = Hive.box('AppPrefs');
+          final isYouTubeAuthenticated =
+              appPrefs.get('yt_logged_in', defaultValue: false) == true;
+
+          if (isYouTubeAuthenticated) {
+            try {
+              await Get.find<MusicServices>()
+                  .recordYouTubePlayback(currentSong.id);
+              if (Get.isRegistered<HomeScreenController>()) {
+                await Get.find<HomeScreenController>()
+                    .onTrackPlayed(currentSong);
+              }
+            } catch (e) {
+              printINFO("Unable to report YouTube playback: $e");
+            }
+          } else {
+            try {
+              await saveRecentlyPlayed(currentSong);
+              if (Get.isRegistered<HomeScreenController>()) {
+                await Get.find<HomeScreenController>()
+                    .onTrackPlayed(currentSong);
+              }
+            } catch (e) {
+              printINFO("Unable to persist local listening history: $e");
+            }
+          }
         }
         break;
 
@@ -586,7 +626,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         currentSongUrl = currMed.extras!['url'] = streamInfo.audio!.url;
         currMed.extras!['streamHeaders'] = streamInfo.streamHeaders;
 
-        await _player.setAudioSource(_createAudioSource(currMed));
+        await _player.setAudioSource(await _createAudioSource(currMed));
         isSongLoading = false;
 
         // Normalize audio

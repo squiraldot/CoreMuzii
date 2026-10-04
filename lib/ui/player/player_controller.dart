@@ -19,6 +19,7 @@ import '/ui/screens/Settings/settings_screen_controller.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../services/windows_audio_service.dart';
 import '../../utils/helper.dart';
+import '../../utils/home_history.dart';
 import '/models/media_Item_builder.dart';
 import '../screens/Home/home_screen_controller.dart';
 import '../widgets/sliding_up_panel.dart';
@@ -443,7 +444,13 @@ class PlayerController extends GetxController
         currentSongIndex.value = currentQueue
             .indexWhere((element) => element.id == currentSong.value!.id);
         await _checkFav();
-        await _addToRP(currentSong.value!);
+        final appPrefs = Hive.box('AppPrefs');
+        final isYouTubeAuthenticated =
+            appPrefs.get('yt_logged_in', defaultValue: false) == true;
+        if (!isYouTubeAuthenticated) {
+          await _addToRP(currentSong.value!);
+          await saveRecentlyPlayed(currentSong.value!);
+        }
         if (isRadioModeOn && (currentSong.value!.id == currentQueue.last.id)) {
           await _addRadioContinuation(radioInitiatorItem!);
         }
