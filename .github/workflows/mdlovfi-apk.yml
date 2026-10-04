@@ -34,6 +34,14 @@ jobs:
           test "$(git -C flutter rev-parse HEAD)" = "$FLUTTER_COMMIT"
           git -C flutter show -s --format='%H %s' HEAD
 
+      - name: Verify Android application package
+        shell: bash
+        run: |
+          test -f android/app/src/main/kotlin/com/merrmist/mdlovfimusic/MainActivity.kt
+          grep -Fx 'package com.merrmist.mdlovfimusic' android/app/src/main/kotlin/com/merrmist/mdlovfimusic/MainActivity.kt
+          grep -F 'android:name=".MainActivity"' android/app/src/main/AndroidManifest.xml
+          grep -F 'applicationId "com.merrmist.mdlovfimusic"' android/app/build.gradle
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
