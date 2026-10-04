@@ -19,6 +19,8 @@ import '../Home/home_screen_controller.dart';
 import '/ui/utils/theme_controller.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import 'settings_preferences.dart';
+
 class SettingsScreenController extends GetxController {
   late String _supportDir;
   final cacheSongs = false.obs;
@@ -84,12 +86,14 @@ class SettingsScreenController extends GetxController {
         : appLang == "zh_Hans"
             ? "zh-CN"
             : appLang;
-    // Mobile uses the bottom navigation as the default layout. Keep desktop
-    // on its existing layout until the desktop navigation is redesigned.
-    isBottomNavBarEnabled.value = isDesktop ? false : true;
-    if (!isDesktop) {
-      // Bottom navigation is now the default mobile shell.
-      // Persist it so existing installs also migrate away from the legacy rail.
+    final storedBottomNavBarEnabled = setBox.get("isBottomNavBarEnabled");
+    isBottomNavBarEnabled.value = resolveBottomNavBarPreference(
+      isDesktop: isDesktop,
+      storedValue: storedBottomNavBarEnabled,
+    );
+    if (!isDesktop && storedBottomNavBarEnabled == null) {
+      // First launch after the mobile bottom-nav migration: persist the
+      // default once, but never overwrite a user's later choice.
       await setBox.put("isBottomNavBarEnabled", true);
     }
     noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 3;
