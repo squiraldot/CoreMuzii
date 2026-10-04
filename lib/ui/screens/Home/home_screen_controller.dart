@@ -1,3 +1,4 @@
+import '../../../services/constant.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -75,7 +76,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> loadContent() async {
-    final box = Hive.box("AppPrefs");
+    final box = Hive.box(appPrefsBoxName);
     final isCachedHomeScreenDataEnabled =
         box.get("cacheHomeScreenData") ?? true;
     final hasYouTubeSession =
@@ -142,7 +143,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> _ensureActiveYouTubeAccountInfo() async {
-    final box = Hive.box('AppPrefs');
+    final box = Hive.box(appPrefsBoxName);
     final stored = box.get('yt_accounts');
 
     final accounts = <String, dynamic>{};
@@ -253,7 +254,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> loadContentFromNetwork({bool silent = false}) async {
-    final box = Hive.box("AppPrefs");
+    final box = Hive.box(appPrefsBoxName);
     String contentType = box.get("discoverContentType") ?? "QP";
 
     networkError.value = false;
@@ -427,7 +428,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
       // sections that the legacy cache serializer does not model.
       if (!isAuthenticatedHome) {
         await cachedHomeScreenData(updateAll: true);
-        await Hive.box("AppPrefs")
+        await Hive.box(appPrefsBoxName)
             .put("homeScreenDataTime", DateTime.now().millisecondsSinceEpoch);
       }
       // ignore: unused_catch_stack
@@ -533,7 +534,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
             "Seems ${val == "TMV" ? "Top music videos" : "Trending songs"} currently not available!");
       }
     } else {
-      songId ??= Hive.box("AppPrefs").get("recentSongId");
+      songId ??= Hive.box(appPrefsBoxName).get("recentSongId");
       if (songId != null) {
         try {
           final value = await _musicServices.getContentRelatedToSong(
@@ -542,7 +543,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
           if (value.isNotEmpty && (value[0]['title']).contains("like")) {
             quickPicks_ =
                 QuickPicks(List<MediaItem>.from(value[0]["contents"]));
-            Hive.box("AppPrefs").put("recentSongId", songId);
+            Hive.box(appPrefsBoxName).put("recentSongId", songId);
           }
           // ignore: empty_catches
         } catch (e) {}
@@ -554,7 +555,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
 
     // set home content last update time
     cachedHomeScreenData(updateQuickPicksNMiddleContent: true);
-    await Hive.box("AppPrefs")
+    await Hive.box(appPrefsBoxName)
         .put("homeScreenDataTime", DateTime.now().millisecondsSinceEpoch);
   }
 
@@ -576,7 +577,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> onTrackPlayed(MediaItem item) async {
-    final appPrefs = Hive.box('AppPrefs');
+    final appPrefs = Hive.box(appPrefsBoxName);
     final isYouTubeAuthenticated =
         appPrefs.get('yt_logged_in', defaultValue: false) == true;
 
@@ -633,7 +634,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
 
   void _checkNewVersion() {
     showVersionDialog.value =
-        Hive.box("AppPrefs").get("newVersionVisibility") ?? true;
+        Hive.box(appPrefsBoxName).get("newVersionVisibility") ?? true;
     if (showVersionDialog.isTrue) {
       newVersionCheck(Get.find<SettingsScreenController>().currentVersion)
           .then((value) {
@@ -647,7 +648,7 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   }
 
   void onChangeVersionVisibility(bool val) {
-    Hive.box("AppPrefs").put("newVersionVisibility", !val);
+    Hive.box(appPrefsBoxName).put("newVersionVisibility", !val);
     showVersionDialog.value = !val;
   }
 
