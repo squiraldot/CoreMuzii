@@ -21,12 +21,10 @@ class ContentListWidget extends StatelessWidget {
     final isAlbumContent = content.runtimeType.toString() == "AlbumContent";
 
     return SizedBox(
-      height: 320,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      height: 270,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -45,7 +43,8 @@ class ContentListWidget extends StatelessWidget {
               if (!isHomeContent)
                 TextButton(
                   onPressed: () {
-                    final controller = Get.find<SearchResultScreenController>();
+                    final controller =
+                        Get.find<SearchResultScreenController>();
                     controller.viewAllCallback(content.title);
                   },
                   child: Text(
@@ -55,7 +54,6 @@ class ContentListWidget extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 14),
           Expanded(
             child: ListView.separated(
               controller: scrollController,
@@ -67,16 +65,18 @@ class ContentListWidget extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(width: 16),
               itemBuilder: (_, index) => SizedBox(
                 width: 160,
-                child: ContentListItem(
-                  content: isAlbumContent
-                      ? content.albumList[index]
-                      : content.playlistList[index],
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10, bottom: 6),
+                  child: ContentListItem(
+                    content: isAlbumContent
+                        ? content.albumList[index]
+                        : content.playlistList[index],
+                  ),
                 ),
               ),
             ),
           ),
-          ],
-        ),
+        ],
       ),
     );
   }
