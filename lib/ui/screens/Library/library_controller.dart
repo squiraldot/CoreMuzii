@@ -18,6 +18,7 @@ import '/models/album.dart';
 import '/models/artist.dart';
 import '/models/media_Item_builder.dart';
 import '/models/playlist.dart';
+import '/services/music_service.dart';
 
 class LibrarySongsController extends GetxController {
   late RxList<MediaItem> librarySongsList = RxList();
@@ -267,8 +268,25 @@ class LibraryPlaylistsController extends GetxController
       if (appPrefsBox.get("piped")['isLoggedIn']) await syncPipedPlaylist();
     }
 
+    if (appPrefsBox.get('yt_logged_in', defaultValue: false) == true) {
+      await syncYouTubeAccountLibrary();
+    }
+
     isContentFetched.value = true;
     await box.close();
+  }
+
+  Future<void> syncYouTubeAccountLibrary() async {
+    try {
+      final musicServices = Get.find<MusicServices>();
+      final ytPlaylists = await musicServices.getAccountPlaylists();
+      final existingIds = libraryPlaylists.map((p) => p.playlistId).toSet();
+      for (var pl in ytPlaylists) {
+        if (!existingIds.contains(pl.playlistId)) {
+          libraryPlaylists.add(pl);
+        }
+      }
+    } catch (_) {}
   }
 
   void updatePlaylistIntoDb(Playlist playlist) async {

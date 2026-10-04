@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
 import 'package:mdlovfimusic/utils/helper.dart';
 import 'package:mdlovfimusic/utils/lang_mapping.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,6 +18,7 @@ import '/ui/player/player_controller.dart';
 import '/ui/utils/theme_controller.dart';
 import 'components/custom_expansion_tile.dart';
 import 'settings_screen_controller.dart';
+import 'youtube_login_screen.dart';
 import '../../widgets/keyboard_shortcuts_menu.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -205,6 +207,56 @@ class SettingsScreen extends StatelessWidget {
                       )),
                 ],
               ),
+              CustomExpansionTile(
+                  title: "YouTube Account",
+                  icon: Icons.account_circle,
+                  children: [
+                    StatefulBuilder(
+                      builder: (context, setState) {
+                        final box = Hive.box('AppPrefs');
+                        final bool isLoggedIn = box.get('yt_logged_in', defaultValue: false);
+                        return ListTile(
+                          contentPadding: const EdgeInsets.only(left: 5, right: 10),
+                          title: Text(isLoggedIn ? "Connected to YouTube" : "Sign in to YouTube"),
+                          subtitle: Text(
+                            isLoggedIn
+                                ? "Logged in with YouTube account cookies"
+                                : "Log in to sync account preferences & personalized recommendations",
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          trailing: TextButton(
+                            child: Text(
+                              isLoggedIn ? "Logout" : "Login",
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium!
+                                  .copyWith(fontSize: 15),
+                            ),
+                            onPressed: () async {
+                              if (isLoggedIn) {
+                                await box.delete('yt_cookies');
+                                await box.put('yt_logged_in', false);
+                                if (Get.isRegistered<MusicServices>()) {
+                                  Get.find<MusicServices>().clearAuthCookies();
+                                }
+                                setState(() {});
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                      snackbar(context, "Logged out from YouTube",
+                                          size: SanckBarSize.BIG));
+                                }
+                              } else {
+                                final result = await Get.to(() => const YoutubeLoginScreen());
+                                if (result == true) {
+                                  setState(() {});
+                                }
+                              }
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ]),
               CustomExpansionTile(
                   title: "content".tr,
                   icon: Icons.music_video,

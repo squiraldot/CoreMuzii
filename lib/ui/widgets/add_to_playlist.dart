@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:widget_marquee/widget_marquee.dart';
 
+import '../../services/music_service.dart';
 import '../../services/piped_service.dart';
 import '/models/media_Item_builder.dart';
 import '/ui/widgets/create_playlist_dialog.dart';
@@ -181,6 +182,15 @@ class AddToPlaylistController extends GetxController {
         .whereType<Playlist>()
         .toList();
     localPlaylists = playlists.toList();
+
+    if (Hive.box("AppPrefs").get('yt_logged_in', defaultValue: false) == true) {
+      try {
+        final ytPlaylists = await Get.find<MusicServices>().getAccountPlaylists();
+        localPlaylists.addAll(ytPlaylists);
+        playlists.value = localPlaylists.toList();
+      } catch (_) {}
+    }
+
     final res = await Get.find<PipedServices>().getAllPlaylists();
     if (res.code == 1) {
       pipedPlaylists = res.response
@@ -205,6 +215,21 @@ class AddToPlaylistController extends GetxController {
       List<MediaItem> songs, String playlistId, BuildContext context) async {
     additionInProgress.value = true;
     if (playlistType.value == "local") {
+      if (playlistId.startsWith("PL") || playlistId.startsWith("VL")) {
+        try {
+          bool success = true;
+          final musicServices = Get.find<MusicServices>();
+          for (MediaItem element in songs) {
+            final res = await musicServices.addSongToPlaylist(playlistId, element.id);
+            if (!res) success = false;
+          }
+          additionInProgress.value = false;
+          return success;
+        } catch (_) {
+          additionInProgress.value = false;
+          return false;
+        }
+      }
       final plstBox = await Hive.openBox(playlistId);
       final playlistSongIds = plstBox.values.map((item) => item['videoId']);
       for (MediaItem element in songs) {

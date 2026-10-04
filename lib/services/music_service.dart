@@ -2,11 +2,13 @@
 
 import 'dart:convert';
 import 'package:audio_service/audio_service.dart';
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' as getx;
 import 'package:hive/hive.dart';
 
 import '/models/album.dart';
+import '/models/playlist.dart';
 import '/services/utils.dart';
 import '../utils/helper.dart';
 import 'constant.dart';
@@ -87,6 +89,12 @@ class MusicServices extends getx.GetxService {
 
     final appPrefsBox = Hive.box('AppPrefs');
     hlCode = appPrefsBox.get('contentLanguage') ?? "en";
+
+    final storedCookies = appPrefsBox.get('yt_cookies');
+    if (storedCookies != null && storedCookies.toString().isNotEmpty) {
+      await updateAuthCookies(storedCookies.toString());
+    }
+
     if (appPrefsBox.containsKey('visitorId')) {
       final visitorData = appPrefsBox.get("visitorId");
       if (visitorData != null && !isExpired(epoch: visitorData['exp'])) {
@@ -113,6 +121,23 @@ class MusicServices extends getx.GetxService {
     // not able to generate in that case
     _headers['X-Goog-Visitor-Id'] =
         visitorId ?? "CgttN24wcmd5UzNSWSi2lvq2BjIKCgJKUBIEGgAgYQ%3D%3D";
+  }
+
+  Future<void> updateAuthCookies(String cookies) async {
+    _headers['cookie'] = cookies;
+    final sapisidMatch = RegExp(r'SAPISID=([^;]+)').firstMatch(cookies);
+    if (sapisidMatch != null) {
+      final sapisid = sapisidMatch.group(1)!;
+      final time = (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
+      final input = "$time $sapisid $domain";
+      final hash = sha1.convert(utf8.encode(input)).toString();
+      _headers['authorization'] = "SAPISIDHASH ${time}_$hash";
+    }
+  }
+
+  void clearAuthCookies() {
+    _headers['cookie'] = 'CONSENT=YES+1';
+    _headers.remove('authorization');
   }
 
   set hlCode(String code) {
@@ -1007,6 +1032,50 @@ class MusicServices extends getx.GetxService {
               .toList();
     }
     return result;
+  }
+
+  Future<Map<String, dynamic>> getLikedSongs({int limit = 100}) async {
+    return await getPlaylistOrAlbumSongs(playlistId: "LM", limit: limit);
+  }
+
+  Future<List<Playlist>> getAccountPlaylists() async {
+    final data = Map.from(_context);
+    data['browseId'] = "FEmusic_liked_playlists";
+    try {
+      final response = (await _sendRequest("browse", data)).data;
+      final results = nav(response, [...single_column_tab, ...section_list, 0, 'gridRenderer', 'items']) ??
+          nav(response, [...single_column_tab, ...section_list, 0, 'musicShelfRenderer', 'contents']) ?? [];
+      final List<Playlist> playlists = [];
+      for (dynamic item in results) {
+        final renderer = item['musicTwoRowItemRenderer'] ?? item['musicResponsiveListItemRenderer'];
+        if (renderer != null) {
+          final parsed = parsePlaylist(renderer);
+          if (parsed.playlistId.isNotEmpty) {
+            playlists.add(parsed);
+          }
+        }
+      }
+      return playlists;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> addSongToPlaylist(String playlistId, String videoId) async {
+    final data = Map.from(_context);
+    data['playlistId'] = playlistId;
+    data['actions'] = [
+      {
+        'action': 'ACTION_ADD_VIDEO',
+        'addedVideoId': videoId,
+      }
+    ];
+    try {
+      final response = await _sendRequest("browse/edit_playlist", data);
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<String?> getSongYear(String songId) async {
