@@ -21,7 +21,7 @@ class ContentListWidget extends StatelessWidget {
     final isAlbumContent = content.runtimeType.toString() == "AlbumContent";
 
     return SizedBox(
-      height: 270,
+      height: 285,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
