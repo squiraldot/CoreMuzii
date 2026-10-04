@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import '/services/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -418,7 +419,7 @@ class Body extends StatelessWidget {
                                   _HomeMoodChips(
                                     moods: homeScreenController.homeMoods,
                                   ),
-                                if (Hive.box('AppPrefs').get(
+                                if (Hive.box(appPrefsBoxName).get(
                                       'yt_logged_in',
                                       defaultValue: false,
                                     ) ==
