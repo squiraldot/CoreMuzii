@@ -22,7 +22,6 @@ class HomeShimmer extends StatelessWidget {
             _contentWidget(),
           ],
         ),
-      ),
     );
   }
 
