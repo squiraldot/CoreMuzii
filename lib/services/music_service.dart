@@ -312,10 +312,26 @@ class MusicServices extends getx.GetxService {
         _extractCookie(cookies, '__Secure-1PAPISID');
     if (sapisid != null && sapisid.isNotEmpty) {
       final timestamp = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      final authParts = <String>[];
       final hash = sha1
           .convert(utf8.encode('$timestamp $sapisid https://music.youtube.com'))
           .toString();
-      _headers['authorization'] = 'SAPISIDHASH ${timestamp}_$hash';
+      authParts.add('SAPISIDHASH ${timestamp}_$hash');
+
+      final sapisid1p = _extractCookie(cookies, '__Secure-1PAPISID');
+      final sapisid3p = _extractCookie(cookies, '__Secure-3PAPISID');
+      for (final entry in <String, String?>{
+        'SAPISID1PHASH': sapisid1p,
+        'SAPISID3PHASH': sapisid3p,
+      }.entries) {
+        final sid = entry.value;
+        if (sid == null || sid.isEmpty) continue;
+        final sidHash = sha1
+            .convert(utf8.encode('$timestamp $sid https://music.youtube.com'))
+            .toString();
+        authParts.add(entry.key + ' ' + timestamp.toString() + '_' + sidHash);
+      }
+      _headers['authorization'] = authParts.join(' ');
     }
     try {
       final response =
@@ -489,30 +505,15 @@ class MusicServices extends getx.GetxService {
   Future<Map<String, String?>> getYouTubeAccountInfo() async {
     await ensureReady();
     final response = await _sendRequest('account/account_menu', {});
-    dynamic navValue(dynamic root, List<dynamic> path) {
-      dynamic current = root;
-      for (final key in path) {
-        if (current is! Map || !current.containsKey(key)) return null;
-        current = current[key];
-      }
-      return current;
-    }
-
-    final header = navValue(response.data, [
-      'actions',
-      0,
-      'openPopupAction',
-      'popup',
-      'multiPageMenuRenderer',
-      'header',
-      'activeAccountHeaderRenderer',
-    ]);
 
     String? text(dynamic value) {
       if (value is Map) {
         final runs = value['runs'];
         if (runs is List && runs.isNotEmpty) {
-          return runs.map((run) => run['text']?.toString() ?? '').join().trim();
+          return runs
+              .map((run) => run is Map ? run['text']?.toString() ?? '' : '')
+              .join()
+              .trim();
         }
         final simple = value['simpleText'];
         if (simple is String) return simple.trim();
@@ -520,13 +521,48 @@ class MusicServices extends getx.GetxService {
       return value is String ? value.trim() : null;
     }
 
-    return {
-      'accountName': header is Map ? text(header['accountName']) : null,
-      'channelHandle': header is Map ? text(header['channelHandle']) : null,
-      'accountPhotoUrl': header is Map
-          ? navValue(header, ['accountPhoto', 'thumbnails', 0, 'url'])?.toString()
-          : null,
-    };
+    Map<String, String?>? account;
+    void walk(dynamic value) {
+      if (account != null) return;
+      if (value is Map) {
+        final header = value['activeAccountHeaderRenderer'];
+        if (header is Map) {
+          final thumbnails = header['accountPhoto'] is Map
+              ? header['accountPhoto']['thumbnails']
+              : null;
+          String? photoUrl;
+          if (thumbnails is List && thumbnails.isNotEmpty) {
+            final first = thumbnails.first;
+            if (first is Map) {
+              photoUrl = first['url']?.toString();
+            }
+          }
+          account = {
+            'accountName': text(header['accountName']),
+            'channelHandle': text(header['channelHandle']),
+            'accountPhotoUrl': photoUrl,
+          };
+          return;
+        }
+        for (final child in value.values) {
+          if (child is Map || child is List) walk(child);
+          if (account != null) return;
+        }
+      } else if (value is List) {
+        for (final child in value) {
+          if (child is Map || child is List) walk(child);
+          if (account != null) return;
+        }
+      }
+    }
+
+    walk(response.data);
+    return account ??
+        <String, String?>{
+          'accountName': null,
+          'channelHandle': null,
+          'accountPhotoUrl': null,
+        };
   }
 
   Future<bool> activateYouTubeAccount(String accountKey) async {
