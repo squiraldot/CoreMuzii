@@ -1,3 +1,4 @@
+import 'constant.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
@@ -25,7 +26,7 @@ class StreamProvider {
     }
     
     String lastStatusMsg = "Unknown error occurred";
-    final appPrefsBox = Hive.box('AppPrefs');
+    final appPrefsBox = Hive.box(appPrefsBoxName);
     final visitorData = appPrefsBox.get("visitorId");
     final visitorId = visitorData != null ? visitorData['id'] : '';
 
