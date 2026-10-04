@@ -33,6 +33,12 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   bool _homeRefreshInProgress = false;
   String _homeContextSignature = '';
   List<HomeMood> homeMoods = <HomeMood>[];
+  /// Reactive snapshot of the currently authenticated YouTube account.
+  ///
+  /// Home used to read Hive directly from the widget tree. That made the UI
+  /// race the login/account hydration path and could leave the fallback
+  /// "YouTube Music" label visible even though the session was authenticated.
+  final youtubeAccount = <String, dynamic>{}.obs;
 
   @override
   onInit() {
@@ -137,24 +143,66 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
 
   Future<void> _ensureActiveYouTubeAccountInfo() async {
     final box = Hive.box('AppPrefs');
-    final activeKey = box.get('yt_active_account_key')?.toString();
     final stored = box.get('yt_accounts');
-    if (activeKey == null || stored is! Map) return;
 
-    final accounts = <String, dynamic>{
-      ...stored.map((key, value) => MapEntry(key.toString(), value)),
-    };
-    final current = accounts[activeKey];
-    if (current is! Map) return;
+    final accounts = <String, dynamic>{};
+    if (stored is Map) {
+      accounts.addAll(
+        stored.map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+      );
+    }
+
+    var activeKey = box.get('yt_active_account_key')?.toString();
+    Map<String, dynamic> current = <String, dynamic>{};
+
+    if (activeKey != null && accounts[activeKey] is Map) {
+      current = Map<String, dynamic>.from(accounts[activeKey] as Map);
+    } else {
+      // Recover older/single-account sessions which have cookies but no
+      // account-record key. This is the important compatibility path for
+      // users who logged in before multi-account persistence was introduced.
+      final cookies = box.get('yt_cookies')?.toString();
+      if (cookies != null && cookies.trim().isNotEmpty) {
+        final identity = YouTubeSessionIdentity.fromDataSyncId(
+          box.get('yt_data_sync_id')?.toString(),
+          authUser: box.get('yt_auth_user')?.toString(),
+        );
+        activeKey = identity.accountKey;
+        current = <String, dynamic>{
+          'cookies': cookies,
+          'visitorData': box.get('yt_visitor_data')?.toString(),
+          'dataSyncId': box.get('yt_data_sync_id')?.toString(),
+          'authUser': identity.authUser,
+          'identityToken': box.get('yt_identity_token')?.toString(),
+        };
+        accounts[activeKey] = current;
+        await box.put('yt_accounts', accounts);
+        await box.put('yt_active_account_key', activeKey);
+      }
+    }
+
+    if (activeKey == null) {
+      youtubeAccount.clear();
+      return;
+    }
 
     final currentName = current['accountName']?.toString().trim() ?? '';
     final currentPhoto = current['accountPhotoUrl']?.toString().trim() ?? '';
-    if (currentName.isNotEmpty && currentPhoto.isNotEmpty) return;
+
+    if (currentName.isNotEmpty && currentPhoto.isNotEmpty) {
+      youtubeAccount.assignAll(current);
+      return;
+    }
 
     try {
+      // MusicServices restores the active cookie/session before this call.
+      // account/account_menu is the same authenticated source used by the
+      // reference implementation to obtain the signed-in profile.
       final info = await _musicServices.getYouTubeAccountInfo();
       final updated = <String, dynamic>{
-        ...Map<String, dynamic>.from(current),
+        ...current,
         if (info['accountName']?.toString().trim().isNotEmpty == true)
           'accountName': info['accountName'],
         if (info['channelHandle']?.toString().trim().isNotEmpty == true)
@@ -163,9 +211,15 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
           'accountPhotoUrl': info['accountPhotoUrl'],
         'updatedAt': DateTime.now().millisecondsSinceEpoch,
       };
+
       accounts[activeKey] = updated;
       await box.put('yt_accounts', accounts);
+      await box.put('yt_active_account_key', activeKey);
+      youtubeAccount.assignAll(updated);
     } catch (e) {
+      // Keep whatever metadata was already persisted. The session itself is
+      // still valid, so the Home screen should not crash or hide the account.
+      youtubeAccount.assignAll(current);
       printINFO('YouTube account profile unavailable: $e');
     }
   }
