@@ -194,6 +194,15 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
       await box.put('yt_active_account_key', identity.accountKey);
       await box.put('yt_cookies', cookies);
       await box.put('yt_logged_in', true);
+
+      final accountName = accountInfo['accountName']?.toString().trim() ?? '';
+      final accountPhoto = accountInfo['accountPhotoUrl']?.toString().trim() ?? '';
+      if (accountName.isNotEmpty) {
+        await box.put('AccountName', accountName);
+      }
+      if (accountPhoto.isNotEmpty) {
+        await box.put('AccountThumbUrl', accountPhoto);
+      }
       if (sessionContext['visitorData']?.toString().trim().isNotEmpty == true) {
         await box.put('yt_visitor_data', sessionContext['visitorData'].toString());
       }
