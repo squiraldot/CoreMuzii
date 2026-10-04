@@ -1,3 +1,4 @@
+import '../../services/constant.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -84,7 +85,7 @@ class SongInfoDialog extends StatelessWidget {
       final dbStreamData = Hive.box("SongsUrlCache").get(id);
       tempstreamInfo = dbStreamData != null &&
               dbStreamData.runtimeType.toString().contains("Map")
-          ? dbStreamData[Hive.box('AppPrefs').get('streamingQuality') == 0
+          ? dbStreamData[Hive.box(appPrefsBoxName).get('streamingQuality') == 0
               ? 'lowQualityAudio'
               : "highQualityAudio"]
           : nullVal;
