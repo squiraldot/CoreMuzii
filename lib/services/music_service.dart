@@ -93,7 +93,7 @@ class MusicServices extends getx.GetxService {
       'contentPlaybackContext': {'signatureTimestamp': signatureTimestamp},
     };
 
-    final appPrefsBox = Hive.box('AppPrefs');
+    final appPrefsBox = Hive.box(appPrefsBoxName);
     hlCode = appPrefsBox.get('contentLanguage') ?? "en";
     glCode = appPrefsBox.get('contentCountryCode') ??
         getx.Get.deviceLocale?.countryCode ?? 'US';
@@ -567,7 +567,7 @@ class MusicServices extends getx.GetxService {
 
   Future<bool> activateYouTubeAccount(String accountKey) async {
     await ensureReady();
-    final box = Hive.box('AppPrefs');
+    final box = Hive.box(appPrefsBoxName);
     final storedAccounts = box.get('yt_accounts');
     if (storedAccounts is! Map) return false;
     final account = storedAccounts[accountKey];
@@ -603,7 +603,7 @@ class MusicServices extends getx.GetxService {
 
   Future<bool> recordYouTubePlayback(String videoId) async {
     await ensureReady();
-    final appPrefs = Hive.box('AppPrefs');
+    final appPrefs = Hive.box(appPrefsBoxName);
     if (appPrefs.get('yt_logged_in', defaultValue: false) != true) {
       return false;
     }
