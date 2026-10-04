@@ -1,3 +1,4 @@
+import '/services/constant.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,10 +23,10 @@ class ThemeController extends GetxController {
         WidgetsBinding.instance.platformDispatcher.platformBrightness;
 
     primaryColor.value =
-        Color(Hive.box('AppPrefs').get("themePrimaryColor") ?? 4278199603);
+        Color(Hive.box(appPrefsBoxName).get("themePrimaryColor") ?? 4278199603);
 
     changeThemeModeType(
-        ThemeType.values[Hive.box('AppPrefs').get("themeModeType") ?? 0]);
+        ThemeType.values[Hive.box(appPrefsBoxName).get("themeModeType") ?? 0]);
 
     _listenSystemBrightness();
 
@@ -37,7 +38,7 @@ class ThemeController extends GetxController {
     platformDispatcher.onPlatformBrightnessChanged = () {
       systemBrightness = platformDispatcher.platformBrightness;
       changeThemeModeType(
-          ThemeType.values[Hive.box('AppPrefs').get("themeModeType")],
+          ThemeType.values[Hive.box(appPrefsBoxName).get("themeModeType")],
           sysCall: true);
     };
   }
@@ -82,7 +83,7 @@ class ThemeController extends GetxController {
         textColor: textColor.value,
         titleColorSwatch: _createMaterialColor(textColor.value));
     currentSongId = songId;
-    Hive.box('AppPrefs').put("themePrimaryColor", (primaryColor.value!).toARGB32());
+    Hive.box(appPrefsBoxName).put("themePrimaryColor", (primaryColor.value!).toARGB32());
     setWindowsTitleBarColor(themedata.value!.scaffoldBackgroundColor);
   }
 
