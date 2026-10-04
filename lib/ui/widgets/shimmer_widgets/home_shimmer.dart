@@ -74,14 +74,14 @@ class HomeShimmer extends StatelessWidget {
 
   Widget _contentWidget() {
     return SizedBox(
-      height: 270,
+      height: 285,
       child: Padding(
         padding: EdgeInsets.zero,
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const BasicShimmerContainer(Size(150, 28)),
-          const SizedBox(height: 0),
+          const SizedBox.shrink(),
           Expanded(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
@@ -90,7 +90,9 @@ class HomeShimmer extends StatelessWidget {
               itemBuilder: (_, __) {
                 return const SizedBox(
                   width: 160,
-                  child: Column(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 10, bottom: 6),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         BasicShimmerContainer(Size(160, 160)),
@@ -99,6 +101,7 @@ class HomeShimmer extends StatelessWidget {
                         SizedBox(height: 5),
                         BasicShimmerContainer(Size(90, 12)),
                       ],
+                    ),
                   ),
                 );
               },
