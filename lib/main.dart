@@ -1,3 +1,4 @@
+import 'services/constant.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -50,7 +51,7 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         translations: Languages(),
         locale:
-            Locale(Hive.box("AppPrefs").get('currentAppLanguageCode') ?? "en"),
+            Locale(Hive.box(appPrefsBoxName).get('currentAppLanguageCode') ?? "en"),
         fallbackLocale: const Locale("en"),
         builder: (context, child) {
           final mQuery = MediaQuery.of(context);
@@ -118,7 +119,7 @@ initHive() async {
 }
 
 void _setAppInitPrefs() {
-  final appPrefs = Hive.box("AppPrefs");
+  final appPrefs = Hive.box(appPrefsBoxName);
   if (appPrefs.get('cacheCleared_v2') != true) {
     Hive.box('SongsUrlCache').clear();
     appPrefs.put('cacheCleared_v2', true);
