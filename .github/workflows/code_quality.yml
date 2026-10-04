@@ -1,9 +1,6 @@
 name: Code quality check # branch validation
 
 on:
-  push:
-    branches:
-      - '**'
   workflow_dispatch:
 
 concurrency:
