@@ -56,9 +56,9 @@ class QuickPicksWidget extends StatelessWidget {
     ).whenComplete(() => Get.delete<SongInfoController>());
   }
 
-  Widget _heading(BuildContext context) {
+  Widget _heading(BuildContext context, {double bottom = 10}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.only(bottom: bottom),
       child: Text(
         content.title.trim().isEmpty ? 'YouTube Music' : content.title.trim(),
         maxLines: 1,
@@ -193,7 +193,7 @@ class QuickPicksWidget extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _heading(context),
+              _heading(context, bottom: 0),
               Expanded(
                 child: ListView.separated(
                   controller: scrollController,
