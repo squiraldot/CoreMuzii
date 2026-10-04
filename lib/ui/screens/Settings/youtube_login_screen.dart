@@ -50,6 +50,17 @@ class _YoutubeLoginScreenState extends State<YoutubeLoginScreen> {
             // redirect. Keep polling the WebView cookies instead of reloading.
             if (error.isForMainFrame != true) return;
             if (error.url?.contains('accounts.youtube.com/accounts/SetSID') ?? false) {
+              // Google may reset the SetSID connection after a successful
+              // sign-in. Auth cookies are often already committed, so recover
+              // by returning to YouTube instead of leaving the user on the
+              // WebView network-error page.
+              Future<void>.delayed(const Duration(milliseconds: 350), () async {
+                if (!mounted || _loginCompleting) return;
+                await _webViewController.loadRequest(
+                  Uri.parse('https://music.youtube.com/'),
+                );
+                await _checkAndExtractSession();
+              });
               return;
             }
             if (mounted) {
