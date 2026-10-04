@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../services/constant.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:mdlovfimusic/utils/helper.dart';
@@ -214,7 +215,7 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     StatefulBuilder(
                       builder: (context, setState) {
-                        final box = Hive.box('AppPrefs');
+                        final box = Hive.box(appPrefsBoxName);
                         final isLoggedIn =
                             box.get('yt_logged_in', defaultValue: false) == true;
                         final activeKey =
