@@ -1,9 +1,6 @@
 name: MDLovFi Android APK
 
 on:
-  push:
-    branches:
-      - '**'
   workflow_dispatch:
 
 concurrency:
