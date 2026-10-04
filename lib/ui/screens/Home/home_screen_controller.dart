@@ -188,6 +188,24 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
       return;
     }
 
+    // Keep the same account metadata keys used by the reference implementation.
+    // This also upgrades older installs where profile data was stored outside
+    // the multi-account map.
+    final legacyName = box.get('AccountName')?.toString().trim() ??
+        box.get('yt_account_name')?.toString().trim() ??
+        '';
+    final legacyPhoto = box.get('AccountThumbUrl')?.toString().trim() ??
+        box.get('yt_account_photo_url')?.toString().trim() ??
+        '';
+    if (current['accountName']?.toString().trim().isEmpty == true &&
+        legacyName.isNotEmpty) {
+      current['accountName'] = legacyName;
+    }
+    if (current['accountPhotoUrl']?.toString().trim().isEmpty == true &&
+        legacyPhoto.isNotEmpty) {
+      current['accountPhotoUrl'] = legacyPhoto;
+    }
+
     final currentName = current['accountName']?.toString().trim() ?? '';
     final currentPhoto = current['accountPhotoUrl']?.toString().trim() ?? '';
 
@@ -215,6 +233,16 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
       accounts[activeKey] = updated;
       await box.put('yt_accounts', accounts);
       await box.put('yt_active_account_key', activeKey);
+
+      final accountName = updated['accountName']?.toString().trim() ?? '';
+      final accountPhoto = updated['accountPhotoUrl']?.toString().trim() ?? '';
+      if (accountName.isNotEmpty) {
+        await box.put('AccountName', accountName);
+      }
+      if (accountPhoto.isNotEmpty) {
+        await box.put('AccountThumbUrl', accountPhoto);
+      }
+
       youtubeAccount.assignAll(updated);
     } catch (e) {
       // Keep whatever metadata was already persisted. The session itself is
