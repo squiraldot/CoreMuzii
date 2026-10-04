@@ -13,9 +13,7 @@ class HomeShimmer extends StatelessWidget {
       highlightColor: Colors.grey[300]!,
       enabled: true,
       direction: ShimmerDirection.ltr,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15),
-        child: Column(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _quickPicksShimmer(),
@@ -76,14 +74,14 @@ class HomeShimmer extends StatelessWidget {
 
   Widget _contentWidget() {
     return SizedBox(
-      height: 320,
+      height: 270,
       child: Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 18),
+        padding: EdgeInsets.zero,
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const BasicShimmerContainer(Size(150, 28)),
-          const SizedBox(height: 14),
+          const SizedBox(height: 0),
           Expanded(
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
