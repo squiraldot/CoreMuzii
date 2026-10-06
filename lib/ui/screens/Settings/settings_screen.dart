@@ -17,6 +17,7 @@ import '/ui/widgets/link_piped.dart';
 import '../Home/home_screen_controller.dart';
 import '/services/music_service.dart';
 import '/ui/player/player_controller.dart';
+import 'advanced_equalizer_screen.dart';
 import '/ui/utils/theme_controller.dart';
 import 'components/custom_expansion_tile.dart';
 import 'settings_screen_controller.dart';
@@ -598,12 +599,8 @@ class SettingsScreen extends StatelessWidget {
                       title: Text("equalizer".tr),
                       subtitle: Text("equalizerDes".tr,
                           style: Theme.of(context).textTheme.bodyMedium),
-                      onTap: () async {
-                        try {
-                          await Get.find<PlayerController>().openEqualizer();
-                        } catch (e) {
-                          printERROR(e);
-                        }
+                      onTap: () {
+                        Get.to(() => const AdvancedEqualizerScreen());
                       },
                     ),
                   if (!isDesktop)
