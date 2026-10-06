@@ -44,6 +44,20 @@ void main() {
       expect(config.bands.every((band) => band.gainDb == 0), isTrue);
     });
 
+    test('round-trips the complete config format', () {
+      final config = EqualizerConfig.graphic10Band().copyWith(
+        enabled: false,
+        preampDb: -3.5,
+        outputGainDb: 2,
+        limiterEnabled: false,
+      );
+
+      expect(
+        EqualizerConfig.fromJson(config.toJson()),
+        equals(config),
+      );
+    });
+
     test('clamps preamp and output gain to the safe range', () {
       final config = EqualizerConfig(
         preampDb: 99,
