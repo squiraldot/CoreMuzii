@@ -41,7 +41,7 @@ void main() {
     expect(imported.author, preset.author);
     expect(imported.description, preset.description);
     expect(imported.isBuiltIn, isFalse);
-    expect(imported.config.toJson(), equals(preset.config.toJson()));
+    expect(_portableConfigJson(imported.config), equals(_portableConfigJson(preset.config)));
   });
 
 
@@ -53,7 +53,7 @@ void main() {
 
     expect(imported.isBuiltIn, isFalse);
     expect(imported.name, builtIn.name);
-    expect(imported.config.toJson(), equals(builtIn.config.toJson()));
+    expect(_portableConfigJson(imported.config), equals(_portableConfigJson(builtIn.config)));
   });
 
   test('rejects malformed json and unsupported formats', () {
@@ -144,4 +144,15 @@ void main() {
     expect(imported.config.limiterEnabled, true);
     expect(imported.config.bands.single.frequency, 1000);
   });
+}
+
+Map<String, Object?> _portableConfigJson(EqualizerConfig config) {
+  final json = Map<String, Object?>.from(config.toJson());
+  final bands = (json['bands'] as List).cast<Map<String, Object?>>();
+  json['bands'] = bands.map((band) {
+    final portableBand = Map<String, Object?>.from(band);
+    portableBand.remove('id');
+    return portableBand;
+  }).toList(growable: false);
+  return json;
 }
