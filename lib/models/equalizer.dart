@@ -141,6 +141,7 @@ class EqualizerBand {
 }
 
 class EqualizerConfig {
+  static const int maxParametricBands = 12;
   static const double minGlobalGainDb = -15;
   static const double maxGlobalGainDb = 15;
 
@@ -158,7 +159,7 @@ class EqualizerConfig {
     required List<EqualizerBand> bands,
   })  : preampDb = _clampGlobalGain(preampDb),
         outputGainDb = _clampGlobalGain(outputGainDb),
-        bands = List.unmodifiable(bands);
+        bands = _validateBands(bands);
 
   factory EqualizerConfig.graphic10Band() {
     const frequencies = [
@@ -186,6 +187,23 @@ class EqualizerConfig {
             enabled: true,
           ),
       ],
+    );
+  }
+
+  EqualizerConfig addBand(EqualizerBand band) {
+    if (bands.length >= maxParametricBands) {
+      throw ArgumentError.value(
+        bands.length,
+        'bands',
+        'A parametric EQ can contain at most $maxParametricBands bands',
+      );
+    }
+    return copyWith(bands: [...bands, band]);
+  }
+
+  EqualizerConfig removeBand(String bandId) {
+    return copyWith(
+      bands: bands.where((band) => band.id != bandId).toList(growable: false),
     );
   }
 
@@ -270,6 +288,18 @@ class EqualizerConfig {
         outputGainDb,
         Object.hashAll(bands),
       );
+}
+
+List<EqualizerBand> _validateBands(List<EqualizerBand> bands) {
+  if (bands.length > EqualizerConfig.maxParametricBands) {
+    throw ArgumentError.value(
+      bands.length,
+      'bands',
+      'A parametric EQ can contain at most '
+          '${EqualizerConfig.maxParametricBands} bands',
+    );
+  }
+  return List.unmodifiable(bands);
 }
 
 double _clampGlobalGain(double value) {
