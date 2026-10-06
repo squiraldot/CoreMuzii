@@ -44,6 +44,15 @@ void main() {
       expect(config.bands.every((band) => band.gainDb == 0), isTrue);
     });
 
+    test('uses the stable v1 portable EQ schema', () {
+      final json = EqualizerConfig.graphic10Band().toJson();
+
+      expect(json['format'], 'mdlovfi-eq');
+      expect(json['version'], 1);
+      expect(json['enabled'], isTrue);
+      expect(json['limiterEnabled'], isTrue);
+    });
+
     test('round-trips the complete config format', () {
       final config = EqualizerConfig.graphic10Band().copyWith(
         enabled: false,
