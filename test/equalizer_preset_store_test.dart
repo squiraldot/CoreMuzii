@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:mdlovfimusic/models/equalizer.dart';
+import 'package:mdlovfimusic/models/equalizer_preset.dart';
 import 'package:mdlovfimusic/services/equalizer_preset_store.dart';
 
 void main() {
