@@ -1,3 +1,5 @@
+import '/models/equalizer.dart';
+
 import '../../services/constant.dart';
 import 'dart:async';
 import 'dart:io';
@@ -1084,6 +1086,17 @@ class PlayerController extends GetxController
 
   Future<void> openEqualizer() async {
     await _audioHandler.customAction("openEqualizer");
+  }
+
+  Future<void> setEqualizerConfig(EqualizerConfig config) async {
+    await _audioHandler.customAction(
+      "setEqualizerConfig",
+      {'config': config.toJson()},
+    );
+  }
+
+  Future<void> resetEqualizer() async {
+    await _audioHandler.customAction("resetEqualizer");
   }
 
   /// Called from audio handler in case audio is not playable
