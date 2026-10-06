@@ -9,6 +9,7 @@ import '/models/equalizer.dart';
 import '/services/constant.dart';
 import '/ui/player/player_controller.dart';
 import 'equalizer_preset_panel.dart';
+import 'parametric_equalizer_editor.dart';
 
 class AdvancedEqualizerScreen extends StatefulWidget {
   const AdvancedEqualizerScreen({super.key});
@@ -21,6 +22,7 @@ class AdvancedEqualizerScreen extends StatefulWidget {
 class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
   late EqualizerConfig _config;
   bool _saving = false;
+  bool _parametricMode = false;
   Future<void> _previewQueue = Future<void>.value();
 
   @override
@@ -136,7 +138,34 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
             onApplyConfig: (config) => _commit(config),
           ),
           const SizedBox(height: 16),
-          LayoutBuilder(
+          Center(
+            child: ToggleButtons(
+              isSelected: [_parametricMode == false, _parametricMode],
+              onPressed: _saving
+                  ? null
+                  : (index) => setState(() => _parametricMode = index == 1),
+              borderRadius: BorderRadius.circular(10),
+              children: const [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text('Graphic'),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: Text('Parametric'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_parametricMode)
+            ParametricEqualizerEditor(
+              config: _config,
+              enabled: _config.enabled,
+              onChanged: (config) => _preview(config),
+            )
+          else
+            LayoutBuilder(
             builder: (context, constraints) {
               final size = Size(constraints.maxWidth, 190);
               return GestureDetector(
