@@ -44,6 +44,18 @@ void main() {
     expect(imported.config, equals(preset.config));
   });
 
+
+  test('exports built-in presets without making the portable file mutable', () {
+    final builtIn = EqualizerBuiltInPresets.all.first;
+
+    final encoded = EqualizerPresetFileCodec.encode(builtIn);
+    final imported = EqualizerPresetFileCodec.decode(encoded);
+
+    expect(imported.isBuiltIn, isFalse);
+    expect(imported.name, builtIn.name);
+    expect(imported.config, equals(builtIn.config));
+  });
+
   test('rejects malformed json and unsupported formats', () {
     expect(
       () => EqualizerPresetFileCodec.decode('{broken'),
