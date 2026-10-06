@@ -279,7 +279,7 @@ double _clampGlobalGain(double value) {
   return value.clamp(
     EqualizerConfig.minGlobalGainDb,
     EqualizerConfig.maxGlobalGainDb,
-  );
+  ).toDouble();
 }
 
 String _requireString(Map<String, Object?> json, String key) {
