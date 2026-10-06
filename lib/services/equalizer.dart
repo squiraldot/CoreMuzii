@@ -5,10 +5,30 @@ import 'package:mdlovfimusic/native_bindings/andrid_utils.dart';
 
 import '../models/equalizer.dart';
 
+class EqualizerApplyGate {
+  int? _sessionId;
+  String? _configJson;
+
+  bool shouldApply(int sessionId, String configJson) {
+    return _sessionId != sessionId || _configJson != configJson;
+  }
+
+  void markApplied(int sessionId, String configJson) {
+    _sessionId = sessionId;
+    _configJson = configJson;
+  }
+
+  void clearSession(int sessionId) {
+    if (_sessionId == sessionId) {
+      _sessionId = null;
+      _configJson = null;
+    }
+  }
+}
+
 class EqualizerService {
   static final Equalizer _equalizer = Equalizer();
-  static int? _appliedSessionId;
-  static String? _appliedConfigJson;
+  static final EqualizerApplyGate _applyGate = EqualizerApplyGate();
 
   static bool openEqualizer(int sessionId) {
     JObject activity = JObject.fromReference(Jni.getCurrentActivity());
@@ -23,7 +43,7 @@ class EqualizerService {
     if (sessionId <= 0) return false;
 
     final configJson = jsonEncode(config.toJson());
-    if (_appliedSessionId == sessionId && _appliedConfigJson == configJson) {
+    if (!_applyGate.shouldApply(sessionId, configJson)) {
       return true;
     }
 
@@ -31,8 +51,7 @@ class EqualizerService {
     try {
       final success = _equalizer.applyEqualizerConfig(sessionId, context);
       if (success) {
-        _appliedSessionId = sessionId;
-        _appliedConfigJson = configJson;
+        _applyGate.markApplied(sessionId, configJson);
       }
       return success;
     } finally {
@@ -49,10 +68,7 @@ class EqualizerService {
   static void endAudioEffect(int sessionId) {
     JObject context = JObject.fromReference(Jni.getCachedApplicationContext());
     _equalizer.endAudioEffect(sessionId, context);
-    if (_appliedSessionId == sessionId) {
-      _appliedSessionId = null;
-      _appliedConfigJson = null;
-    }
+    _applyGate.clearSession(sessionId);
     context.release();
   }
 }
