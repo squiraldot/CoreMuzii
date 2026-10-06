@@ -8,10 +8,12 @@ class EqualizerPresetPanel extends StatefulWidget {
   const EqualizerPresetPanel({
     super.key,
     required this.config,
+    required this.persistChanges,
     required this.onApplyConfig,
   });
 
   final EqualizerConfig config;
+  final bool persistChanges;
   final Future<void> Function(EqualizerConfig config) onApplyConfig;
 
   @override
@@ -47,7 +49,17 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
   @override
   void didUpdateWidget(covariant EqualizerPresetPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.config == widget.config || _applyingPreset) return;
+    if (oldWidget.config == widget.config ||
+        _applyingPreset ||
+        !widget.persistChanges) {
+      return;
+    }
+    final matching = _presets.where((preset) => preset.config == widget.config);
+    final exactPreset = matching.isEmpty ? null : matching.first;
+    if (exactPreset != null) {
+      setState(() => _selectedPresetId = exactPreset.id);
+      return;
+    }
     _presetWriteQueue = _presetWriteQueue.then((_) async {
       try {
         await _persistEditedConfig(widget.config);
