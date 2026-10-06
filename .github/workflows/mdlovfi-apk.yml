@@ -1,6 +1,9 @@
 name: MDLovFi Android APK
 
 on:
+  push:
+    branches:
+      - feature/advanced-equalizer
   workflow_dispatch:
 
 concurrency:
