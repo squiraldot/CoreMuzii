@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '/models/equalizer.dart';
 import '/models/equalizer_preset.dart';
+import '/services/equalizer_preset_file_codec.dart';
 import '/services/equalizer_preset_store.dart';
 
 class EqualizerPresetPanel extends StatefulWidget {
@@ -26,6 +31,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
   String? _selectedPresetId;
   bool _loading = true;
   bool _applyingPreset = false;
+  bool _fileOperationInProgress = false;
   Future<void> _presetWriteQueue = Future<void>.value();
 
   List<EqualizerPreset> get _presets => [
@@ -215,6 +221,164 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
     });
   }
 
+
+  Future<void> _export() async {
+    if (_fileOperationInProgress) return;
+
+    final selected = _selected ??
+        EqualizerPreset(
+          id: 'current-eq',
+          name: 'My Equalizer',
+          author: 'User',
+          description: 'Current MDLovFi equalizer settings.',
+          createdAt: DateTime.now().toUtc(),
+          updatedAt: DateTime.now().toUtc(),
+          isBuiltIn: false,
+          config: widget.config,
+        );
+
+    setState(() => _fileOperationInProgress = true);
+    try {
+      final encoded = EqualizerPresetFileCodec.encode(selected);
+      final fileName = _fileName(selected.name);
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: 'Export MDLovFi preset',
+        fileName: fileName,
+        bytes: Uint8List.fromList(utf8.encode(encoded)),
+        mimeType: EqualizerPresetFileCodec.mimeType,
+      );
+
+      if (!mounted || path == null) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Preset exported: $fileName')),
+      );
+    } catch (error) {
+      if (mounted) _showFileError('Could not export preset', error);
+    } finally {
+      if (mounted) setState(() => _fileOperationInProgress = false);
+    }
+  }
+
+  Future<void> _import() async {
+    if (_fileOperationInProgress) return;
+
+    setState(() => _fileOperationInProgress = true);
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: [EqualizerPresetFileCodec.extension],
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+
+      final file = result.files.single;
+      final bytes = file.bytes ?? await file.xFile.readAsBytes();
+      final preset = EqualizerPresetFileCodec.decode(utf8.decode(bytes));
+
+      if (!mounted) return;
+      final shouldApply = await _showImportPreview(preset);
+      if (shouldApply != true) return;
+
+      _applyingPreset = true;
+      try {
+        await widget.onApplyConfig(preset.config);
+      } finally {
+        _applyingPreset = false;
+      }
+
+      if (!mounted) return;
+      final matching = _presets.where((item) => item.config == preset.config);
+      setState(() {
+        _selectedPresetId = matching.isEmpty ? null : matching.first.id;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Imported “${preset.name}”. Use Save as to keep it in My Presets.',
+          ),
+        ),
+      );
+    } on FormatException catch (error) {
+      if (mounted) _showFileError('Invalid MDLovFi preset', error);
+    } catch (error) {
+      if (mounted) _showFileError('Could not import preset', error);
+    } finally {
+      if (mounted) setState(() => _fileOperationInProgress = false);
+    }
+  }
+
+  Future<bool?> _showImportPreview(EqualizerPreset preset) {
+    final enabledBands =
+        preset.config.bands.where((band) => band.enabled).length;
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Preview imported preset'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              preset.name,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text('Author: ${preset.author}'),
+            if (preset.description.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(preset.description),
+            ],
+            const SizedBox(height: 12),
+            Text('Bands: ${enabledBands} enabled'),
+            Text('Preamp: ${preset.config.preampDb.toStringAsFixed(1)} dB'),
+            Text('Limiter: ${preset.config.limiterEnabled ? 'On' : 'Off'}'),
+            Text(
+              'Output gain: '
+              '${preset.config.outputGainDb.toStringAsFixed(1)} dB',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFileError(String title, Object error) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(error.toString()),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _fileName(String name) {
+    final sanitized = name
+        .trim()
+        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+        .replaceAll(RegExp(r'\\s+'), '_');
+    final base = sanitized.isEmpty ? 'mdlovfi-preset' : sanitized;
+    return base.endsWith('.${EqualizerPresetFileCodec.extension}')
+        ? base
+        : '$base.${EqualizerPresetFileCodec.extension}';
+  }
+
   Future<String?> _nameDialog({
     required String title,
     required String action,
@@ -261,7 +425,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                 ),
-                if (_loading)
+                if (_loading || _fileOperationInProgress)
                   const SizedBox(
                     width: 18,
                     height: 18,
@@ -288,7 +452,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
                     ),
                   ),
               ],
-              onChanged: _loading
+              onChanged: _loading || _fileOperationInProgress
                   ? null
                   : (id) {
                       if (id == null) return;
@@ -310,6 +474,16 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
                   onPressed: _selected == null ? null : _duplicate,
                   icon: const Icon(Icons.copy_outlined),
                   label: const Text('Duplicate'),
+                ),
+                TextButton.icon(
+                  onPressed: _fileOperationInProgress ? null : _import,
+                  icon: const Icon(Icons.file_open_outlined),
+                  label: const Text('Import'),
+                ),
+                TextButton.icon(
+                  onPressed: _fileOperationInProgress ? null : _export,
+                  icon: const Icon(Icons.ios_share_outlined),
+                  label: const Text('Export'),
                 ),
                 if (selectedIsCustom)
                   TextButton.icon(
