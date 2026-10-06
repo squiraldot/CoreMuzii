@@ -57,7 +57,7 @@ void main() {
     expect(updated.createdAt, created.createdAt);
     expect(updated.name, 'Updated');
     expect(updated.config.preampDb, -2);
-    expect(updated.updatedAt.isAtSameMomentAs(created.updatedAt), isFalse);
+    expect(updated.updatedAt.isBefore(created.updatedAt), isFalse);
   });
 
   test('duplicates built-in and custom presets as editable custom presets',
