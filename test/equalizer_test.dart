@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mdlovfimusic/models/equalizer.dart';
 import 'package:mdlovfimusic/services/equalizer/biquad.dart';
+import 'package:mdlovfimusic/services/equalizer.dart';
 
 void main() {
   group('EqualizerApplyGate', () {
