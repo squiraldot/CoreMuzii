@@ -24,6 +24,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
   String? _selectedPresetId;
   bool _loading = true;
   bool _applyingPreset = false;
+  Future<void> _presetWriteQueue = Future<void>.value();
 
   List<EqualizerPreset> get _presets => [
         ...EqualizerBuiltInPresets.all,
@@ -47,7 +48,13 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
   void didUpdateWidget(covariant EqualizerPresetPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.config == widget.config || _applyingPreset) return;
-    _persistEditedConfig(widget.config);
+    _presetWriteQueue = _presetWriteQueue.then((_) async {
+      try {
+        await _persistEditedConfig(widget.config);
+      } catch (_) {
+        // A failed preset write must never break realtime EQ editing.
+      }
+    });
   }
 
   Future<void> _load() async {
