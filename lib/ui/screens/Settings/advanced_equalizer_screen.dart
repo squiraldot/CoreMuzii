@@ -333,7 +333,6 @@ class _BandSlider extends StatelessWidget {
 class _EqualizerCurvePainter extends CustomPainter {
   const _EqualizerCurvePainter({
     required this.bands,
-    required this.textStyle,
   });
 
   final List<EqualizerBand> bands;
