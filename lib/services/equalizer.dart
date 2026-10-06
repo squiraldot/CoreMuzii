@@ -27,13 +27,15 @@ class EqualizerApplyGate {
 }
 
 class EqualizerService {
-  static final Equalizer _equalizer = Equalizer();
+  static Equalizer? _equalizer;
   static final EqualizerApplyGate _applyGate = EqualizerApplyGate();
+
+  static Equalizer get _instance => _equalizer ??= Equalizer();
 
   static bool openEqualizer(int sessionId) {
     JObject activity = JObject.fromReference(Jni.getCurrentActivity());
     JObject context = JObject.fromReference(Jni.getCachedApplicationContext());
-    final success = _equalizer.openEqualizer(sessionId, context, activity);
+    final success = _instance.openEqualizer(sessionId, context, activity);
     activity.release();
     context.release();
     return success;
@@ -49,7 +51,7 @@ class EqualizerService {
 
     final context = configJson.toJString();
     try {
-      final success = _equalizer.applyEqualizerConfig(sessionId, context);
+      final success = _instance.applyEqualizerConfig(sessionId, context);
       if (success) {
         _applyGate.markApplied(sessionId, configJson);
       }
@@ -61,13 +63,13 @@ class EqualizerService {
 
   static void initAudioEffect(int sessionId) {
     JObject context = JObject.fromReference(Jni.getCachedApplicationContext());
-    _equalizer.initAudioEffect(sessionId, context);
+    _instance.initAudioEffect(sessionId, context);
     context.release();
   }
 
   static void endAudioEffect(int sessionId) {
     JObject context = JObject.fromReference(Jni.getCachedApplicationContext());
-    _equalizer.endAudioEffect(sessionId, context);
+    _instance.endAudioEffect(sessionId, context);
     _applyGate.clearSession(sessionId);
     context.release();
   }
