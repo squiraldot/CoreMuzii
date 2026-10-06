@@ -3,6 +3,37 @@ import 'package:mdlovfimusic/models/equalizer.dart';
 import 'package:mdlovfimusic/services/equalizer/biquad.dart';
 
 void main() {
+  group('EqualizerApplyGate', () {
+    test('skips duplicate config on the same audio session', () {
+      final gate = EqualizerApplyGate();
+
+      expect(gate.shouldApply(42, 'config-a'), isTrue);
+      gate.markApplied(42, 'config-a');
+
+      expect(gate.shouldApply(42, 'config-a'), isFalse);
+    });
+
+    test('reapplies when session or config changes', () {
+      final gate = EqualizerApplyGate();
+      gate.markApplied(42, 'config-a');
+
+      expect(gate.shouldApply(42, 'config-b'), isTrue);
+      expect(gate.shouldApply(43, 'config-a'), isTrue);
+    });
+
+    test('clearing a session removes only its cached application', () {
+      final gate = EqualizerApplyGate();
+      gate.markApplied(42, 'config-a');
+
+      gate.clearSession(7);
+      expect(gate.shouldApply(42, 'config-a'), isFalse);
+
+      gate.clearSession(42);
+      expect(gate.shouldApply(42, 'config-a'), isTrue);
+    });
+  });
+
+
   group('EqualizerBand', () {
     test('serializes all DSP fields without losing precision', () {
       final band = EqualizerBand(
