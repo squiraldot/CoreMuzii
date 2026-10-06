@@ -77,6 +77,56 @@ void main() {
       expect(config.preampDb, 15);
       expect(config.outputGainDb, -15);
     });
+
+    test('limits parametric configurations to twelve bands', () {
+      final bands = [
+        for (var i = 0; i < EqualizerConfig.maxParametricBands; i++)
+          EqualizerBand(
+            id: 'band-$i',
+            type: EqualizerFilterType.peaking,
+            frequency: 100 + i * 100.0,
+            gainDb: 0,
+            q: 1,
+            enabled: true,
+          ),
+      ];
+
+      expect(
+        () => EqualizerConfig(
+          bands: [
+            ...bands,
+            EqualizerBand(
+              id: 'band-over-limit',
+              type: EqualizerFilterType.peaking,
+              frequency: 2000,
+              gainDb: 0,
+              q: 1,
+              enabled: true,
+            ),
+          ],
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('supports adding and removing parametric bands without changing other bands', () {
+      final config = EqualizerConfig.graphic10Band();
+      final added = EqualizerBand(
+        id: 'parametric-1',
+        type: EqualizerFilterType.lowShelf,
+        frequency: 80,
+        gainDb: 3,
+        q: 0.8,
+        enabled: true,
+      );
+
+      final expanded = config.addBand(added);
+      final removed = expanded.removeBand('parametric-1');
+
+      expect(expanded.bands.last, equals(added));
+      expect(removed, equals(config));
+    });
+
   });
 
   group('BiquadCalculator', () {
