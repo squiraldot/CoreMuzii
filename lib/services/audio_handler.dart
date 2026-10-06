@@ -67,6 +67,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   // var networkErrorPause = false;
   bool isSongLoading = true;
   int _playSessionId = 0;
+  int? _activeEqualizerSessionId;
   EqualizerConfig _equalizerConfig = EqualizerConfig.graphic10Band();
 
   // list of shuffled queue songs ids
@@ -128,10 +129,16 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
   void _listenSessionIdStream() {
     _player.androidAudioSessionIdStream.listen((int? id) {
-      if (id != null) {
-        EqualizerService.initAudioEffect(id);
-        EqualizerService.applyConfig(id, _equalizerConfig);
+      if (id == null || id <= 0) return;
+
+      final previousSessionId = _activeEqualizerSessionId;
+      if (previousSessionId != null && previousSessionId != id) {
+        EqualizerService.endAudioEffect(previousSessionId);
       }
+
+      _activeEqualizerSessionId = id;
+      EqualizerService.initAudioEffect(id);
+      EqualizerService.applyConfig(id, _equalizerConfig);
     });
   }
 
@@ -487,6 +494,10 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     switch (name) {
 
       case 'dispose':
+        if (_activeEqualizerSessionId != null) {
+          EqualizerService.endAudioEffect(_activeEqualizerSessionId!);
+          _activeEqualizerSessionId = null;
+        }
         await _player.dispose();
         super.stop();
         break;
@@ -723,6 +734,19 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         queue.add(currentQueue);
         if (shuffleModeEnabled) {
           shuffledQueue.insert(currentShuffleIndex + 1, song.id);
+        }
+        break;
+
+      case 'applyEqualizerConfig':
+        final configJson = extras?['config'];
+        if (configJson is Map) {
+          final config = EqualizerConfig.fromJson(
+            Map<String, Object?>.from(configJson),
+          );
+          final sessionId = _activeEqualizerSessionId;
+          if (sessionId != null) {
+            EqualizerService.applyConfig(sessionId, config);
+          }
         }
         break;
 
