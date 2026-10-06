@@ -10,12 +10,6 @@ class EqualizerPresetFileCodec {
   static const String mimeType = 'application/json';
 
   static String encode(EqualizerPreset preset) {
-    if (preset.isBuiltIn) {
-      throw ArgumentError(
-        'Built-in presets must be copied before exporting.',
-      );
-    }
-
     final config = preset.config;
     final document = <String, Object>{
       'format': format,
@@ -56,7 +50,7 @@ class EqualizerPresetFileCodec {
       final rawVersion = json['version'];
       if (rawVersion != version) {
         throw FormatException(
-          'Unsupported equalizer preset version: $rawVersion',
+          'Unsupported equalizer preset version: ' + rawVersion.toString(),
         );
       }
 
@@ -65,18 +59,19 @@ class EqualizerPresetFileCodec {
         throw const FormatException('Equalizer preset bands must be a list');
       }
 
-      final bands = rawBands.map((rawBand) {
-        if (rawBand is! Map) {
+      final bands = rawBands.asMap().entries.map((entry) {
+        final band = entry.value;
+        if (band is! Map) {
           throw const FormatException('Equalizer preset band must be an object');
         }
-        final band = Map<String, Object?>.from(rawBand);
+        final bandJson = Map<String, Object?>.from(band);
         return EqualizerBand(
-          id: 'imported-${bands.length}',
-          type: EqualizerFilterTypeJson.parse(band['type']),
-          frequency: _readDouble(band, 'frequency'),
-          gainDb: _readDouble(band, 'gainDb'),
-          q: _readDouble(band, 'q'),
-          enabled: _readBool(band, 'enabled'),
+          id: 'imported-' + entry.key.toString(),
+          type: EqualizerFilterTypeJson.parse(bandJson['type']),
+          frequency: _readDouble(bandJson, 'frequency'),
+          gainDb: _readDouble(bandJson, 'gainDb'),
+          q: _readDouble(bandJson, 'q'),
+          enabled: _readBool(bandJson, 'enabled'),
         );
       }).toList(growable: false);
 
@@ -92,12 +87,15 @@ class EqualizerPresetFileCodec {
         bands: bands,
       );
 
+      final name = _readString(json, 'name');
+      final author = _readString(json, 'author');
+      final description = _readOptionalString(json, 'description', fallback: '');
       final now = DateTime.now().toUtc();
       return EqualizerPreset(
-        id: 'imported-${now.microsecondsSinceEpoch}',
-        name: _readString(json, 'name'),
-        author: _readString(json, 'author'),
-        description: _readOptionalString(json, 'description', fallback: ''),
+        id: 'imported-' + now.microsecondsSinceEpoch.toString(),
+        name: name,
+        author: author,
+        description: description,
         createdAt: now,
         updatedAt: now,
         isBuiltIn: false,
@@ -106,20 +104,20 @@ class EqualizerPresetFileCodec {
     } on FormatException {
       rethrow;
     } on ArgumentError catch (error) {
-      throw FormatException('Invalid equalizer preset: ${error.message}');
+      throw FormatException('Invalid equalizer preset: ' + error.message.toString());
     } on TypeError catch (error) {
-      throw FormatException('Invalid equalizer preset: $error');
+      throw FormatException('Invalid equalizer preset: ' + error.toString());
     } on JsonUnsupportedObjectError catch (error) {
-      throw FormatException('Invalid equalizer preset JSON: $error');
+      throw FormatException('Invalid equalizer preset JSON: ' + error.toString());
     } catch (error) {
-      throw FormatException('Invalid equalizer preset: $error');
+      throw FormatException('Invalid equalizer preset: ' + error.toString());
     }
   }
 
   static String _readString(Map<String, Object?> json, String key) {
     final value = json[key];
     if (value is String && value.trim().isNotEmpty) return value;
-    throw FormatException('Equalizer preset $key must be a non-empty string');
+    throw FormatException('Equalizer preset ' + key + ' must be a non-empty string');
   }
 
   static String _readOptionalString(
@@ -130,13 +128,13 @@ class EqualizerPresetFileCodec {
     final value = json[key];
     if (value == null) return fallback;
     if (value is String) return value;
-    throw FormatException('Equalizer preset $key must be a string');
+    throw FormatException('Equalizer preset ' + key + ' must be a string');
   }
 
   static double _readDouble(Map<String, Object?> json, String key) {
     final value = json[key];
     if (value is num && value.isFinite) return value.toDouble();
-    throw FormatException('Equalizer preset $key must be a finite number');
+    throw FormatException('Equalizer preset ' + key + ' must be a finite number');
   }
 
   static double _readOptionalDouble(
@@ -147,13 +145,13 @@ class EqualizerPresetFileCodec {
     final value = json[key];
     if (value == null) return fallback;
     if (value is num && value.isFinite) return value.toDouble();
-    throw FormatException('Equalizer preset $key must be a finite number');
+    throw FormatException('Equalizer preset ' + key + ' must be a finite number');
   }
 
   static bool _readBool(Map<String, Object?> json, String key) {
     final value = json[key];
     if (value is bool) return value;
-    throw FormatException('Equalizer preset $key must be a boolean');
+    throw FormatException('Equalizer preset ' + key + ' must be a boolean');
   }
 
   static bool _readOptionalBool(
@@ -164,6 +162,6 @@ class EqualizerPresetFileCodec {
     final value = json[key];
     if (value == null) return fallback;
     if (value is bool) return value;
-    throw FormatException('Equalizer preset $key must be a boolean');
+    throw FormatException('Equalizer preset ' + key + ' must be a boolean');
   }
 }
