@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:hive/hive.dart';
 
+import '/models/equalizer.dart';
 import '/models/equalizer_preset.dart';
 
 class EqualizerPresetStore {
