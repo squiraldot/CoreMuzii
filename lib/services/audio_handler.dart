@@ -86,7 +86,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       useProxyForRequestHeaders: false,
       audioLoadConfiguration: const AudioLoadConfiguration(
             androidLoadControl: AndroidLoadControl(
-      minBufferDuration: Duration(seconds: 50),
+      minBufferDuration: Duration(seconds: 10),
       maxBufferDuration: Duration(seconds: 30),
       bufferForPlaybackDuration: Duration(milliseconds: 250),
       bufferForPlaybackAfterRebufferDuration: Duration(seconds: 1),
