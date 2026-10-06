@@ -38,7 +38,7 @@ void main() {
 
       expect(config.bands, hasLength(10));
       expect(
-        config.bands.map((band) => band.frequency),
+        config.bands.map((band) => band.frequency).toList(),
         [31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000],
       );
       expect(config.bands.every((band) => band.gainDb == 0), isTrue);
