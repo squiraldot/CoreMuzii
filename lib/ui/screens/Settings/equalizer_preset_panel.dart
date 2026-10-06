@@ -157,7 +157,12 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
       _customPresets = [..._customPresets, copy];
       _selectedPresetId = copy.id;
     });
-    await widget.onApplyConfig(copy.config);
+    _applyingPreset = true;
+    try {
+      await widget.onApplyConfig(copy.config);
+    } finally {
+      _applyingPreset = false;
+    }
   }
 
   Future<void> _delete() async {
