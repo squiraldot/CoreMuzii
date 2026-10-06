@@ -1,4 +1,5 @@
 import '/services/constant.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
@@ -21,6 +22,7 @@ import '/services/equalizer.dart';
 import '/services/stream_service.dart';
 import '/services/music_service.dart';
 import '/models/hm_streaming_data.dart';
+import '/models/equalizer.dart';
 import '/ui/player/player_controller.dart';
 import '/services/local_proxy.dart';
 import '../ui/screens/Home/home_screen_controller.dart';
@@ -65,6 +67,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   // var networkErrorPause = false;
   bool isSongLoading = true;
   int _playSessionId = 0;
+  EqualizerConfig _equalizerConfig = EqualizerConfig.graphic10Band();
 
   // list of shuffled queue songs ids
   List<String> shuffledQueue = [];
@@ -100,6 +103,16 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         Hive.box(appPrefsBoxName).get("queueLoopModeEnabled") ?? false;
     loudnessNormalizationEnabled =
         appPrefsBox.get("loudnessNormalizationEnabled") ?? false;
+    final savedEqualizer = appPrefsBox.get("equalizerConfig");
+    if (savedEqualizer is String) {
+      try {
+        _equalizerConfig = EqualizerConfig.fromJson(
+          Map<String, Object?>.from(jsonDecode(savedEqualizer) as Map),
+        );
+      } catch (_) {
+        _equalizerConfig = EqualizerConfig.graphic10Band();
+      }
+    }
     _listenForDurationChanges();
     if (GetPlatform.isAndroid) {
       _listenSessionIdStream();
@@ -117,6 +130,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     _player.androidAudioSessionIdStream.listen((int? id) {
       if (id != null) {
         EqualizerService.initAudioEffect(id);
+        EqualizerService.applyConfig(id, _equalizerConfig);
       }
     });
   }
@@ -713,7 +727,43 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         break;
 
       case 'openEqualizer':
-        EqualizerService.openEqualizer(_player.androidAudioSessionId!);
+        final sessionId = _player.androidAudioSessionId;
+        if (sessionId != null) {
+          EqualizerService.openEqualizer(sessionId);
+        }
+        break;
+
+      case 'setEqualizerConfig':
+        final rawConfig = extras?['config'];
+        if (rawConfig is Map) {
+          try {
+            _equalizerConfig = EqualizerConfig.fromJson(
+              Map<String, Object?>.from(rawConfig),
+            );
+            await Hive.box(appPrefsBoxName).put(
+              "equalizerConfig",
+              jsonEncode(_equalizerConfig.toJson()),
+            );
+            final sessionId = _player.androidAudioSessionId;
+            if (sessionId != null) {
+              EqualizerService.applyConfig(sessionId, _equalizerConfig);
+            }
+          } catch (e) {
+            printERROR("Invalid equalizer config: $e");
+          }
+        }
+        break;
+
+      case 'resetEqualizer':
+        _equalizerConfig = EqualizerConfig.graphic10Band();
+        await Hive.box(appPrefsBoxName).put(
+          "equalizerConfig",
+          jsonEncode(_equalizerConfig.toJson()),
+        );
+        final sessionId = _player.androidAudioSessionId;
+        if (sessionId != null) {
+          EqualizerService.applyConfig(sessionId, _equalizerConfig);
+        }
         break;
 
       case 'saveSession':
