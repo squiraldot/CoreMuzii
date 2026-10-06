@@ -52,9 +52,6 @@ class Equalizer {
                 return false
             }
 
-            val oldProcessor = dynamicsProcessors.remove(sessionId)
-            oldProcessor?.release()
-
             // Create a temporary effect to discover the actual channel count for this
             // audio session. The configured effect is then created with the same count.
             val probe = DynamicsProcessing(sessionId)
@@ -119,7 +116,11 @@ class Equalizer {
             }
 
             processor.enabled = enabled
-            dynamicsProcessors[sessionId] = processor
+
+            // Only replace a working processor after the new configuration has been
+            // fully created. This keeps playback/EQ alive if a device rejects a config.
+            val oldProcessor = dynamicsProcessors.put(sessionId, processor)
+            oldProcessor?.release()
             true
         } catch (_: Throwable) {
             false
