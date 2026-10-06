@@ -8,6 +8,7 @@ import 'package:hive/hive.dart';
 import '/models/equalizer.dart';
 import '/services/constant.dart';
 import '/ui/player/player_controller.dart';
+import 'equalizer_preset_panel.dart';
 
 class AdvancedEqualizerScreen extends StatefulWidget {
   const AdvancedEqualizerScreen({super.key});
@@ -127,6 +128,11 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
           Text(
             'Changes are applied to the current playback session.',
             style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          EqualizerPresetPanel(
+            config: _config,
+            onApplyConfig: (config) => _commit(config),
           ),
           const SizedBox(height: 16),
           LayoutBuilder(
