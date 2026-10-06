@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,6 +39,11 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
     return EqualizerConfig.graphic10Band();
   }
 
+  Future<void> _preview(EqualizerConfig config) async {
+    setState(() => _config = config);
+    await Get.find<PlayerController>().applyEqualizerConfig(config);
+  }
+
   Future<void> _commit(EqualizerConfig config) async {
     setState(() {
       _config = config;
@@ -56,13 +62,31 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
     setState(() => _config = _config.copyWith(bands: bands));
   }
 
-  void _setBandGainFromGraph(Offset position, Size size) {
+  Future<void> _previewBandGain(int index, double gainDb) async {
+    final bands = List<EqualizerBand>.from(_config.bands);
+    bands[index] = bands[index].copyWith(gainDb: gainDb);
+    await _preview(_config.copyWith(bands: bands));
+  }
+
+  Future<void> _previewBandGainFromGraph(Offset position, Size size) async {
     if (_config.bands.isEmpty || size.width <= 0 || size.height <= 0) return;
     final x = (position.dx / size.width).clamp(0.0, 1.0);
+    final minLog = math.log(31) / math.ln10;
+    final maxLog = math.log(16000) / math.ln10;
+    final targetLog = minLog + x * (maxLog - minLog);
+    var index = 0;
+    var distance = double.infinity;
+    for (var i = 0; i < _config.bands.length; i++) {
+      final bandLog = math.log(_config.bands[i].frequency) / math.ln10;
+      final d = (bandLog - targetLog).abs();
+      if (d < distance) {
+        distance = d;
+        index = i;
+      }
+    }
     final y = (position.dy / size.height).clamp(0.0, 1.0);
-    final index = (x * (_config.bands.length - 1)).round();
     final gain = (15 - y * 30).clamp(-15.0, 15.0);
-    _setBandGain(index, gain);
+    await _previewBandGain(index, gain);
   }
 
   @override
@@ -112,7 +136,7 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onPanUpdate: (details) =>
-                    _setBandGainFromGraph(details.localPosition, size),
+                    _previewBandGainFromGraph(details.localPosition, size),
                 onPanEnd: (_) => _commit(_config),
                 child: SizedBox(
                   height: size.height,
@@ -139,9 +163,8 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
             min: -15,
             max: 15,
             value: _config.preampDb,
-            onChanged: (value) => setState(
-              () => _config = _config.copyWith(preampDb: value),
-            ),
+            onChanged: (value) =>
+                _preview(_config.copyWith(preampDb: value)),
             onChangeEnd: (value) =>
                 _commit(_config.copyWith(preampDb: value)),
           ),
@@ -156,7 +179,7 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
               frequency: frequencies[i],
               gainDb: _config.bands[i].gainDb,
               enabled: _config.enabled,
-              onChanged: (value) => _setBandGain(i, value),
+              onChanged: (value) => _previewBandGain(i, value),
               onChangeEnd: (value) => _commit(
                 _config.copyWith(
                   bands: [
@@ -186,6 +209,74 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
               child: LinearProgressIndicator(),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _GainField extends StatefulWidget {
+  const _GainField({
+    required this.gainDb,
+    required this.enabled,
+    required this.onSubmitted,
+  });
+
+  final double gainDb;
+  final bool enabled;
+  final ValueChanged<double> onSubmitted;
+
+  @override
+  State<_GainField> createState() => _GainFieldState();
+}
+
+class _GainFieldState extends State<_GainField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.gainDb.toStringAsFixed(1));
+  }
+
+  @override
+  void didUpdateWidget(covariant _GainField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.gainDb != widget.gainDb) {
+      _controller.text = widget.gainDb.toStringAsFixed(1);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Gain in decibels',
+      value: widget.gainDb.toStringAsFixed(1) + ' dB',
+      textField: true,
+      child: TextField(
+        controller: _controller,
+        enabled: widget.enabled,
+        textAlign: TextAlign.end,
+        keyboardType: const TextInputType.numberWithOptions(
+          signed: true,
+          decimal: true,
+        ),
+        decoration: const InputDecoration(
+          isDense: true,
+          border: InputBorder.none,
+          suffixText: ' dB',
+        ),
+        onSubmitted: (value) {
+          final parsed = double.tryParse(value);
+          if (parsed != null) {
+            widget.onSubmitted(parsed.clamp(-15.0, 15.0));
+          }
+        },
       ),
     );
   }
@@ -229,10 +320,11 @@ class _BandSlider extends StatelessWidget {
           ),
         ),
         SizedBox(
-          width: 54,
-          child: Text(
-            gainDb.toStringAsFixed(1) + ' dB',
-            textAlign: TextAlign.end,
+          width: 68,
+          child: _GainField(
+            gainDb: gainDb,
+            enabled: enabled,
+            onSubmitted: onChangeEnd,
           ),
         ),
       ],
@@ -265,17 +357,13 @@ class _EqualizerCurvePainter extends CustomPainter {
     }
 
     for (var i = 0; i < bands.length; i++) {
-      final x = bands.length == 1
-          ? size.width / 2
-          : size.width * i / (bands.length - 1);
+      final x = _frequencyX(bands[i].frequency, size.width);
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
     }
 
     final path = Path();
     for (var i = 0; i < bands.length; i++) {
-      final x = bands.length == 1
-          ? size.width / 2
-          : size.width * i / (bands.length - 1);
+      final x = _frequencyX(bands[i].frequency, size.width);
       final y =
           ((15 - bands[i].gainDb) / 30).clamp(0.0, 1.0) * size.height;
 
@@ -294,6 +382,13 @@ class _EqualizerCurvePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawLine(Offset(0, zeroY), Offset(size.width, zeroY), zeroPaint);
+  }
+
+  double _frequencyX(double frequency, double width) {
+    final minLog = math.log(31) / math.ln10;
+    final maxLog = math.log(16000) / math.ln10;
+    final valueLog = math.log(frequency.clamp(31.0, 16000.0)) / math.ln10;
+    return ((valueLog - minLog) / (maxLog - minLog)).clamp(0.0, 1.0) * width;
   }
 
   @override
