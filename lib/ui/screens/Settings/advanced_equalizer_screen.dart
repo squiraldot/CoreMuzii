@@ -20,6 +20,7 @@ class AdvancedEqualizerScreen extends StatefulWidget {
 class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
   late EqualizerConfig _config;
   bool _saving = false;
+  Future<void> _previewQueue = Future<void>.value();
 
   @override
   void initState() {
@@ -39,9 +40,12 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
     return EqualizerConfig.graphic10Band();
   }
 
-  Future<void> _preview(EqualizerConfig config) async {
+  Future<void> _preview(EqualizerConfig config) {
     setState(() => _config = config);
-    await Get.find<PlayerController>().applyEqualizerConfig(config);
+    _previewQueue = _previewQueue.then(
+      (_) => Get.find<PlayerController>().applyEqualizerConfig(config),
+    );
+    return _previewQueue;
   }
 
   Future<void> _commit(EqualizerConfig config) async {
@@ -50,16 +54,11 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
       _saving = true;
     });
     try {
+      await _previewQueue;
       await Get.find<PlayerController>().setEqualizerConfig(config);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  void _setBandGain(int index, double gainDb) {
-    final bands = List<EqualizerBand>.from(_config.bands);
-    bands[index] = bands[index].copyWith(gainDb: gainDb);
-    setState(() => _config = _config.copyWith(bands: bands));
   }
 
   Future<void> _previewBandGain(int index, double gainDb) async {
