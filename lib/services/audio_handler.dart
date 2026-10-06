@@ -87,9 +87,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       audioLoadConfiguration: const AudioLoadConfiguration(
             androidLoadControl: AndroidLoadControl(
       minBufferDuration: Duration(seconds: 50),
-      maxBufferDuration: Duration(seconds: 120),
-      bufferForPlaybackDuration: Duration(milliseconds: 50),
-      bufferForPlaybackAfterRebufferDuration: Duration(seconds: 2),
+      maxBufferDuration: Duration(seconds: 30),
+      bufferForPlaybackDuration: Duration(milliseconds: 250),
+      bufferForPlaybackAfterRebufferDuration: Duration(seconds: 1),
     )));
     _createCacheDir();
     _notifyAudioHandlerAboutPlaybackEvents();
@@ -137,8 +137,25 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       }
 
       _activeEqualizerSessionId = id;
+      // Keep session changes lightweight. DynamicsProcessing is initialized only
+      // after playback starts so it cannot block startup or first-track loading.
       EqualizerService.initAudioEffect(id);
-      EqualizerService.applyConfig(id, _equalizerConfig);
+    });
+  }
+
+  void _applyEqualizerAfterPlaybackStarts() {
+    if (!GetPlatform.isAndroid) return;
+    final sessionId = _activeEqualizerSessionId;
+    if (sessionId == null || sessionId <= 0) return;
+
+    // Give just_audio/ExoPlayer one event-loop turn to start native playback
+    // before the synchronous JNI effect construction.
+    Future<void>.delayed(Duration.zero, () {
+      try {
+        EqualizerService.applyConfig(sessionId, _equalizerConfig);
+      } catch (e) {
+        printINFO("Unable to apply equalizer without delaying playback: $e");
+      }
     });
   }
 
@@ -559,9 +576,12 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
                 milliseconds: position,
               ),
             );
+            _applyEqualizerAfterPlaybackStarts();
           }
         } else {
-          await _player.play();
+          final playFuture = _player.play();
+          _applyEqualizerAfterPlaybackStarts();
+          await playFuture;
 
           final appPrefs = Hive.box(appPrefsBoxName);
           final isYouTubeAuthenticated =
@@ -660,7 +680,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
           _normalizeVolume(streamInfo.audio!.loudnessDb);
         }
 
-        await _player.play();
+        final playFuture = _player.play();
+        _applyEqualizerAfterPlaybackStarts();
+        await playFuture;
         break;
 
       case 'toggleSkipSilence':
