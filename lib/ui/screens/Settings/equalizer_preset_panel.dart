@@ -245,7 +245,6 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
         dialogTitle: 'Export MDLovFi preset',
         fileName: fileName,
         bytes: Uint8List.fromList(utf8.encode(encoded)),
-        mimeType: EqualizerPresetFileCodec.mimeType,
       );
 
       if (!mounted || path == null) return;
@@ -372,7 +371,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
     final sanitized = name
         .trim()
         .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
-        .replaceAll(RegExp(r'\\s+'), '_');
+        .replaceAll(RegExp(r'\s+'), '_');
     final base = sanitized.isEmpty ? 'mdlovfi-preset' : sanitized;
     return base.endsWith('.${EqualizerPresetFileCodec.extension}')
         ? base
