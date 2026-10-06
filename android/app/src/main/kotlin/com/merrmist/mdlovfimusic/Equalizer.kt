@@ -3,7 +3,7 @@ package com.merrmist.mdlovfimusic
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.media.AudioEffect
+import android.media.audiofx.AudioEffect
 import android.media.audiofx.DynamicsProcessing
 import android.os.Build
 import androidx.annotation.Keep
@@ -184,7 +184,7 @@ class Equalizer {
         activity: Activity
     ): Boolean {
         val equalizerPackages = listOf(
-            "com.android.settings.Settings\\$SoundSettingsActivity",
+            "com.android.settings.Settings\$SoundSettingsActivity",
             "com.android.settings.EqualizerSettings",
             "com.samsung.android.soundalive",
             "com.miui.audioeffect",
