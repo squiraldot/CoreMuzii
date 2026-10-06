@@ -14,10 +14,7 @@ void main() {
         enabled: true,
       );
 
-      expect(
-        EqualizerBand.fromJson(band.toJson()),
-        equals(band),
-      );
+      expect(EqualizerBand.fromJson(band.toJson()), equals(band));
     });
 
     test('rejects unsafe gain and frequency values', () {
@@ -60,7 +57,7 @@ void main() {
   });
 
   group('BiquadCalculator', () {
-    test('flat peaking filter is mathematically transparent', () {
+    test('zero-gain peaking filter is transparent', () {
       final coefficients = BiquadCalculator.peaking(
         sampleRate: 48000,
         frequency: 1000,
@@ -69,10 +66,8 @@ void main() {
       );
 
       expect(coefficients.b0, closeTo(1, 1e-12));
-      expect(coefficients.b1, closeTo(0, 1e-12));
-      expect(coefficients.b2, closeTo(0, 1e-12));
-      expect(coefficients.a1, closeTo(0, 1e-12));
-      expect(coefficients.a2, closeTo(0, 1e-12));
+      expect(coefficients.b1, closeTo(coefficients.a1, 1e-12));
+      expect(coefficients.b2, closeTo(coefficients.a2, 1e-12));
     });
 
     test('rejects a band at or above Nyquist', () {
