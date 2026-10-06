@@ -41,7 +41,7 @@ void main() {
     expect(imported.author, preset.author);
     expect(imported.description, preset.description);
     expect(imported.isBuiltIn, isFalse);
-    expect(imported.config, equals(preset.config));
+    expect(imported.config.toJson(), equals(preset.config.toJson()));
   });
 
 
@@ -53,7 +53,7 @@ void main() {
 
     expect(imported.isBuiltIn, isFalse);
     expect(imported.name, builtIn.name);
-    expect(imported.config, equals(builtIn.config));
+    expect(imported.config.toJson(), equals(builtIn.config.toJson()));
   });
 
   test('rejects malformed json and unsupported formats', () {
@@ -102,8 +102,16 @@ void main() {
           'name': 'Unsafe',
           'author': 'User',
           'enabled': true,
-          'preamp': 999,
-          'bands': <Object?>[],
+          'preamp': 0,
+          'bands': [
+            {
+              'type': 'peaking',
+              'frequency': 1000,
+              'gainDb': 999,
+              'q': 1,
+              'enabled': true,
+            },
+          ],
         }),
       ),
       throwsA(isA<FormatException>()),
