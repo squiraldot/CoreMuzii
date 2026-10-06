@@ -18,6 +18,7 @@ import 'package:rxdart/rxdart.dart';
 import '/models/album.dart';
 import '../models/playlist.dart';
 import '/services/equalizer.dart';
+import '/services/equalizer_controller.dart';
 import '/services/stream_service.dart';
 import '/services/music_service.dart';
 import '/models/hm_streaming_data.dart';
@@ -117,6 +118,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     _player.androidAudioSessionIdStream.listen((int? id) {
       if (id != null) {
         EqualizerService.initAudioEffect(id);
+        if (Get.isRegistered<EqualizerController>()) {
+          Get.find<EqualizerController>().setAudioSessionId(id);
+        }
       }
     });
   }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:widget_marquee/widget_marquee.dart';
 
 import '/ui/player/components/animated_play_button.dart';
+import '/ui/screens/Equalizer/equalizer_screen.dart';
 import '../player_controller.dart';
 
 class PlayerControlWidget extends StatelessWidget {
@@ -169,6 +170,16 @@ class PlayerControlWidget extends StatelessWidget {
                               .withValues(alpha: 0.2),
                     ));
               }),
+              IconButton(
+                icon: Icon(
+                  Icons.equalizer,
+                  color: Theme.of(context).textTheme.titleMedium!.color,
+                ),
+                tooltip: 'Equalizer',
+                onPressed: () {
+                  Get.to(() => const EqualizerScreen());
+                },
+              ),
             ],
           ),
         ]);
