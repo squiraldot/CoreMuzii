@@ -69,7 +69,7 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
 
   Future<void> _previewBandGainFromGraph(Offset position, Size size) async {
     if (_config.bands.isEmpty || size.width <= 0 || size.height <= 0) return;
-    final x = (position.dx / size.width).clamp(0.0, 1.0);
+    final x = (position.dx / size.width).clamp(0.0, 1.0).toDouble();
     final minLog = math.log(31) / math.ln10;
     final maxLog = math.log(16000) / math.ln10;
     final targetLog = minLog + x * (maxLog - minLog);
@@ -83,8 +83,8 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
         index = i;
       }
     }
-    final y = (position.dy / size.height).clamp(0.0, 1.0);
-    final gain = (15 - y * 30).clamp(-15.0, 15.0);
+    final y = (position.dy / size.height).clamp(0.0, 1.0).toDouble();
+    final gain = (15 - y * 30).clamp(-15.0, 15.0).toDouble();
     await _previewBandGain(index, gain);
   }
 
@@ -143,7 +143,6 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
                   child: CustomPaint(
                     painter: _EqualizerCurvePainter(
                       bands: _config.bands,
-                      textStyle: Theme.of(context).textTheme.bodySmall!,
                     ),
                   ),
                 ),
@@ -273,7 +272,7 @@ class _GainFieldState extends State<_GainField> {
         onSubmitted: (value) {
           final parsed = double.tryParse(value);
           if (parsed != null) {
-            widget.onSubmitted(parsed.clamp(-15.0, 15.0));
+            widget.onSubmitted(parsed.clamp(-15.0, 15.0).toDouble());
           }
         },
       ),
@@ -338,8 +337,6 @@ class _EqualizerCurvePainter extends CustomPainter {
   });
 
   final List<EqualizerBand> bands;
-  final TextStyle textStyle;
-
   @override
   void paint(Canvas canvas, Size size) {
     final gridPaint = Paint()
@@ -364,7 +361,7 @@ class _EqualizerCurvePainter extends CustomPainter {
     for (var i = 0; i < bands.length; i++) {
       final x = _frequencyX(bands[i].frequency, size.width);
       final y =
-          ((15 - bands[i].gainDb) / 30).clamp(0.0, 1.0) * size.height;
+          ((15 - bands[i].gainDb) / 30).clamp(0.0, 1.0).toDouble() * size.height;
 
       if (i == 0) {
         path.moveTo(x, y);
@@ -386,8 +383,8 @@ class _EqualizerCurvePainter extends CustomPainter {
   double _frequencyX(double frequency, double width) {
     final minLog = math.log(31) / math.ln10;
     final maxLog = math.log(16000) / math.ln10;
-    final valueLog = math.log(frequency.clamp(31.0, 16000.0)) / math.ln10;
-    return ((valueLog - minLog) / (maxLog - minLog)).clamp(0.0, 1.0) * width;
+    final valueLog = math.log(frequency.clamp(31.0, 16000.0).toDouble()) / math.ln10;
+    return ((valueLog - minLog) / (maxLog - minLog)).clamp(0.0, 1.0).toDouble() * width;
   }
 
   @override
