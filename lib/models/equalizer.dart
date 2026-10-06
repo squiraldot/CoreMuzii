@@ -44,7 +44,7 @@ class EqualizerBand {
   final double q;
   final bool enabled;
 
-  const EqualizerBand({
+  EqualizerBand({
     required this.id,
     required this.type,
     required this.frequency,
