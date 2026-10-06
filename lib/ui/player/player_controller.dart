@@ -1088,6 +1088,13 @@ class PlayerController extends GetxController
     await _audioHandler.customAction("openEqualizer");
   }
 
+  Future<void> applyEqualizerConfig(EqualizerConfig config) async {
+    await _audioHandler.customAction(
+      "applyEqualizerConfig",
+      {'config': config.toJson()},
+    );
+  }
+
   Future<void> setEqualizerConfig(EqualizerConfig config) async {
     await _audioHandler.customAction(
       "setEqualizerConfig",
