@@ -132,6 +132,7 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
           const SizedBox(height: 12),
           EqualizerPresetPanel(
             config: _config,
+            persistChanges: _saving,
             onApplyConfig: (config) => _commit(config),
           ),
           const SizedBox(height: 16),
