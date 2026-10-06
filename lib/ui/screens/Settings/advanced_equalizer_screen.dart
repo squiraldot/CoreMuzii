@@ -162,7 +162,7 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
             ParametricEqualizerEditor(
               config: _config,
               enabled: _config.enabled,
-              onChanged: (config) => _preview(config),
+              onChanged: (config) => _commit(config),
             )
           else
             LayoutBuilder(
@@ -202,29 +202,31 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
             onChangeEnd: (value) =>
                 _commit(_config.copyWith(preampDb: value)),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Bands',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          for (var i = 0; i < _config.bands.length; i++)
-            _BandSlider(
-              frequency: frequencies[i],
-              gainDb: _config.bands[i].gainDb,
-              enabled: _config.enabled,
-              onChanged: (value) => _previewBandGain(i, value),
-              onChangeEnd: (value) => _commit(
-                _config.copyWith(
-                  bands: [
-                    for (var j = 0; j < _config.bands.length; j++)
-                      j == i
-                          ? _config.bands[j].copyWith(gainDb: value)
-                          : _config.bands[j],
-                  ],
+          if (!_parametricMode) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Bands',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            for (var i = 0; i < _config.bands.length; i++)
+              _BandSlider(
+                frequency: frequencies[i],
+                gainDb: _config.bands[i].gainDb,
+                enabled: _config.enabled,
+                onChanged: (value) => _previewBandGain(i, value),
+                onChangeEnd: (value) => _commit(
+                  _config.copyWith(
+                    bands: [
+                      for (var j = 0; j < _config.bands.length; j++)
+                        j == i
+                            ? _config.bands[j].copyWith(gainDb: value)
+                            : _config.bands[j],
+                    ],
+                  ),
                 ),
               ),
-            ),
+          ],
           const SizedBox(height: 12),
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
