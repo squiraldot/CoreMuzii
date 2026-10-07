@@ -15,7 +15,7 @@ import kotlin.math.hypot
 
 class MainActivity : AudioServiceActivity() {
     private val spectrumChannel = "mdlovfi/spectrum_analyzer"
-    private val presetShareChannel = "mdlovfi/preset_share"
+    private val presetShareChannel = "mdlovfi/preset_share"\n    private val presetShareMethodChannel = "mdlovfi/preset_share_method"
     private var presetEventSink: EventChannel.EventSink? = null
     private var initialPreset: String? = null
     private val visualizers = ConcurrentHashMap<Int, Visualizer>()
@@ -35,7 +35,7 @@ class MainActivity : AudioServiceActivity() {
                     presetEventSink = null
                 }
             })
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, presetShareChannel)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, presetShareMethodChannel)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "getInitialPreset" -> result.success(initialPreset.also { initialPreset = null })
