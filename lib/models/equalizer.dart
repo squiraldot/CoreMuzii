@@ -1,3 +1,202 @@
+
+class AdvancedDspConfig {
+  final bool enabled;
+  final bool bassBoostEnabled;
+  final double bassBoostAmountDb;
+  final double bassBoostFrequencyHz;
+  final double bassBoostQ;
+  final bool loudnessEnabled;
+  final double loudnessAmountDb;
+  final bool compressorEnabled;
+  final double compressorThresholdDb;
+  final double compressorRatio;
+  final double compressorAttackMs;
+  final double compressorReleaseMs;
+  final double compressorKneeDb;
+  final double compressorMakeupGainDb;
+  final double limiterCeilingDb;
+  final double limiterReleaseMs;
+  final bool soundFxEnabled;
+  final double xBassAmountDb;
+  final double xTrebleAmountDb;
+  final double powerBassAmountDb;
+  final bool dynamicBassEnabled;
+  final double dynamicBassAmountDb;
+  final bool surroundEnabled;
+  final double surroundAmount;
+
+  AdvancedDspConfig({
+    this.enabled = true,
+    this.bassBoostEnabled = false,
+    double bassBoostAmountDb = 0,
+    double bassBoostFrequencyHz = 70,
+    double bassBoostQ = 0.9,
+    this.loudnessEnabled = false,
+    double loudnessAmountDb = 0,
+    this.compressorEnabled = false,
+    double compressorThresholdDb = -18,
+    double compressorRatio = 2,
+    double compressorAttackMs = 10,
+    double compressorReleaseMs = 120,
+    double compressorKneeDb = 6,
+    double compressorMakeupGainDb = 0,
+    double limiterCeilingDb = -1,
+    double limiterReleaseMs = 80,
+    this.soundFxEnabled = false,
+    double xBassAmountDb = 0,
+    double xTrebleAmountDb = 0,
+    double powerBassAmountDb = 0,
+    this.dynamicBassEnabled = false,
+    double dynamicBassAmountDb = 0,
+    this.surroundEnabled = false,
+    double surroundAmount = 0,
+  })  : bassBoostAmountDb = _range(
+          bassBoostAmountDb, 0, 12, 'bassBoostAmountDb'),
+        bassBoostFrequencyHz = _range(
+          bassBoostFrequencyHz, 40, 180, 'bassBoostFrequencyHz'),
+        bassBoostQ = _range(bassBoostQ, 0.2, 2.0, 'bassBoostQ'),
+        loudnessAmountDb = _range(loudnessAmountDb, 0, 12, 'loudnessAmountDb'),
+        compressorThresholdDb = _range(
+          compressorThresholdDb, -60, 0, 'compressorThresholdDb'),
+        compressorRatio = _range(compressorRatio, 1, 20, 'compressorRatio'),
+        compressorAttackMs = _range(
+          compressorAttackMs, 0.1, 100, 'compressorAttackMs'),
+        compressorReleaseMs = _range(
+          compressorReleaseMs, 10, 1000, 'compressorReleaseMs'),
+        compressorKneeDb = _range(compressorKneeDb, 0, 40, 'compressorKneeDb'),
+        compressorMakeupGainDb = _range(
+          compressorMakeupGainDb, -12, 12, 'compressorMakeupGainDb'),
+        limiterCeilingDb = _range(
+          limiterCeilingDb, -12, 0, 'limiterCeilingDb'),
+        limiterReleaseMs = _range(
+          limiterReleaseMs, 10, 1000, 'limiterReleaseMs'),
+        xBassAmountDb = _range(xBassAmountDb, 0, 12, 'xBassAmountDb'),
+        xTrebleAmountDb = _range(xTrebleAmountDb, 0, 12, 'xTrebleAmountDb'),
+        powerBassAmountDb = _range(powerBassAmountDb, 0, 12, 'powerBassAmountDb'),
+        dynamicBassAmountDb = _range(
+          dynamicBassAmountDb, 0, 12, 'dynamicBassAmountDb'),
+        surroundAmount = _range(surroundAmount, 0, 1, 'surroundAmount');
+
+  Map<String, Object> toJson() => {
+        'enabled': enabled,
+        'bassBoostEnabled': bassBoostEnabled,
+        'bassBoostAmountDb': bassBoostAmountDb,
+        'bassBoostFrequencyHz': bassBoostFrequencyHz,
+        'bassBoostQ': bassBoostQ,
+        'loudnessEnabled': loudnessEnabled,
+        'loudnessAmountDb': loudnessAmountDb,
+        'compressorEnabled': compressorEnabled,
+        'compressorThresholdDb': compressorThresholdDb,
+        'compressorRatio': compressorRatio,
+        'compressorAttackMs': compressorAttackMs,
+        'compressorReleaseMs': compressorReleaseMs,
+        'compressorKneeDb': compressorKneeDb,
+        'compressorMakeupGainDb': compressorMakeupGainDb,
+        'limiterCeilingDb': limiterCeilingDb,
+        'limiterReleaseMs': limiterReleaseMs,
+        'soundFxEnabled': soundFxEnabled,
+        'xBassAmountDb': xBassAmountDb,
+        'xTrebleAmountDb': xTrebleAmountDb,
+        'powerBassAmountDb': powerBassAmountDb,
+        'dynamicBassEnabled': dynamicBassEnabled,
+        'dynamicBassAmountDb': dynamicBassAmountDb,
+        'surroundEnabled': surroundEnabled,
+        'surroundAmount': surroundAmount,
+      };
+
+  factory AdvancedDspConfig.fromJson(Map<String, Object?> json) {
+    return AdvancedDspConfig(
+      enabled: _boolOr(json, 'enabled', true),
+      bassBoostEnabled: _boolOr(json, 'bassBoostEnabled', false),
+      bassBoostAmountDb: _doubleOr(json, 'bassBoostAmountDb', 0),
+      bassBoostFrequencyHz: _doubleOr(json, 'bassBoostFrequencyHz', 70),
+      bassBoostQ: _doubleOr(json, 'bassBoostQ', 0.9),
+      loudnessEnabled: _boolOr(json, 'loudnessEnabled', false),
+      loudnessAmountDb: _doubleOr(json, 'loudnessAmountDb', 0),
+      compressorEnabled: _boolOr(json, 'compressorEnabled', false),
+      compressorThresholdDb: _doubleOr(json, 'compressorThresholdDb', -18),
+      compressorRatio: _doubleOr(json, 'compressorRatio', 2),
+      compressorAttackMs: _doubleOr(json, 'compressorAttackMs', 10),
+      compressorReleaseMs: _doubleOr(json, 'compressorReleaseMs', 120),
+      compressorKneeDb: _doubleOr(json, 'compressorKneeDb', 6),
+      compressorMakeupGainDb: _doubleOr(json, 'compressorMakeupGainDb', 0),
+      limiterCeilingDb: _doubleOr(json, 'limiterCeilingDb', -1),
+      limiterReleaseMs: _doubleOr(json, 'limiterReleaseMs', 80),
+      soundFxEnabled: _boolOr(json, 'soundFxEnabled', false),
+      xBassAmountDb: _doubleOr(json, 'xBassAmountDb', 0),
+      xTrebleAmountDb: _doubleOr(json, 'xTrebleAmountDb', 0),
+      powerBassAmountDb: _doubleOr(json, 'powerBassAmountDb', 0),
+      dynamicBassEnabled: _boolOr(json, 'dynamicBassEnabled', false),
+      dynamicBassAmountDb: _doubleOr(json, 'dynamicBassAmountDb', 0),
+      surroundEnabled: _boolOr(json, 'surroundEnabled', false),
+      surroundAmount: _doubleOr(json, 'surroundAmount', 0),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is AdvancedDspConfig &&
+      other.enabled == enabled &&
+      other.bassBoostEnabled == bassBoostEnabled &&
+      other.bassBoostAmountDb == bassBoostAmountDb &&
+      other.bassBoostFrequencyHz == bassBoostFrequencyHz &&
+      other.bassBoostQ == bassBoostQ &&
+      other.loudnessEnabled == loudnessEnabled &&
+      other.loudnessAmountDb == loudnessAmountDb &&
+      other.compressorEnabled == compressorEnabled &&
+      other.compressorThresholdDb == compressorThresholdDb &&
+      other.compressorRatio == compressorRatio &&
+      other.compressorAttackMs == compressorAttackMs &&
+      other.compressorReleaseMs == compressorReleaseMs &&
+      other.compressorKneeDb == compressorKneeDb &&
+      other.compressorMakeupGainDb == compressorMakeupGainDb &&
+      other.limiterCeilingDb == limiterCeilingDb &&
+      other.limiterReleaseMs == limiterReleaseMs &&
+      other.soundFxEnabled == soundFxEnabled &&
+      other.xBassAmountDb == xBassAmountDb &&
+      other.xTrebleAmountDb == xTrebleAmountDb &&
+      other.powerBassAmountDb == powerBassAmountDb &&
+      other.dynamicBassEnabled == dynamicBassEnabled &&
+      other.dynamicBassAmountDb == dynamicBassAmountDb &&
+      other.surroundEnabled == surroundEnabled &&
+      other.surroundAmount == surroundAmount;
+
+  @override
+  int get hashCode => Object.hashAll([
+        enabled,
+        bassBoostEnabled,
+        bassBoostAmountDb,
+        bassBoostFrequencyHz,
+        bassBoostQ,
+        loudnessEnabled,
+        loudnessAmountDb,
+        compressorEnabled,
+        compressorThresholdDb,
+        compressorRatio,
+        compressorAttackMs,
+        compressorReleaseMs,
+        compressorKneeDb,
+        compressorMakeupGainDb,
+        limiterCeilingDb,
+        limiterReleaseMs,
+        soundFxEnabled,
+        xBassAmountDb,
+        xTrebleAmountDb,
+        powerBassAmountDb,
+        dynamicBassEnabled,
+        dynamicBassAmountDb,
+        surroundEnabled,
+        surroundAmount,
+      ]);
+
+  static double _range(double value, double min, double max, String name) {
+    if (!value.isFinite || value < min || value > max) {
+      throw ArgumentError.value(value, name, 'Must be between $min and $max');
+    }
+    return value;
+  }
+}
+
 enum EqualizerFilterType {
   peaking,
   lowShelf,
@@ -150,6 +349,7 @@ class EqualizerConfig {
   final bool limiterEnabled;
   final double outputGainDb;
   final List<EqualizerBand> bands;
+  final AdvancedDspConfig advancedDsp;
 
   EqualizerConfig({
     this.enabled = true,
@@ -157,9 +357,11 @@ class EqualizerConfig {
     this.limiterEnabled = true,
     double outputGainDb = 0,
     required List<EqualizerBand> bands,
+    AdvancedDspConfig advancedDsp = const _DefaultAdvancedDspConfig(),
   })  : preampDb = _clampGlobalGain(preampDb),
         outputGainDb = _clampGlobalGain(outputGainDb),
-        bands = _validateBands(bands);
+        bands = _validateBands(bands),
+        advancedDsp = advancedDsp;
 
   factory EqualizerConfig.graphic10Band() {
     const frequencies = [
@@ -220,6 +422,7 @@ class EqualizerConfig {
       limiterEnabled: limiterEnabled ?? this.limiterEnabled,
       outputGainDb: outputGainDb ?? this.outputGainDb,
       bands: bands ?? this.bands,
+      advancedDsp: advancedDsp ?? this.advancedDsp,
     );
   }
 
@@ -230,6 +433,7 @@ class EqualizerConfig {
         'preamp': preampDb,
         'outputGain': outputGainDb,
         'limiterEnabled': limiterEnabled,
+        'advancedDsp': advancedDsp.toJson(),
         'bands': bands.map((band) => band.toJson()).toList(growable: false),
       };
 
@@ -253,6 +457,11 @@ class EqualizerConfig {
       preampDb: _requireDouble(json, 'preamp'),
       outputGainDb: _requireDouble(json, 'outputGain'),
       limiterEnabled: _requireBool(json, 'limiterEnabled'),
+      advancedDsp: json['advancedDsp'] is Map
+          ? AdvancedDspConfig.fromJson(
+              Map<String, Object?>.from(json['advancedDsp'] as Map),
+            )
+          : AdvancedDspConfig(),
       bands: rawBands
           .map(
             (band) => EqualizerBand.fromJson(
@@ -270,6 +479,7 @@ class EqualizerConfig {
         other.preampDb != preampDb ||
         other.limiterEnabled != limiterEnabled ||
         other.outputGainDb != outputGainDb ||
+        other.advancedDsp != advancedDsp ||
         other.bands.length != bands.length) {
       return false;
     }
@@ -286,6 +496,7 @@ class EqualizerConfig {
         preampDb,
         limiterEnabled,
         outputGainDb,
+        advancedDsp,
         Object.hashAll(bands),
       );
 }
@@ -330,4 +541,8 @@ bool _requireBool(Map<String, Object?> json, String key) {
   final value = json[key];
   if (value is bool) return value;
   throw FormatException('Expected boolean for $key');
+}
+
+class _DefaultAdvancedDspConfig extends AdvancedDspConfig {
+  const _DefaultAdvancedDspConfig() : super();
 }
