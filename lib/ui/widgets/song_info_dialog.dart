@@ -89,8 +89,6 @@ class SongInfoDialog extends StatelessWidget {
           ],
         ),
       ),
-        ),
-      ),
     );
   }
 
