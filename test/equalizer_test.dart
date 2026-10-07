@@ -213,7 +213,10 @@ void main() {
     });
 
     test('keeps legacy configs valid when advancedDsp is absent', () {
-      final legacy = EqualizerConfig.graphic10Band().toJson();
+      final legacy = Map<String, Object?>.from(
+        EqualizerConfig.graphic10Band().toJson(),
+      )..['version'] = 1;
+      legacy.remove('advancedDsp');
       final restored = EqualizerConfig.fromJson(legacy);
 
       expect(restored.advancedDsp, equals(AdvancedDspConfig()));
