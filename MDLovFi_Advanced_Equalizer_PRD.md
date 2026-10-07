@@ -2,8 +2,8 @@
 
 **Repository:** `squiraldot/CoreMuzii`  
 **Feature:** Advanced in-app Equalizer, Presets, Import/Export, AutoEQ and Telegram ecosystem  
-**Status:** Planning / implementation-ready  
-**Important:** This PRD must be implemented on a new feature branch. `main` must not be modified directly.
+**Status:** Phases 0–4 implemented; Phases 5–8 remaining  
+**Important:** Continue implementation on the existing canonical branch `feature/advanced-equalizer`. Do not create additional feature branches. `main` must not be modified directly.
 
 ---
 
@@ -34,15 +34,13 @@ The EQ engine and preset format must be designed first so later features do not 
 
 ## Never develop directly on `main`
 
-At the start:
+All remaining EQ work must continue on the existing branch:
 
-```bash
-git checkout main
-git pull
-git checkout -b feature/advanced-equalizer
+```text
+feature/advanced-equalizer
 ```
 
-All EQ work must happen on that branch.
+Do not create another branch for individual phases. All EQ work must happen on the canonical feature branch.
 
 Recommended branch:
 
@@ -67,7 +65,7 @@ main
   ↓
 feature/advanced-equalizer
   ↓
-Phase 0 → Phase 1 → Phase 2 → ... → Phase 8
+Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7 → Phase 8
   ↓
 Tests + analysis + Android build + real-device QA
   ↓
@@ -198,389 +196,377 @@ The UI must never own the storage schema.
 
 # 6. Phase Roadmap
 
+## Current status
+
+| Phase | Status | What is included |
+|---|---|---|
+| Phase 0 | ✅ Done | Repository/audio pipeline audit and DSP insertion-point decision |
+| Phase 1 | ✅ Done | 10-band graphic EQ, realtime Android DSP, preamp, limiter, persistence |
+| Phase 2 | ✅ Done | Built-in + custom presets, Hive persistence, preset management |
+| Phase 3 | ✅ Done | Portable `.mdleq` import/export, validation, preview |
+| Phase 4 | ✅ Done | Parametric EQ with 7 filter types, up to 12 bands, lifecycle/playback fixes |
+| Phase 5 | ⏳ Next | Advanced DSP + MDLovFi SoundFX / DSFX-style engine |
+| Phase 6 | ⏳ Planned | Realtime spectrum analyzer + EQ curve visualization |
+| Phase 7 | ⏳ Planned | AutoEQ / headphone & IEM profiles |
+| Phase 8 | ⏳ Planned | Telegram preset sharing + optional community ecosystem |
+
+**Remaining:** 4 phases — Phase 5, 6, 7 and 8.
+
+---
+
 ## Phase 0 — Repository Audit / Technical Spike
 
-### Goal
+### Status: ✅ Complete
 
-Understand the current audio pipeline before changing production behavior.
+Completed:
 
-### Tasks
-
-- inspect `just_audio` player creation
-- inspect `AudioHandler`
-- inspect audio session code
-- inspect existing `Equalizer.kt`
-- inspect JNI bridge
-- find every EQ caller
-- identify track/player recreation paths
-- identify crossfade/preload paths
-- identify correct DSP insertion point
-- confirm Android SDK/min SDK
-- verify supported audio formats
-
-### Deliverable
-
-Document:
-
-- DSP insertion point
-- reusable existing components
-- components to replace
-- Android limitations
-- fallback behavior
-
-### Exit criteria
-
-No production behavior is changed in Phase 0.
+- inspected `just_audio`, `AudioHandler`, audio-session lifecycle and existing Android EQ path
+- identified the in-app DSP insertion point
+- documented Android `DynamicsProcessing` limitations
+- isolated native DSP behind the Flutter service/controller layer
+- verified audio-session recreation/lifecycle behavior
 
 ---
 
 # Phase 1 — Core 10-Band Graphic EQ
 
-### Goal
+### Status: ✅ Complete
 
-Create a reliable realtime EQ foundation.
+Completed:
 
-Bands:
-
-```text
-31 Hz
-62 Hz
-125 Hz
-250 Hz
-500 Hz
-1 kHz
-2 kHz
-4 kHz
-8 kHz
-16 kHz
-```
-
-Gain:
-
-```text
--15 dB … +15 dB
-```
-
-Features:
-
-- enable/disable
-- preamp
-- reset/flat
-- bypass
-- draggable EQ curve
-- accessible sliders/numeric controls
-- realtime application
-
-Use stable biquad/audio-EQ mathematics, preferably the Audio EQ Cookbook approach.
-
-### Acceptance
-
-- flat EQ is effectively transparent
-- boosts/cuts work correctly
-- no obvious clipping by default
-- survives track changes
-- survives player recreation
-- survives restart
-- no playback crash
+- 31 Hz … 16 kHz 10-band graphic EQ
+- ±15 dB gain range
+- realtime Android DSP application
+- preamp and limiter
+- draggable curve + numeric gain editing
+- persistent EQ configuration
+- bypass/reset
+- playback lifecycle integration
+- unit tests and Android CI verification
 
 ---
 
 # Phase 2 — Built-in + Custom Presets
 
-### Built-in presets
+### Status: ✅ Complete
 
-Ship curated presets such as:
+Completed:
 
-```text
-Flat
-Bass Boost
-Deep Bass
-Vocal
-Pop
-Rock
-Jazz
-Classical
-Acoustic
-EDM
-Hip-Hop
-Metal
-Podcast
-Warm
-Bright
-Night
-Cinematic
-Loud
-```
-
-Presets must be intentionally tuned, not random gain values.
-
-### Custom presets
-
-Users can:
-
-- save
-- rename
-- update
-- duplicate
-- delete
-- apply
-- favorite/pin if practical
-
-Built-in presets must be immutable.
-
-Editing a built-in preset should create/save a custom copy.
-
-### Storage
-
-Use existing Hive/local persistence rather than introducing another database without a strong reason.
-
-### Acceptance
-
-- all built-ins work offline
-- custom presets survive restart
-- built-ins cannot be accidentally destroyed
-- applying preset updates audio immediately
+- curated built-in presets
+- custom save/rename/update/duplicate/delete
+- Hive persistence
+- immutable built-ins
+- preset matching without unnecessary duplicates
+- realtime preset application
+- preset store tests
 
 ---
 
 # Phase 3 — Portable Preset Format
 
-Use:
+### Status: ✅ Complete
+
+Portable format:
 
 ```text
 .mdleq
 ```
 
-Recommended JSON structure:
+Completed:
 
-```json
-{
-  "format": "mdlovfi-eq",
-  "version": 1,
-  "name": "My Bass",
-  "author": "User",
-  "enabled": true,
-  "preamp": -3.0,
-  "bands": [
-    {
-      "type": "peaking",
-      "frequency": 60.0,
-      "gainDb": 5.0,
-      "q": 1.2,
-      "enabled": true
-    }
-  ]
-}
-```
-
-Requirements:
-
-- export preset
-- import preset
-- schema validation
-- versioning
-- malformed-file protection
-- safe numeric ranges
-- preview before applying
-- future-version compatibility strategy
-
-The format must be platform-independent.
+- versioned JSON schema
+- export/import
+- validation and safe numeric ranges
+- malformed/future-version protection
+- import preview before applying
+- imported presets remain unsaved until the user chooses Save as
+- Android picker compatibility: use a broad native file picker filter and validate `.mdleq` in-app
+- codec tests
 
 ---
 
 # Phase 4 — Parametric EQ
 
-### Goal
+### Status: ✅ Complete
 
-Provide professional EQ control.
+Completed:
 
-Users can:
+- Graphic / Parametric mode switch
+- up to 12 parametric bands
+- add/delete bands
+- enable/disable bands
+- frequency, gain and Q editing
+- filter types: Peaking, Low Shelf, High Shelf, Low Pass, High Pass, Band Pass, Notch
+- shared underlying EQ model so switching modes does not wipe configuration
+- playback/loading regression fixes so EQ application does not block initial playback
+- buffer/startup tuning verified on real device
+- tests + Android CI verification
 
-- add band
-- delete band
-- enable/disable band
-- change frequency
-- change gain
-- change Q
-- choose filter type
+Known refinement to address when touching the UI later:
 
-Supported filters:
-
-```text
-Peaking
-Low Shelf
-High Shelf
-Low Pass
-High Pass
-Band Pass
-Notch
-```
-
-Recommended initial limit:
-
-```text
-10–12 active bands
-```
-
-Graphic and parametric modes must operate on the same underlying EQ model.
-
-Switching modes must not silently destroy settings.
+- ensure Graphic mode cannot expose invalid fixed-band assumptions if a configuration contains only custom parametric bands; switching modes must remain safe and predictable.
 
 ---
 
-# Phase 5 — Advanced DSP
+# Phase 5 — Advanced DSP + MDLovFi SoundFX
 
-Implement incrementally.
+### Status: ⏳ Next
 
-## Bass Boost
+This phase is the main remaining DSP-engine phase. It should be implemented incrementally and safely. **Do not claim to reproduce any proprietary third-party DSFX implementation.** Build an independent MDLovFi DSP engine inspired by publicly described sound-enhancement controls.
+
+## Phase 5A — Core Advanced DSP
+
+Implement:
+
+### Bass Boost
 
 Controls:
 
 - amount
 - frequency
 - Q
+- bypass
 
-## Loudness
+### Loudness
 
-Must correctly interact with:
+Implement loudness compensation that interacts correctly with:
 
-- EQ
+- EQ gain
 - preamp
+- output gain
 - limiter
 
-## Compressor
+### Compressor
 
 Controls:
 
-```text
-threshold
+```threshold
 ratio
 attack
 release
 knee
 makeup gain
+bypass
 ```
 
-## Limiter
+### Limiter / Clipping Protection
 
 Controls:
 
-```text
+``
 enabled
 ceiling
 release
+bypass
 ```
 
-It must protect against clipping caused by EQ/bass/loudness/compressor gain.
+Requirements:
 
-## Stereo
+- protect against EQ/bass/loudness/compressor gain
+- avoid unnecessary pumping
+- fail safely without interrupting playback
 
-Potential:
+### Stereo Processing
 
-```text
+Controls:
+
+``
 balance
 mono
 stereo width
 channel swap
+bypass
 ```
 
-Only ship features that work correctly on the target pipeline.
+### Crossfeed
 
-## Crossfeed
+Optional headphone feature. Ship only if the implementation is audibly and technically reliable.
 
-Optional headphone feature.
+### Reverb / Spatial
 
-## Reverb / spatial effects
+Optional. Do not ship weak or artificial-sounding processing just to increase feature count.
 
-Optional. Do not ship poor-quality effects merely for feature count.
+---
 
-Every effect should be independently bypassable.
+## Phase 5B — MDLovFi SoundFX / DSFX-style Engine
+
+Build a dedicated sound-enhancement layer on top of the stable EQ/DSP pipeline.
+
+Target controls:
+
+``
+XBass
+XTreble
+PowerBass
+Output Gain
+Dynamic Bass
+Stereo / Surround enhancement
+Headphone / IEM profile
+```
+
+### Design goals
+
+- stronger perceived bass without uncontrolled clipping
+- treble enhancement without harshness
+- bass punch/body control separate from normal EQ
+- output gain compensation
+- stereo expansion that does not destroy mono compatibility
+- optional headphone/IEM-specific tuning
+- every enhancement independently bypassable
+- safe automatic gain compensation
+- interaction with EQ + compressor + limiter must be deterministic
+
+### Important distinction
+
+The original/proprietary implementation referred to publicly as **DSFX** is not being copied. MDLovFi will implement its own independent DSP chain and should brand it as **MDLovFi SoundFX** (or **MDLovFi DSFX-style**) unless a licensing/specification review establishes otherwise.
+
+---
+
+## Phase 5C — DSP Safety + Integration
+
+Before Phase 5 is considered complete:
+
+- define deterministic DSP processing order
+- prevent NaN/Infinity propagation
+- constrain all user parameters
+- implement clipping/headroom protection
+- verify EQ + SoundFX + compressor + limiter interaction
+- ensure every effect has a true bypass
+- preserve normal playback when DSP initialization fails
+- verify audio-session/player recreation
+- measure CPU and battery impact
+- verify no crackling, dropouts or startup delays
+- update `.mdleq` schema/version when new DSP parameters become portable
+- migrate old presets safely when new fields are introduced
+
+Recommended processing order to validate experimentally rather than assume:
+
+``
+Input
+ ↓
+Preamp / Headroom
+ ↓
+Parametric or Graphic EQ
+ ↓
+SoundFX / Bass / Treble / Loudness
+ ↓
+Compressor
+ ↓
+Stereo processing
+ ↓
+Limiter / Clipping protection
+ ↓
+Output Gain
+ ↓
+Audio Output
+```
+
+The exact order must be finalized from measured/audible behavior and platform constraints.
 
 ---
 
 # Phase 6 — Spectrum Analyzer
 
+### Status: ⏳ Planned
+
 ### Goal
 
-Provide realtime visual feedback.
+Provide realtime visual feedback without blocking audio processing.
 
-Features:
+Implement:
 
 - FFT spectrum
 - frequency scale
 - amplitude scale
 - EQ curve overlay
-- draggable EQ points
+- draggable EQ points where practical
 - optional peak hold
 - optional smoothing
+- Spectrum / EQ Curve / Spectrum + EQ Curve modes
 
-Modes:
+Requirements:
 
-```text
-Spectrum
-EQ Curve
-Spectrum + EQ Curve
-```
-
-Analyzer work must not block the audio thread or cause UI jank.
+- analyzer work stays off the audio-critical path
+- no UI jank during playback
+- configurable update rate if needed for battery/CPU
+- visualize the same effective EQ/SoundFX curve where technically meaningful
 
 ---
 
 # Phase 7 — AutoEQ / Headphone Profiles
 
-### Goal
-
-Support measurement-based headphone/IEM correction.
+### Status: ⏳ Planned
 
 Flow:
 
-```text
-Headphone EQ
+``
+Headphone / IEM EQ
  ↓
 Search
  ↓
 Select model
  ↓
-Preview curve
+Preview correction curve
  ↓
 Apply
  ↓
 Save as preset
+ ↓
+Export .mdleq
 ```
 
-Features:
+Implement:
 
-- search headphone/IEM
+- headphone/IEM search
+- model/profile metadata
 - profile preview
-- apply profile
+- apply correction
+- safe gain/headroom handling
 - save as custom preset
 - export as `.mdleq`
+- clear handling when no profile is available
 
-Use AutoEQ data/algorithms appropriately. Do not copy GPL implementation code into the app without licensing review.
+Use AutoEQ data/algorithms appropriately. Do not copy GPL implementation code without licensing review.
+
+Potential future enhancement:
+
+- user-owned custom measurement import
+- target curve selection
+- profile normalization/headroom controls
 
 ---
 
 # Phase 8 — Telegram Preset Ecosystem
 
-Telegram is an optional sharing layer, not a dependency of the EQ engine.
+### Status: ⏳ Planned
 
-## First version
+Telegram remains an optional sharing layer, never a dependency of the DSP engine.
 
-```text
+## Phase 8A — Local Sharing
+
+First ship:
+
+``
 Preset
  ↓
 Export .mdleq
  ↓
 Android Share
  ↓
-Telegram
+Telegram / any compatible app
 ```
 
-## Future bot
+Requirements:
 
-Bot can:
+- share exported `.mdleq` directly from MDLovFi
+- preserve filename and metadata
+- handle share cancellation/failure safely
 
-```text
+## Phase 8B — Optional Telegram Bot
+
+Future bot can:
+
+``
 receive .mdleq
 validate
 store
@@ -591,14 +577,25 @@ search presets
 
 Possible commands:
 
-```text
+``
 /search bass
 /search vocal
 /search sony
 /get <preset-id>
 ```
 
-Keep Telegram/backend logic separate from the EQ engine.
+Keep Telegram/backend logic separate from the EQ engine and app playback core.
+
+## Phase 8C — Community Safety
+
+If a public preset ecosystem is shipped:
+
+- validate schema server-side
+- reject malformed/unsafe parameter values
+- version presets
+- keep attribution metadata
+- allow moderation/takedown
+- never execute arbitrary code from a preset
 
 ---
 
