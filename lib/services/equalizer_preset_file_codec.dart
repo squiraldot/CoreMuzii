@@ -5,7 +5,7 @@ import '/models/equalizer_preset.dart';
 
 class EqualizerPresetFileCodec {
   static const String format = 'mdlovfi-eq';
-  static const int version = 2;
+  static const int version = 3;
   static const String extension = 'mdleq';
   static const String mimeType = 'application/json';
 
@@ -54,7 +54,7 @@ class EqualizerPresetFileCodec {
       }
 
       final rawVersion = json['version'];
-      if (rawVersion is! int || (rawVersion != 1 && rawVersion != version)) {
+      if (rawVersion is! int || (rawVersion != 1 && rawVersion != 2 && rawVersion != version)) {
         throw FormatException(
           'Unsupported equalizer preset version: ' + rawVersion.toString(),
         );
