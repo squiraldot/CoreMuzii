@@ -9,6 +9,11 @@ class EqualizerPresetFileCodec {
   static const String extension = 'mdleq';
   static const String mimeType = 'application/json';
 
+  static bool isSupportedFileName(String fileName) {
+    final normalized = fileName.trim().toLowerCase();
+    return normalized.endsWith('.$extension');
+  }
+
   static String encode(EqualizerPreset preset) {
     final config = preset.config;
     final document = <String, Object>{
