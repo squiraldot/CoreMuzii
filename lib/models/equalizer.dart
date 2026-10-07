@@ -81,7 +81,7 @@ class AdvancedDspConfig {
           dynamicBassAmountDb, 0, 12, 'dynamicBassAmountDb'),
         surroundAmount = _range(surroundAmount, 0, 1, 'surroundAmount'),
         stereoBalance = _range(stereoBalance, -1, 1, 'stereoBalance'),
-        stereoWidth = _range(stereoWidth, 0, 2, 'stereoWidth');
+        stereoWidth = _range(stereoWidth, 1, 2, 'stereoWidth');
 
   AdvancedDspConfig copyWith({
     bool? enabled,
