@@ -5,7 +5,7 @@ import '/models/equalizer_preset.dart';
 
 class EqualizerPresetFileCodec {
   static const String format = 'mdlovfi-eq';
-  static const int version = 1;
+  static const int version = 2;
   static const String extension = 'mdleq';
   static const String mimeType = 'application/json';
 
@@ -26,6 +26,7 @@ class EqualizerPresetFileCodec {
       'preamp': config.preampDb,
       'outputGain': config.outputGainDb,
       'limiterEnabled': config.limiterEnabled,
+      'advancedDsp': config.advancedDsp.toJson(),
       'bands': config.bands
           .map((band) => <String, Object>{
                 'type': band.type.value,
@@ -53,7 +54,7 @@ class EqualizerPresetFileCodec {
       }
 
       final rawVersion = json['version'];
-      if (rawVersion != version) {
+      if (rawVersion is! int || (rawVersion != 1 && rawVersion != version)) {
         throw FormatException(
           'Unsupported equalizer preset version: ' + rawVersion.toString(),
         );
@@ -89,6 +90,11 @@ class EqualizerPresetFileCodec {
           'limiterEnabled',
           fallback: true,
         ),
+        advancedDsp: json['advancedDsp'] is Map
+            ? AdvancedDspConfig.fromJson(
+                Map<String, Object?>.from(json['advancedDsp'] as Map),
+              )
+            : AdvancedDspConfig(),
         bands: bands,
       );
 
