@@ -198,11 +198,11 @@ class Equalizer {
 
         // Constant-power pan: center keeps both channels at 0 dB while
         // moving toward either side attenuates only the opposite channel.
-        val angle = ((balance + 1f) * Math.PI / 4.0).toFloat()
-        val leftGain = kotlin.math.cos(angle).coerceAtLeast(0.001f)
-        val rightGain = kotlin.math.sin(angle).coerceAtLeast(0.001f)
-        val leftDb = (20f * kotlin.math.log10(leftGain)).coerceIn(-60f, 0f)
-        val rightDb = (20f * kotlin.math.log10(rightGain)).coerceIn(-60f, 0f)
+        val angle = ((balance.toDouble() + 1.0) * Math.PI / 4.0)
+        val leftGain = kotlin.math.cos(angle).coerceAtLeast(0.001)
+        val rightGain = kotlin.math.sin(angle).coerceAtLeast(0.001)
+        val leftDb = (20.0 * kotlin.math.log10(leftGain)).coerceIn(-60.0, 0.0).toFloat()
+        val rightDb = (20.0 * kotlin.math.log10(rightGain)).coerceIn(-60.0, 0.0).toFloat()
 
         builder.setInputGainByChannelIndex(0, leftDb)
         builder.setInputGainByChannelIndex(1, rightDb)
