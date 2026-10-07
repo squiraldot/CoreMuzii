@@ -8,6 +8,7 @@ import 'package:hive/hive.dart';
 import '/models/equalizer.dart';
 import '/services/constant.dart';
 import '/ui/player/player_controller.dart';
+import 'advanced_dsp_panel.dart';
 import 'equalizer_preset_panel.dart';
 import 'parametric_equalizer_editor.dart';
 
@@ -116,7 +117,7 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
             children: [
               const Expanded(
                 child: Text(
-                  '10-Band Graphic',
+                  'Advanced Equalizer',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -228,9 +229,19 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
               ),
           ],
           const SizedBox(height: 12),
+          AdvancedDspPanel(
+            config: _config.advancedDsp,
+            enabled: _config.enabled,
+            onPreview: (advanced) =>
+                _preview(_config.copyWith(advancedDsp: advanced)),
+            onCommit: (advanced) =>
+                _commit(_config.copyWith(advancedDsp: advanced)),
+          ),
+          const SizedBox(height: 12),
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
             title: const Text('Limiter'),
+
             subtitle:
                 const Text('Protects against clipping when boosting bands.'),
             value: _config.limiterEnabled,
