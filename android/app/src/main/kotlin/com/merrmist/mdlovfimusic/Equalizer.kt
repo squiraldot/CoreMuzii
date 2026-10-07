@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.audiofx.AudioEffect
 import android.media.audiofx.DynamicsProcessing
+import android.media.audiofx.Virtualizer
 import android.os.Build
 import androidx.annotation.Keep
 import org.json.JSONObject
@@ -13,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Keep
 class Equalizer {
     private val dynamicsProcessors = ConcurrentHashMap<Int, DynamicsProcessing>()
+    private val virtualizers = ConcurrentHashMap<Int, Virtualizer>()
 
     fun openEqualizer(sessionId: Int, context: Context, activity: Activity): Boolean {
         val intent = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL).apply {
@@ -30,10 +32,12 @@ class Equalizer {
     }
 
     /**
-     * Applies the platform-independent MDLovFi EQ model to an Android audio session.
+     * Applies the complete MDLovFi DSP chain to one Android audio session.
      *
-     * API 28+ uses DynamicsProcessing because it supports a configurable multi-band
-     * EQ stage and a limiter on the same AudioTrack/MediaPlayer session.
+     * API 28+ provides the native chain:
+     * input gain -> PreEQ -> MBC -> PostEQ -> Limiter.
+     * SoundFX controls are translated into deterministic gain/drive parameters
+     * inside that same chain. Surround uses the platform Virtualizer when supported.
      */
     fun applyEqualizerConfig(sessionId: Int, configJson: String): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P || sessionId <= 0) {
@@ -47,13 +51,13 @@ class Equalizer {
             val outputGain = config.optDouble("outputGain", 0.0).toFloat()
             val limiterEnabled = config.optBoolean("limiterEnabled", true)
             val bands = config.optJSONArray("bands") ?: return false
+            val advanced = config.optJSONObject("advancedDsp") ?: JSONObject()
+            val advancedEnabled = advanced.optBoolean("enabled", true)
 
             if (bands.length() == 0 || bands.length() > MAX_EQ_BANDS) {
                 return false
             }
 
-            // Create a temporary effect to discover the actual channel count for this
-            // audio session. The configured effect is then created with the same count.
             val probe = DynamicsProcessing(sessionId)
             val channelCount = probe.channelCount
             probe.release()
@@ -62,19 +66,26 @@ class Equalizer {
                 return false
             }
 
+            val postEqBandCount = 4
+            val mbcBandCount = 4
             val builder = DynamicsProcessing.Config.Builder(
                 DynamicsProcessing.VARIANT_FAVOR_FREQUENCY_RESOLUTION,
                 channelCount,
                 true,
                 bands.length(),
-                false,
-                0,
-                false,
-                0,
+                true,
+                mbcBandCount,
+                true,
+                postEqBandCount,
                 true
             )
 
-            val totalInputGain = (preamp + outputGain).coerceIn(-15f, 15f)
+            val totalInputGain = calculateInputGain(
+                preamp,
+                outputGain,
+                advanced,
+                advancedEnabled
+            )
             builder.setInputGainAllChannelsTo(totalInputGain)
 
             val processor = DynamicsProcessing(
@@ -87,8 +98,10 @@ class Equalizer {
             for (channel in 0 until channelCount) {
                 for (bandIndex in 0 until bands.length()) {
                     val band = bands.getJSONObject(bandIndex)
-                    val gain = band.optDouble("gainDb", 0.0).toFloat().coerceIn(-15f, 15f)
-                    val bandEnabled = band.optBoolean("enabled", true)
+                    val gain = band.optDouble("gainDb", 0.0)
+                        .toFloat()
+                        .coerceIn(-15f, 15f)
+                    val bandEnabled = band.optBoolean("enabled", true) && enabled
                     processor.setPreEqBandByChannelIndex(
                         channel,
                         bandIndex,
@@ -100,16 +113,34 @@ class Equalizer {
                     )
                 }
 
+                configureAdvancedMbc(processor, channel, advanced, advancedEnabled)
+                configureAdvancedPostEq(processor, channel, advanced, advancedEnabled)
+
+                val ceiling = if (advancedEnabled) {
+                    advanced.optDouble("limiterCeilingDb", -1.0)
+                        .toFloat()
+                        .coerceIn(-12f, 0f)
+                } else {
+                    -1f
+                }
+                val release = if (advancedEnabled) {
+                    advanced.optDouble("limiterReleaseMs", 80.0)
+                        .toFloat()
+                        .coerceIn(10f, 1000f)
+                } else {
+                    80f
+                }
+
                 processor.setLimiterByChannelIndex(
                     channel,
                     DynamicsProcessing.Limiter(
                         true,
                         limiterEnabled && enabled,
                         0,
-                        5f,
-                        100f,
+                        1f,
+                        release,
                         20f,
-                        -1f,
+                        ceiling,
                         0f
                     )
                 )
@@ -117,10 +148,11 @@ class Equalizer {
 
             processor.enabled = enabled
 
-            // Only replace a working processor after the new configuration has been
-            // fully created. This keeps playback/EQ alive if a device rejects a config.
             val oldProcessor = dynamicsProcessors.put(sessionId, processor)
             oldProcessor?.release()
+
+            configureVirtualizer(sessionId, advanced, advancedEnabled)
+
             true
         } catch (_: Throwable) {
             false
@@ -129,6 +161,7 @@ class Equalizer {
 
     fun releaseEqualizer(sessionId: Int) {
         dynamicsProcessors.remove(sessionId)?.release()
+        virtualizers.remove(sessionId)?.release()
     }
 
     fun initAudioEffect(sessionId: Int, context: Context) {
@@ -146,6 +179,205 @@ class Equalizer {
             AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION,
             context
         )
+    }
+
+    private fun configureAdvancedMbc(
+        processor: DynamicsProcessing,
+        channel: Int,
+        advanced: JSONObject,
+        advancedEnabled: Boolean
+    ) {
+        val compressorEnabled = advancedEnabled &&
+            advanced.optBoolean("compressorEnabled", false)
+        val dynamicBassEnabled = advancedEnabled &&
+            advanced.optBoolean("dynamicBassEnabled", false)
+        val mbcEnabled = compressorEnabled || dynamicBassEnabled
+
+        val threshold = advanced.optDouble("compressorThresholdDb", -18.0)
+            .toFloat().coerceIn(-60f, 0f)
+        val ratio = advanced.optDouble("compressorRatio", 2.0)
+            .toFloat().coerceIn(1f, 20f)
+        val attack = advanced.optDouble("compressorAttackMs", 10.0)
+            .toFloat().coerceIn(0.1f, 100f)
+        val release = advanced.optDouble("compressorReleaseMs", 120.0)
+            .toFloat().coerceIn(10f, 1000f)
+        val knee = advanced.optDouble("compressorKneeDb", 6.0)
+            .toFloat().coerceIn(0f, 40f)
+        val makeup = advanced.optDouble("compressorMakeupGainDb", 0.0)
+            .toFloat().coerceIn(-12f, 12f)
+        val dynamicBass = advanced.optDouble("dynamicBassAmountDb", 0.0)
+            .toFloat().coerceIn(0f, 12f)
+
+        val cutoffs = floatArrayOf(120f, 1000f, 5000f, 20000f)
+        for (band in cutoffs.indices) {
+            val isLowBand = band == 0
+            val preGain = if (dynamicBassEnabled && isLowBand) dynamicBass else 0f
+            val postGain = if (compressorEnabled) makeup else 0f
+            val bandRatio = if (compressorEnabled) ratio else 1f
+            val bandThreshold = if (compressorEnabled) threshold else 0f
+            val bandAttack = if (compressorEnabled) attack else 1f
+            val bandRelease = if (compressorEnabled) release else 60f
+            val bandKnee = if (compressorEnabled) knee else 0f
+
+            processor.setMbcBandByChannelIndex(
+                channel,
+                band,
+                DynamicsProcessing.MbcBand(
+                    mbcEnabled,
+                    cutoffs[band],
+                    bandAttack,
+                    bandRelease,
+                    bandRatio,
+                    bandThreshold,
+                    bandKnee,
+                    -60f,
+                    1f,
+                    preGain,
+                    postGain
+                )
+            )
+        }
+
+        processor.setMbcByChannelIndex(
+            channel,
+            DynamicsProcessing.Mbc(
+                true,
+                mbcEnabled,
+                cutoffs.size
+            )
+        )
+    }
+
+    private fun configureAdvancedPostEq(
+        processor: DynamicsProcessing,
+        channel: Int,
+        advanced: JSONObject,
+        advancedEnabled: Boolean
+    ) {
+        val bassBoost = if (advancedEnabled &&
+            advanced.optBoolean("bassBoostEnabled", false)
+        ) {
+            advanced.optDouble("bassBoostAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
+        } else 0f
+
+        val xBass = if (advancedEnabled &&
+            advanced.optBoolean("soundFxEnabled", false)
+        ) {
+            advanced.optDouble("xBassAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
+        } else 0f
+
+        val powerBass = if (advancedEnabled &&
+            advanced.optBoolean("soundFxEnabled", false)
+        ) {
+            advanced.optDouble("powerBassAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
+        } else 0f
+
+        val xTreble = if (advancedEnabled &&
+            advanced.optBoolean("soundFxEnabled", false)
+        ) {
+            advanced.optDouble("xTrebleAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
+        } else 0f
+
+        val loudness = if (advancedEnabled &&
+            advanced.optBoolean("loudnessEnabled", false)
+        ) {
+            advanced.optDouble("loudnessAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
+        } else 0f
+
+        val lowGain = (bassBoost + xBass + powerBass * 0.75f + loudness * 0.45f)
+            .coerceIn(-15f, 15f)
+        val lowMidGain = (powerBass * 0.35f + loudness * 0.15f)
+            .coerceIn(-15f, 15f)
+        val highMidGain = (xTreble * 0.35f + loudness * 0.15f)
+            .coerceIn(-15f, 15f)
+        val highGain = (xTreble + loudness * 0.45f)
+            .coerceIn(-15f, 15f)
+
+        val bassFrequency = advanced.optDouble("bassBoostFrequencyHz", 70.0)
+            .toFloat().coerceIn(40f, 180f)
+
+        val cutoffs = floatArrayOf(
+            bassFrequency,
+            350f,
+            5000f,
+            16000f
+        )
+        val gains = floatArrayOf(lowGain, lowMidGain, highMidGain, highGain)
+
+        for (band in cutoffs.indices) {
+            processor.setPostEqBandByChannelIndex(
+                channel,
+                band,
+                DynamicsProcessing.EqBand(
+                    true,
+                    cutoffs[band],
+                    gains[band]
+                )
+            )
+        }
+
+        processor.setPostEqByChannelIndex(
+            channel,
+            DynamicsProcessing.Eq(
+                true,
+                true,
+                cutoffs.size
+            )
+        )
+    }
+
+    private fun configureVirtualizer(
+        sessionId: Int,
+        advanced: JSONObject,
+        advancedEnabled: Boolean
+    ) {
+        val enabled = advancedEnabled &&
+            advanced.optBoolean("surroundEnabled", false)
+        if (!enabled) {
+            virtualizers.remove(sessionId)?.release()
+            return
+        }
+
+        try {
+            val virtualizer = Virtualizer(0, sessionId)
+            if (!virtualizer.getStrengthSupported()) {
+                virtualizer.release()
+                virtualizers.remove(sessionId)?.release()
+                return
+            }
+
+            val amount = advanced.optDouble("surroundAmount", 0.0)
+                .toFloat().coerceIn(0f, 1f)
+            virtualizer.setStrength((amount * 1000f).toInt().toShort())
+            virtualizer.enabled = true
+
+            val old = virtualizers.put(sessionId, virtualizer)
+            old?.release()
+        } catch (_: Throwable) {
+            virtualizers.remove(sessionId)?.release()
+        }
+    }
+
+    private fun calculateInputGain(
+        preamp: Float,
+        outputGain: Float,
+        advanced: JSONObject,
+        advancedEnabled: Boolean
+    ): Float {
+        var gain = preamp + outputGain
+        if (advancedEnabled && advanced.optBoolean("loudnessEnabled", false)) {
+            gain += advanced.optDouble("loudnessAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
+        }
+
+        // Reserve headroom for additive SoundFX/EQ boosts before the limiter.
+        if (advancedEnabled && advanced.optBoolean("soundFxEnabled", false)) {
+            val xBass = advanced.optDouble("xBassAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
+            val xTreble = advanced.optDouble("xTrebleAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
+            val powerBass = advanced.optDouble("powerBassAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
+            gain -= maxOf(xBass, xTreble, powerBass * 0.75f).coerceAtMost(9f)
+        }
+
+        return gain.coerceIn(-15f, 15f)
     }
 
     private fun calculateCutoffs(bands: org.json.JSONArray): FloatArray {
@@ -184,7 +416,7 @@ class Equalizer {
         activity: Activity
     ): Boolean {
         val equalizerPackages = listOf(
-            "com.android.settings.Settings\$SoundSettingsActivity",
+            "com.android.settings.Settings$SoundSettingsActivity",
             "com.android.settings.EqualizerSettings",
             "com.samsung.android.soundalive",
             "com.miui.audioeffect",
@@ -201,7 +433,6 @@ class Equalizer {
                     return true
                 }
             } catch (_: Exception) {
-                // Continue to the next known manufacturer implementation.
             }
         }
         return false
