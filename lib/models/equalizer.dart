@@ -24,6 +24,8 @@ class AdvancedDspConfig {
   final double dynamicBassAmountDb;
   final bool surroundEnabled;
   final double surroundAmount;
+  final double stereoBalance;
+  final double stereoWidth;
 
   AdvancedDspConfig({
     this.enabled = true,
@@ -50,6 +52,8 @@ class AdvancedDspConfig {
     double dynamicBassAmountDb = 0,
     this.surroundEnabled = false,
     double surroundAmount = 0,
+    double stereoBalance = 0,
+    double stereoWidth = 1,
   })  : bassBoostAmountDb = _range(
           bassBoostAmountDb, 0, 12, 'bassBoostAmountDb'),
         bassBoostFrequencyHz = _range(
@@ -75,7 +79,9 @@ class AdvancedDspConfig {
         powerBassAmountDb = _range(powerBassAmountDb, 0, 12, 'powerBassAmountDb'),
         dynamicBassAmountDb = _range(
           dynamicBassAmountDb, 0, 12, 'dynamicBassAmountDb'),
-        surroundAmount = _range(surroundAmount, 0, 1, 'surroundAmount');
+        surroundAmount = _range(surroundAmount, 0, 1, 'surroundAmount'),
+        stereoBalance = _range(stereoBalance, -1, 1, 'stereoBalance'),
+        stereoWidth = _range(stereoWidth, 0, 2, 'stereoWidth');
 
   AdvancedDspConfig copyWith({
     bool? enabled,
@@ -102,6 +108,8 @@ class AdvancedDspConfig {
     double? dynamicBassAmountDb,
     bool? surroundEnabled,
     double? surroundAmount,
+    double? stereoBalance,
+    double? stereoWidth,
   }) {
     return AdvancedDspConfig(
       enabled: enabled ?? this.enabled,
@@ -130,6 +138,8 @@ class AdvancedDspConfig {
       dynamicBassAmountDb: dynamicBassAmountDb ?? this.dynamicBassAmountDb,
       surroundEnabled: surroundEnabled ?? this.surroundEnabled,
       surroundAmount: surroundAmount ?? this.surroundAmount,
+      stereoBalance: stereoBalance ?? this.stereoBalance,
+      stereoWidth: stereoWidth ?? this.stereoWidth,
     );
   }
 
@@ -158,6 +168,8 @@ class AdvancedDspConfig {
         'dynamicBassAmountDb': dynamicBassAmountDb,
         'surroundEnabled': surroundEnabled,
         'surroundAmount': surroundAmount,
+        'stereoBalance': stereoBalance,
+        'stereoWidth': stereoWidth,
       };
 
   factory AdvancedDspConfig.fromJson(Map<String, Object?> json) {
@@ -186,6 +198,8 @@ class AdvancedDspConfig {
       dynamicBassAmountDb: _doubleOr(json, 'dynamicBassAmountDb', 0),
       surroundEnabled: _boolOr(json, 'surroundEnabled', false),
       surroundAmount: _doubleOr(json, 'surroundAmount', 0),
+      stereoBalance: _doubleOr(json, 'stereoBalance', 0),
+      stereoWidth: _doubleOr(json, 'stereoWidth', 1),
     );
   }
 
@@ -215,7 +229,9 @@ class AdvancedDspConfig {
       other.dynamicBassEnabled == dynamicBassEnabled &&
       other.dynamicBassAmountDb == dynamicBassAmountDb &&
       other.surroundEnabled == surroundEnabled &&
-      other.surroundAmount == surroundAmount;
+      other.surroundAmount == surroundAmount &&
+      other.stereoBalance == stereoBalance &&
+      other.stereoWidth == stereoWidth;
 
   @override
   int get hashCode => Object.hashAll([
@@ -243,6 +259,8 @@ class AdvancedDspConfig {
         dynamicBassAmountDb,
         surroundEnabled,
         surroundAmount,
+        stereoBalance,
+        stereoWidth,
       ]);
 
   static double _range(double value, double min, double max, String name) {
