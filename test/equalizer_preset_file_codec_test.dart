@@ -36,7 +36,7 @@ void main() {
     final json = jsonDecode(encoded) as Map<String, Object?>;
 
     expect(json['format'], 'mdlovfi-eq');
-    expect(json['version'], 2);
+    expect(json['version'], 3);
     expect(json['name'], 'My Bass');
     expect(json['author'], 'User');
     expect(json.containsKey('id'), isFalse);
@@ -82,6 +82,41 @@ void main() {
     );
 
     expect(imported.config.advancedDsp, equals(preset.config.advancedDsp));
+  });
+
+  test('imports v2 presets with advanced DSP fields', () {
+    final imported = EqualizerPresetFileCodec.decode(
+      jsonEncode({
+        'format': 'mdlovfi-eq',
+        'version': 2,
+        'name': 'Legacy v2',
+        'author': 'User',
+        'enabled': true,
+        'preamp': 0,
+        'outputGain': 0,
+        'limiterEnabled': true,
+        'advancedDsp': {
+          'enabled': true,
+          'bassBoostEnabled': true,
+          'bassBoostAmountDb': 4,
+          'stereoBalance': -0.25,
+          'stereoWidth': 1.4,
+        },
+        'bands': [
+          {
+            'type': 'peaking',
+            'frequency': 1000,
+            'gainDb': 0,
+            'q': 1,
+            'enabled': true,
+          },
+        ],
+      }),
+    );
+
+    expect(imported.config.advancedDsp.bassBoostAmountDb, 4);
+    expect(imported.config.advancedDsp.stereoBalance, -0.25);
+    expect(imported.config.advancedDsp.stereoWidth, 1.4);
   });
 
   test('continues importing v1 presets with advanced DSP defaults', () {
@@ -138,7 +173,7 @@ void main() {
       () => EqualizerPresetFileCodec.decode(
         jsonEncode({
           'format': 'mdlovfi-eq',
-          'version': 3,
+          'version': 4,
           'name': 'Future',
           'author': 'Someone',
           'enabled': true,
