@@ -13,6 +13,13 @@ void main() {
     limiterEnabled: true,
   );
 
+  test('accepts mdleq filenames case-insensitively and rejects other extensions', () {
+    expect(EqualizerPresetFileCodec.isSupportedFileName('My_Preset.mdleq'), isTrue);
+    expect(EqualizerPresetFileCodec.isSupportedFileName('MY_PRESET.MDLEQ'), isTrue);
+    expect(EqualizerPresetFileCodec.isSupportedFileName('My_Preset.json'), isFalse);
+    expect(EqualizerPresetFileCodec.isSupportedFileName('My_Preset.mdleq.bak'), isFalse);
+  });
+
   test('exports a portable v1 mdleq document and imports it losslessly', () {
     final preset = EqualizerPreset(
       id: 'custom-1',
