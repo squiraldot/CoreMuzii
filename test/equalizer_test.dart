@@ -76,11 +76,11 @@ void main() {
       expect(config.bands.every((band) => band.gainDb == 0), isTrue);
     });
 
-    test('uses the stable v1 portable EQ schema', () {
+    test('uses the stable v2 EQ schema for advanced DSP', () {
       final json = EqualizerConfig.graphic10Band().toJson();
 
       expect(json['format'], 'mdlovfi-eq');
-      expect(json['version'], 1);
+      expect(json['version'], 2);
       expect(json['enabled'], isTrue);
       expect(json['limiterEnabled'], isTrue);
     });
