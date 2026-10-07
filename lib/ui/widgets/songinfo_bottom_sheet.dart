@@ -68,7 +68,9 @@ class SongInfoBottomSheet extends StatelessWidget {
                         ? IconButton(
                             onPressed: () => showDialog(
                                   context: context,
-                                  builder: (context) => SongInfoDialog(
+                                  useRootNavigator: true,
+                                  barrierDismissible: true,
+                                  builder: (dialogContext) => SongInfoDialog(
                                     song: song,
                                   ),
                                 ),
