@@ -161,6 +161,65 @@ void main() {
 
   });
 
+
+  group('AdvancedDspConfig', () {
+    test('uses safe disabled defaults and round-trips all DSP controls', () {
+      final dsp = AdvancedDspConfig(
+        bassBoostEnabled: true,
+        bassBoostAmountDb: 8,
+        bassBoostFrequencyHz: 70,
+        bassBoostQ: 0.9,
+        loudnessEnabled: true,
+        loudnessAmountDb: 5,
+        compressorEnabled: true,
+        compressorThresholdDb: -18,
+        compressorRatio: 4,
+        compressorAttackMs: 10,
+        compressorReleaseMs: 120,
+        compressorKneeDb: 6,
+        compressorMakeupGainDb: 2,
+        limiterCeilingDb: -1,
+        limiterReleaseMs: 80,
+        soundFxEnabled: true,
+        xBassAmountDb: 6,
+        xTrebleAmountDb: 3,
+        powerBassAmountDb: 4,
+        dynamicBassEnabled: true,
+        dynamicBassAmountDb: 5,
+        surroundEnabled: true,
+        surroundAmount: 0.4,
+      );
+
+      expect(AdvancedDspConfig.fromJson(dsp.toJson()), equals(dsp));
+      expect(AdvancedDspConfig().enabled, isTrue);
+      expect(AdvancedDspConfig().bassBoostEnabled, isFalse);
+      expect(AdvancedDspConfig().compressorEnabled, isFalse);
+      expect(AdvancedDspConfig().soundFxEnabled, isFalse);
+    });
+
+    test('rejects unsafe DSP values', () {
+      expect(
+        () => AdvancedDspConfig(bassBoostAmountDb: 99),
+        throwsArgumentError,
+      );
+      expect(
+        () => AdvancedDspConfig(compressorRatio: 0.5),
+        throwsArgumentError,
+      );
+      expect(
+        () => AdvancedDspConfig(limiterCeilingDb: 1),
+        throwsArgumentError,
+      );
+    });
+
+    test('keeps legacy configs valid when advancedDsp is absent', () {
+      final legacy = EqualizerConfig.graphic10Band().toJson();
+      final restored = EqualizerConfig.fromJson(legacy);
+
+      expect(restored.advancedDsp, equals(const AdvancedDspConfig()));
+    });
+  });
+
   group('BiquadCalculator', () {
     test('zero-gain peaking filter is transparent', () {
       final coefficients = BiquadCalculator.peaking(
