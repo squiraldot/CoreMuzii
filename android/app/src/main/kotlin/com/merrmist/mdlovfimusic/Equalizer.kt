@@ -295,10 +295,16 @@ class Equalizer {
 
         val bassFrequency = advanced.optDouble("bassBoostFrequencyHz", 70.0)
             .toFloat().coerceIn(40f, 180f)
+        val bassQ = advanced.optDouble("bassBoostQ", 0.9)
+            .toFloat().coerceIn(0.2f, 2f)
+        // DynamicsProcessing EqBand exposes cutoff rather than Q. Use the
+        // next band edge to approximate the requested bass bandwidth.
+        val bassWidthCutoff = (bassFrequency * (1f + 2f / bassQ))
+            .coerceIn(bassFrequency + 0.1f, 350f)
 
         val cutoffs = floatArrayOf(
             bassFrequency,
-            350f,
+            bassWidthCutoff,
             5000f,
             16000f
         )
