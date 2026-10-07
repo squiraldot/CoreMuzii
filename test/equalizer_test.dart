@@ -188,6 +188,8 @@ void main() {
         dynamicBassAmountDb: 5,
         surroundEnabled: true,
         surroundAmount: 0.4,
+        stereoBalance: -0.25,
+        stereoWidth: 1.4,
       );
 
       expect(AdvancedDspConfig.fromJson(dsp.toJson()), equals(dsp));
@@ -195,6 +197,23 @@ void main() {
       expect(AdvancedDspConfig().bassBoostEnabled, isFalse);
       expect(AdvancedDspConfig().compressorEnabled, isFalse);
       expect(AdvancedDspConfig().soundFxEnabled, isFalse);
+    });
+
+    test('supports stereo balance and width within safe ranges', () {
+      final dsp = AdvancedDspConfig(
+        stereoBalance: -0.5,
+        stereoWidth: 1.5,
+      );
+
+      expect(AdvancedDspConfig.fromJson(dsp.toJson()), equals(dsp));
+      expect(
+        () => AdvancedDspConfig(stereoBalance: 1.1),
+        throwsArgumentError,
+      );
+      expect(
+        () => AdvancedDspConfig(stereoWidth: 2.1),
+        throwsArgumentError,
+      );
     });
 
     test('rejects unsafe DSP values', () {
