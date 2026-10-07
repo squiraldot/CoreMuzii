@@ -11,6 +11,7 @@ import '/ui/player/player_controller.dart';
 import 'advanced_dsp_panel.dart';
 import 'equalizer_preset_panel.dart';
 import 'parametric_equalizer_editor.dart';
+import 'spectrum_analyzer_panel.dart';
 
 class AdvancedEqualizerScreen extends StatefulWidget {
   const AdvancedEqualizerScreen({super.key});
@@ -228,6 +229,11 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
                 ),
               ),
           ],
+          const SizedBox(height: 12),
+          SpectrumAnalyzerPanel(
+            config: _config,
+            onConfigChanged: (config) => _preview(config),
+          ),
           const SizedBox(height: 12),
           AdvancedDspPanel(
             config: _config.advancedDsp,
