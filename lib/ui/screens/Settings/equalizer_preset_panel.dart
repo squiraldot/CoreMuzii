@@ -264,13 +264,18 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
     setState(() => _fileOperationInProgress = true);
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: [EqualizerPresetFileCodec.extension],
+        type: FileType.any,
         withData: true,
       );
       if (result == null || result.files.isEmpty) return;
 
       final file = result.files.single;
+      if (!EqualizerPresetFileCodec.isSupportedFileName(file.name)) {
+        throw FormatException(
+          'Please select a .\${EqualizerPresetFileCodec.extension} preset file.',
+        );
+      }
+
       final bytes = file.bytes ?? await file.xFile.readAsBytes();
       final preset = EqualizerPresetFileCodec.decode(utf8.decode(bytes));
 
