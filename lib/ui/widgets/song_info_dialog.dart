@@ -3,6 +3,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
+import '/ui/widgets/common_dialog_widget.dart';
 
 
 class SongInfoDialog extends StatelessWidget {
@@ -12,83 +13,67 @@ class SongInfoDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final streamInfo = _getStreamInfo(song.id);
-    final theme = Theme.of(context);
-    final surfaceColor = theme.colorScheme.surface;
-    final textColor = theme.colorScheme.onSurface;
-
-    return Dialog(
-      backgroundColor: surfaceColor,
-      surfaceTintColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 500,
-          maxHeight: Get.mediaQuery.size.height * .72,
-          minWidth: 280,
-        ),
-        child: Material(
-          color: surfaceColor,
-          borderRadius: BorderRadius.circular(16),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
+    return CommonDialog(
+      child: SizedBox(
+        height: Get.mediaQuery.size.height * .7,
+        child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10.0),
-              child: Text("songInfo".tr,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: textColor,
-                  )),
+              child: Text(
+                "songInfo".tr,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
             ),
             const Divider(),
             Expanded(
-                child: ListView(
-              children: [
-                InfoItem(title: "id".tr, value: song.id),
-                InfoItem(title: "title".tr, value: song.title),
-                InfoItem(title: "album".tr, value: song.album ?? "NA"),
-                InfoItem(title: "artists".tr, value: song.artist ?? "NA"),
-                InfoItem(
+              child: ListView(
+                children: [
+                  InfoItem(title: "id".tr, value: song.id),
+                  InfoItem(title: "title".tr, value: song.title),
+                  InfoItem(title: "album".tr, value: song.album ?? "NA"),
+                  InfoItem(title: "artists".tr, value: song.artist ?? "NA"),
+                  InfoItem(
                     title: "duration".tr,
                     value:
-                        "${streamInfo["approxDurationMs"] ?? song.duration?.inMilliseconds ?? "NA"} ms"),
-                InfoItem(
+                        "${streamInfo["approxDurationMs"] ?? song.duration?.inMilliseconds ?? "NA"} ms",
+                  ),
+                  InfoItem(
                     title: "audioCodec".tr,
-                    value: streamInfo["audioCodec"] ?? "NA"),
-                InfoItem(
+                    value: streamInfo["audioCodec"] ?? "NA",
+                  ),
+                  InfoItem(
                     title: "bitrate".tr,
-                    value: "${streamInfo["bitrate"] ?? "NA"}"),
-                InfoItem(
+                    value: "${streamInfo["bitrate"] ?? "NA"}",
+                  ),
+                  InfoItem(
                     title: "loudnessDb".tr,
-                    value: "${streamInfo["loudnessDb"] ?? "NA"}"),
-              ],
-            )),
+                    value: "${streamInfo["loudnessDb"] ?? "NA"}",
+                  ),
+                ],
+              ),
+            ),
             const Divider(),
             SizedBox(
               height: 50,
               child: Align(
                 alignment: Alignment.center,
                 child: InkWell(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 10.0, horizontal: 25),
-                      child: Text(
-                      "close".tr,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: textColor,
-                      ),
+                  onTap: () {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10.0,
+                      horizontal: 25,
                     ),
-                    )),
+                    child: Text("close".tr),
+                  ),
+                ),
               ),
-            )
+            ),
           ],
         ),
-      ),
       ),
     );
   }
