@@ -443,7 +443,7 @@ class EqualizerConfig {
     }
 
     final version = json['version'];
-    if (version != 1) {
+    if (version != 1 && version != 2) {
       throw FormatException('Unsupported equalizer format version: $version');
     }
 
