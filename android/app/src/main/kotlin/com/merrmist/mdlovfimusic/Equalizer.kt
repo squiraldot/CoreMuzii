@@ -364,9 +364,19 @@ class Equalizer {
         advanced: JSONObject,
         advancedEnabled: Boolean
     ) {
-        val enabled = advancedEnabled &&
+        val surroundEnabled = advancedEnabled &&
             advanced.optBoolean("surroundEnabled", false)
-        if (!enabled) {
+        val stereoWidth = advanced.optDouble("stereoWidth", 1.0)
+            .toFloat().coerceIn(1f, 2f)
+        val widthEnhancement = (stereoWidth - 1f).coerceIn(0f, 1f)
+        val surroundAmount = if (surroundEnabled) {
+            advanced.optDouble("surroundAmount", 0.0)
+                .toFloat().coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+        val effectiveAmount = maxOf(surroundAmount, widthEnhancement)
+        if (effectiveAmount <= 0f) {
             virtualizers.remove(sessionId)?.release()
             return
         }
@@ -379,9 +389,7 @@ class Equalizer {
                 return
             }
 
-            val amount = advanced.optDouble("surroundAmount", 0.0)
-                .toFloat().coerceIn(0f, 1f)
-            virtualizer.setStrength((amount * 1000f).toInt().toShort())
+            virtualizer.setStrength((effectiveAmount * 1000f).toInt().toShort())
             virtualizer.enabled = true
 
             val old = virtualizers.put(sessionId, virtualizer)
