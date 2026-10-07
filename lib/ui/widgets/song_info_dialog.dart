@@ -12,7 +12,7 @@ class SongInfoDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Map<dynamic, dynamic> streamInfo = _getStreamInfo(song.id);
+    final streamInfo = _getStreamInfo(song.id);
     return CommonDialog(
       child: SizedBox(
         height: Get.mediaQuery.size.height * .7,
@@ -68,29 +68,51 @@ class SongInfoDialog extends StatelessWidget {
     );
   }
 
-  Map<dynamic, dynamic> _getStreamInfo(String id) {
-    Map<dynamic, dynamic> tempstreamInfo;
-    final nullVal = {
+  Map<String, dynamic> _getStreamInfo(String id) {
+    const nullVal = <String, dynamic>{
       "audioCodec": null,
       "bitrate": null,
       "loudnessDb": null,
-      "approxDurationMs": null
+      "approxDurationMs": null,
     };
-    if (Hive.box("SongDownloads").containsKey(id)) {
-      final song = Hive.box("SongDownloads").get(id);
 
-      tempstreamInfo =
-          song["streamInfo"] == null ? nullVal : song["streamInfo"][1];
-    } else {
+    try {
+      final downloads = Hive.box("SongDownloads");
+      if (downloads.containsKey(id)) {
+        final downloadedSong = downloads.get(id);
+        final rawStreamInfo = downloadedSong is Map
+            ? downloadedSong["streamInfo"]
+            : null;
+
+        if (rawStreamInfo is List && rawStreamInfo.length > 1) {
+          final selected = rawStreamInfo[1];
+          if (selected is Map) {
+            return Map<String, dynamic>.from(selected);
+          }
+        }
+        if (rawStreamInfo is Map) {
+          return Map<String, dynamic>.from(rawStreamInfo);
+        }
+        return nullVal;
+      }
+
       final dbStreamData = Hive.box("SongsUrlCache").get(id);
-      tempstreamInfo = dbStreamData != null &&
-              dbStreamData.runtimeType.toString().contains("Map")
-          ? dbStreamData[Hive.box(appPrefsBoxName).get('streamingQuality') == 0
+      if (dbStreamData is! Map) return nullVal;
+
+      final qualityKey =
+          Hive.box(appPrefsBoxName).get('streamingQuality') == 0
               ? 'lowQualityAudio'
-              : "highQualityAudio"]
-          : nullVal;
+              : 'highQualityAudio';
+      final selected = dbStreamData[qualityKey];
+      if (selected is Map) {
+        return Map<String, dynamic>.from(selected);
+      }
+    } catch (_) {
+      // Stream metadata is optional. Never let malformed cache data break
+      // the song info dialog.
     }
-    return tempstreamInfo;
+
+    return nullVal;
   }
 }
 
