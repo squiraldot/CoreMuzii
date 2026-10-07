@@ -87,6 +87,7 @@ class Equalizer {
                 advancedEnabled
             )
             builder.setInputGainAllChannelsTo(totalInputGain)
+            configureStereoBalance(builder, channelCount, advanced, advancedEnabled)
 
             val processor = DynamicsProcessing(
                 0,
@@ -179,6 +180,30 @@ class Equalizer {
             AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION,
             context
         )
+    }
+
+    private fun configureStereoBalance(
+        builder: DynamicsProcessing.Config.Builder,
+        channelCount: Int,
+        advanced: JSONObject,
+        advancedEnabled: Boolean
+    ) {
+        if (!advancedEnabled || channelCount < 2) return
+
+        val balance = advanced.optDouble("stereoBalance", 0.0)
+            .toFloat()
+            .coerceIn(-1f, 1f)
+
+        // Constant-power pan: center keeps both channels at 0 dB while
+        // moving toward either side attenuates only the opposite channel.
+        val angle = ((balance + 1f) * Math.PI / 4.0).toFloat()
+        val leftGain = kotlin.math.cos(angle).coerceAtLeast(0.001f)
+        val rightGain = kotlin.math.sin(angle).coerceAtLeast(0.001f)
+        val leftDb = (20f * kotlin.math.log10(leftGain)).coerceIn(-60f, 0f)
+        val rightDb = (20f * kotlin.math.log10(rightGain)).coerceIn(-60f, 0f)
+
+        builder.setInputGainByChannelIndex(0, leftDb)
+        builder.setInputGainByChannelIndex(1, rightDb)
     }
 
     private fun configureAdvancedMbc(
