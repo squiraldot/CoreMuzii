@@ -285,9 +285,9 @@ class AdvancedDspPanel extends StatelessWidget {
             _slider(
               label: 'Width',
               value: config.stereoWidth,
-              min: 0,
+              min: 1,
               max: 2,
-              suffix: '',
+              suffix: 'x',
               onChanged: (value) =>
                   onPreview(config.copyWith(stereoWidth: value)),
               onChangeEnd: (value) =>
