@@ -22,9 +22,9 @@ void main() {
     expect(profile.name, 'Demo Headphone');
     expect(profile.preampDb, -5.2);
     expect(profile.bands, hasLength(3));
-    expect(profile.bands[0].type.value, 'lowShelf');
+    expect(profile.bands[0].type, EqualizerFilterType.lowShelf);
     expect(profile.bands[1].frequency, 1000);
-    expect(profile.bands[2].type.value, 'highShelf');
+    expect(profile.bands[2].type, EqualizerFilterType.highShelf);
   });
 
   test('rejects unsupported or invalid AutoEq filters', () {
