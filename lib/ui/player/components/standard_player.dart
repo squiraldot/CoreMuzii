@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../widgets/songinfo_bottom_sheet.dart';
+import '../../widgets/song_info_dialog.dart';
 import '../player_controller.dart';
 import 'albumart_lyrics.dart';
 import 'backgroud_image.dart';
@@ -214,7 +215,7 @@ class StandardPlayer extends StatelessWidget {
                     size: 25,
                   ),
                   onPressed: () {
-                    showModalBottomSheet(
+                    showModalBottomSheet<bool>(
                       constraints: const BoxConstraints(maxWidth: 500),
                       shape: const RoundedRectangleBorder(
                         borderRadius:
@@ -228,7 +229,19 @@ class StandardPlayer extends StatelessWidget {
                         playerController.currentSong.value!,
                         calledFromPlayer: true,
                       ),
-                    ).whenComplete(() => Get.delete<SongInfoController>());
+                    ).then((showInfo) {
+                      Get.delete<SongInfoController>();
+                      if (showInfo == true) {
+                        showDialog(
+                          context: playerController
+                              .homeScaffoldkey.currentState!.context,
+                          barrierDismissible: true,
+                          builder: (_) => SongInfoDialog(
+                            song: playerController.currentSong.value!,
+                          ),
+                        );
+                      }
+                    });
                   },
                 ),
               ],
