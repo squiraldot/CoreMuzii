@@ -29,6 +29,9 @@ class EqualizerApplyGate {
 class EqualizerService {
   static Equalizer? _equalizer;
   static final EqualizerApplyGate _applyGate = EqualizerApplyGate();
+  static int? _activeSessionId;
+
+  static int? get activeSessionId => _activeSessionId;
 
   static Equalizer get _instance => _equalizer ??= Equalizer();
 
@@ -62,12 +65,14 @@ class EqualizerService {
   }
 
   static void initAudioEffect(int sessionId) {
+    _activeSessionId = sessionId;
     JObject context = JObject.fromReference(Jni.getCachedApplicationContext());
     _instance.initAudioEffect(sessionId, context);
     context.release();
   }
 
   static void endAudioEffect(int sessionId) {
+    if (_activeSessionId == sessionId) _activeSessionId = null;
     JObject context = JObject.fromReference(Jni.getCachedApplicationContext());
     _instance.endAudioEffect(sessionId, context);
     _applyGate.clearSession(sessionId);
