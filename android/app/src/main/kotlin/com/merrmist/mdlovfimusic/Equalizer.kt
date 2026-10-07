@@ -389,8 +389,9 @@ class Equalizer {
                 .optDouble("frequency", previous.toDouble())
                 .toFloat()
 
+            val maxCutoff = 20000f - (bands.length() - index - 1) * 0.1f
             val cutoff = frequency.coerceAtLeast(previous + 0.1f)
-            cutoffs[index] = cutoff.coerceIn(20.1f, 20000f)
+            cutoffs[index] = cutoff.coerceIn(20.1f, maxCutoff)
             previous = cutoffs[index]
         }
 
