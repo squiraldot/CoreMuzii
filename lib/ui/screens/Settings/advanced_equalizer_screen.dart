@@ -9,6 +9,7 @@ import '/models/equalizer.dart';
 import '/services/constant.dart';
 import '/ui/player/player_controller.dart';
 import 'advanced_dsp_panel.dart';
+import 'autoeq_panel.dart';
 import 'equalizer_preset_panel.dart';
 import 'parametric_equalizer_editor.dart';
 import 'spectrum_analyzer_panel.dart';
@@ -31,6 +32,7 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
   void initState() {
     super.initState();
     _config = _loadConfig();
+    _parametricMode = _config.bands.length != 10;
   }
 
   EqualizerConfig _loadConfig() {
@@ -229,6 +231,13 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
                 ),
               ),
           ],
+          const SizedBox(height: 12),
+          AutoEqPanel(
+            onApplyConfig: (config) async {
+              setState(() => _parametricMode = true);
+              await _commit(config);
+            },
+          ),
           const SizedBox(height: 12),
           SpectrumAnalyzerPanel(
             config: _config,
