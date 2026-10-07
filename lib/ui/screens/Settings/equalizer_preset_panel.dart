@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -327,7 +328,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
         directory.path + '/' + fileName,
         mimeType: EqualizerPresetFileCodec.mimeType,
       );
-      await file.writeAsBytes(utf8.encode(encoded), flush: true);
+      await File(file.path).writeAsBytes(utf8.encode(encoded), flush: true);
       await Share.shareXFiles(
         [file],
         subject: selected.name,
