@@ -77,6 +77,62 @@ class AdvancedDspConfig {
           dynamicBassAmountDb, 0, 12, 'dynamicBassAmountDb'),
         surroundAmount = _range(surroundAmount, 0, 1, 'surroundAmount');
 
+  AdvancedDspConfig copyWith({
+    bool? enabled,
+    bool? bassBoostEnabled,
+    double? bassBoostAmountDb,
+    double? bassBoostFrequencyHz,
+    double? bassBoostQ,
+    bool? loudnessEnabled,
+    double? loudnessAmountDb,
+    bool? compressorEnabled,
+    double? compressorThresholdDb,
+    double? compressorRatio,
+    double? compressorAttackMs,
+    double? compressorReleaseMs,
+    double? compressorKneeDb,
+    double? compressorMakeupGainDb,
+    double? limiterCeilingDb,
+    double? limiterReleaseMs,
+    bool? soundFxEnabled,
+    double? xBassAmountDb,
+    double? xTrebleAmountDb,
+    double? powerBassAmountDb,
+    bool? dynamicBassEnabled,
+    double? dynamicBassAmountDb,
+    bool? surroundEnabled,
+    double? surroundAmount,
+  }) {
+    return AdvancedDspConfig(
+      enabled: enabled ?? this.enabled,
+      bassBoostEnabled: bassBoostEnabled ?? this.bassBoostEnabled,
+      bassBoostAmountDb: bassBoostAmountDb ?? this.bassBoostAmountDb,
+      bassBoostFrequencyHz: bassBoostFrequencyHz ?? this.bassBoostFrequencyHz,
+      bassBoostQ: bassBoostQ ?? this.bassBoostQ,
+      loudnessEnabled: loudnessEnabled ?? this.loudnessEnabled,
+      loudnessAmountDb: loudnessAmountDb ?? this.loudnessAmountDb,
+      compressorEnabled: compressorEnabled ?? this.compressorEnabled,
+      compressorThresholdDb:
+          compressorThresholdDb ?? this.compressorThresholdDb,
+      compressorRatio: compressorRatio ?? this.compressorRatio,
+      compressorAttackMs: compressorAttackMs ?? this.compressorAttackMs,
+      compressorReleaseMs: compressorReleaseMs ?? this.compressorReleaseMs,
+      compressorKneeDb: compressorKneeDb ?? this.compressorKneeDb,
+      compressorMakeupGainDb:
+          compressorMakeupGainDb ?? this.compressorMakeupGainDb,
+      limiterCeilingDb: limiterCeilingDb ?? this.limiterCeilingDb,
+      limiterReleaseMs: limiterReleaseMs ?? this.limiterReleaseMs,
+      soundFxEnabled: soundFxEnabled ?? this.soundFxEnabled,
+      xBassAmountDb: xBassAmountDb ?? this.xBassAmountDb,
+      xTrebleAmountDb: xTrebleAmountDb ?? this.xTrebleAmountDb,
+      powerBassAmountDb: powerBassAmountDb ?? this.powerBassAmountDb,
+      dynamicBassEnabled: dynamicBassEnabled ?? this.dynamicBassEnabled,
+      dynamicBassAmountDb: dynamicBassAmountDb ?? this.dynamicBassAmountDb,
+      surroundEnabled: surroundEnabled ?? this.surroundEnabled,
+      surroundAmount: surroundAmount ?? this.surroundAmount,
+    );
+  }
+
   Map<String, Object> toJson() => {
         'enabled': enabled,
         'bassBoostEnabled': bassBoostEnabled,
