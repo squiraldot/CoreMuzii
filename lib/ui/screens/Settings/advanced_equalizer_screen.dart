@@ -100,8 +100,18 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
     final frequencies =
         _config.bands.map((band) => band.frequency.round()).toList();
 
-    return Scaffold(
-      appBar: AppBar(
+    final switchTheme = Theme.of(context).switchTheme.copyWith(
+      thumbColor: WidgetStateProperty.resolveWith((states) =>
+          states.contains(WidgetState.selected) ? Colors.white : Colors.grey.shade500),
+      trackColor: WidgetStateProperty.resolveWith((states) =>
+          states.contains(WidgetState.selected) ? Colors.grey.shade700 : Colors.grey.shade900),
+      trackOutlineColor: WidgetStateProperty.all(Colors.grey.shade700),
+    );
+
+    return Theme(
+      data: Theme.of(context).copyWith(switchTheme: switchTheme),
+      child: Scaffold(
+        appBar: AppBar(
         title: const Text('Advanced Equalizer'),
         actions: [
           IconButton(
@@ -113,8 +123,8 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
           Row(
             children: [
@@ -270,7 +280,8 @@ class _AdvancedEqualizerScreenState extends State<AdvancedEqualizerScreen> {
               padding: EdgeInsets.only(top: 8),
               child: LinearProgressIndicator(),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -403,12 +414,16 @@ class _EqualizerCurvePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final gridPaint = Paint()
+      ..color = Colors.grey.shade800
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
     final curvePaint = Paint()
+      ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
-    final dotPaint = Paint()..style = PaintingStyle.fill;
+    final dotPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
 
     for (var i = 0; i <= 6; i++) {
       final y = size.height * i / 6;
@@ -438,6 +453,7 @@ class _EqualizerCurvePainter extends CustomPainter {
 
     final zeroY = size.height / 2;
     final zeroPaint = Paint()
+      ..color = Colors.grey.shade600
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     canvas.drawLine(Offset(0, zeroY), Offset(size.width, zeroY), zeroPaint);
