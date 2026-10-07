@@ -448,7 +448,7 @@ class Equalizer {
         activity: Activity
     ): Boolean {
         val equalizerPackages = listOf(
-            "com.android.settings.Settings$SoundSettingsActivity",
+            "com.android.settings.Settings\$SoundSettingsActivity",
             "com.android.settings.EqualizerSettings",
             "com.samsung.android.soundalive",
             "com.miui.audioeffect",
