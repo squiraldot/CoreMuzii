@@ -1,20 +1,49 @@
 package com.merrmist.mdlovfimusic
 
+import android.content.Intent
+import android.net.Uri
 import android.media.audiofx.Visualizer
+import android.util.Base64
 import android.os.Build
 import androidx.annotation.Keep
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.hypot
 
 class MainActivity : AudioServiceActivity() {
     private val spectrumChannel = "mdlovfi/spectrum_analyzer"
+    private val presetShareChannel = "mdlovfi/preset_share"
+    private var presetEventSink: EventChannel.EventSink? = null
+    private var initialPreset: String? = null
     private val visualizers = ConcurrentHashMap<Int, Visualizer>()
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, presetShareChannel)
+            .setStreamHandler(object : EventChannel.StreamHandler {
+                override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                    presetEventSink = events
+                    initialPreset?.let {
+                        events?.success(it)
+                        initialPreset = null
+                    }
+                }
+                override fun onCancel(arguments: Any?) {
+                    presetEventSink = null
+                }
+            })
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, presetShareChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "getInitialPreset" -> result.success(initialPreset.also { initialPreset = null })
+                    else -> result.notImplemented()
+                }
+            }
+        handlePresetIntent(intent)
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, spectrumChannel)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -105,6 +134,36 @@ class MainActivity : AudioServiceActivity() {
                 visualizer.release()
             } catch (_: RuntimeException) {
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handlePresetIntent(intent)
+    }
+
+    private fun handlePresetIntent(intent: Intent?) {
+        if (intent == null) return
+        val action = intent.action ?: return
+        if (action != Intent.ACTION_SEND && action != Intent.ACTION_VIEW) return
+        val type = intent.type ?: return
+        if (type != "application/json" && !type.contains("mdleq")) return
+        val uri = when (action) {
+            Intent.ACTION_SEND -> intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+            else -> intent.data
+        } ?: return
+        try {
+            val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return
+            val content = Base64.encodeToString(bytes, Base64.NO_WRAP)
+            val payload = "base64:" + content
+            if (presetEventSink != null) {
+                presetEventSink?.success(payload)
+            } else {
+                initialPreset = payload
+            }
+        } catch (_: Exception) {
+            // Invalid/unreadable shared files are ignored; Flutter can show errors for decoded payloads.
         }
     }
 
