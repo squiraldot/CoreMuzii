@@ -205,10 +205,21 @@ class _SpectrumPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1;
-    final spectrumPaint = Paint()..style = PaintingStyle.fill;
-    final peakPaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 1;
-    final curvePaint = Paint()..style = PaintingStyle.stroke..strokeWidth = 2;
+    final gridPaint = Paint()
+      ..color = Colors.grey.shade800
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final spectrumPaint = Paint()
+      ..color = Colors.grey.shade700
+      ..style = PaintingStyle.fill;
+    final peakPaint = Paint()
+      ..color = Colors.grey.shade400
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final curvePaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
 
     for (var index = 0; index <= 4; index++) {
       final y = size.height * index / 4;
