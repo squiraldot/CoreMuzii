@@ -83,7 +83,9 @@ class Equalizer {
             val totalInputGain = calculateInputGain(
                 preamp,
                 outputGain,
-                advanced,
+                advanced.apply {
+                    put("bandsForHeadroom", bands)
+                },
                 advancedEnabled
             )
             builder.setInputGainAllChannelsTo(totalInputGain)
@@ -396,20 +398,49 @@ class Equalizer {
         advancedEnabled: Boolean
     ): Float {
         var gain = preamp + outputGain
+
         if (advancedEnabled && advanced.optBoolean("loudnessEnabled", false)) {
-            gain += advanced.optDouble("loudnessAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
+            val loudness = advanced.optDouble("loudnessAmountDb", 0.0)
+                .toFloat().coerceIn(0f, 12f)
+            gain -= loudness
         }
 
-        // Reserve headroom for additive SoundFX/EQ boosts before the limiter.
+        if (advancedEnabled && advanced.optBoolean("compressorEnabled", false)) {
+            val makeup = advanced.optDouble("compressorMakeupGainDb", 0.0)
+                .toFloat().coerceIn(-12f, 12f)
+            if (makeup > 0f) gain -= makeup
+        }
+
+        var peakBoost = 0f
+        for (index in 0 until advanced.optJSONArray("bandsForHeadroom")?.length().orZero()) {
+            val band = advanced.optJSONArray("bandsForHeadroom")?.optJSONObject(index)
+            if (band != null && band.optBoolean("enabled", true)) {
+                peakBoost = maxOf(
+                    peakBoost,
+                    band.optDouble("gainDb", 0.0).toFloat().coerceIn(0f, 15f)
+                )
+            }
+        }
+
+        if (advancedEnabled && advanced.optBoolean("bassBoostEnabled", false)) {
+            peakBoost += advanced.optDouble("bassBoostAmountDb", 0.0)
+                .toFloat().coerceIn(0f, 12f)
+        }
         if (advancedEnabled && advanced.optBoolean("soundFxEnabled", false)) {
-            val xBass = advanced.optDouble("xBassAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
-            val xTreble = advanced.optDouble("xTrebleAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
-            val powerBass = advanced.optDouble("powerBassAmountDb", 0.0).toFloat().coerceIn(0f, 12f)
-            gain -= maxOf(xBass, xTreble, powerBass * 0.75f).coerceAtMost(9f)
+            val xBass = advanced.optDouble("xBassAmountDb", 0.0)
+                .toFloat().coerceIn(0f, 12f)
+            val xTreble = advanced.optDouble("xTrebleAmountDb", 0.0)
+                .toFloat().coerceIn(0f, 12f)
+            val powerBass = advanced.optDouble("powerBassAmountDb", 0.0)
+                .toFloat().coerceIn(0f, 12f)
+            peakBoost += maxOf(xBass, xTreble, powerBass * 0.75f)
         }
 
+        gain -= peakBoost.coerceAtMost(15f)
         return gain.coerceIn(-15f, 15f)
     }
+
+    private fun Int?.orZero(): Int = this ?: 0
 
     private fun calculateCutoffs(bands: org.json.JSONArray): FloatArray {
         val cutoffs = FloatArray(bands.length())
