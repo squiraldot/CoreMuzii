@@ -211,6 +211,10 @@ void main() {
         throwsArgumentError,
       );
       expect(
+        () => AdvancedDspConfig(stereoWidth: 0.9),
+        throwsArgumentError,
+      );
+      expect(
         () => AdvancedDspConfig(stereoWidth: 2.1),
         throwsArgumentError,
       );
