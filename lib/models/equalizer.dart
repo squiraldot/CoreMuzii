@@ -357,11 +357,11 @@ class EqualizerConfig {
     this.limiterEnabled = true,
     double outputGainDb = 0,
     required List<EqualizerBand> bands,
-    AdvancedDspConfig advancedDsp = const _DefaultAdvancedDspConfig(),
+    AdvancedDspConfig? advancedDsp,
   })  : preampDb = _clampGlobalGain(preampDb),
         outputGainDb = _clampGlobalGain(outputGainDb),
         bands = _validateBands(bands),
-        advancedDsp = advancedDsp;
+        advancedDsp = advancedDsp ?? AdvancedDspConfig();
 
   factory EqualizerConfig.graphic10Band() {
     const frequencies = [
@@ -541,8 +541,4 @@ bool _requireBool(Map<String, Object?> json, String key) {
   final value = json[key];
   if (value is bool) return value;
   throw FormatException('Expected boolean for $key');
-}
-
-class _DefaultAdvancedDspConfig extends AdvancedDspConfig {
-  const _DefaultAdvancedDspConfig() : super();
 }
