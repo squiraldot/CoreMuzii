@@ -580,6 +580,18 @@ double _clampGlobalGain(double value) {
   ).toDouble();
 }
 
+
+bool _boolOr(Map<String, Object?> json, String key, bool fallback) {
+  final value = json[key];
+  return value is bool ? value : fallback;
+}
+
+double _doubleOr(Map<String, Object?> json, String key, double fallback) {
+  final value = json[key];
+  if (value is num && value.isFinite) return value.toDouble();
+  return fallback;
+}
+
 String _requireString(Map<String, Object?> json, String key) {
   final value = json[key];
   if (value is! String) {
