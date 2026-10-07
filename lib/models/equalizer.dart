@@ -471,6 +471,7 @@ class EqualizerConfig {
     bool? limiterEnabled,
     double? outputGainDb,
     List<EqualizerBand>? bands,
+    AdvancedDspConfig? advancedDsp,
   }) {
     return EqualizerConfig(
       enabled: enabled ?? this.enabled,
