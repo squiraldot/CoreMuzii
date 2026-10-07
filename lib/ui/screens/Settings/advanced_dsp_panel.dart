@@ -265,6 +265,47 @@ class AdvancedDspPanel extends StatelessWidget {
           ],
         ),
         _section(
+          title: 'Stereo',
+          enabled: enabled && config.enabled,
+          value: config.surroundEnabled,
+          onEnabled: (value) =>
+              onCommit(config.copyWith(surroundEnabled: value)),
+          children: [
+            _slider(
+              label: 'Balance',
+              value: config.stereoBalance,
+              min: -1,
+              max: 1,
+              suffix: '',
+              onChanged: (value) =>
+                  onPreview(config.copyWith(stereoBalance: value)),
+              onChangeEnd: (value) =>
+                  onCommit(config.copyWith(stereoBalance: value)),
+            ),
+            _slider(
+              label: 'Width',
+              value: config.stereoWidth,
+              min: 0,
+              max: 2,
+              suffix: '',
+              onChanged: (value) =>
+                  onPreview(config.copyWith(stereoWidth: value)),
+              onChangeEnd: (value) =>
+                  onCommit(config.copyWith(stereoWidth: value)),
+            ),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'Balance is applied per channel. Width is combined with Android surround virtualization when supported.',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+        _section(
           title: 'Surround',
           enabled: enabled && config.enabled,
           value: config.surroundEnabled,
