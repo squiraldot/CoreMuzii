@@ -50,6 +50,46 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
   void initState() {
     super.initState();
     _load();
+    _incomingPresetSubscription =
+        PresetShareService.incomingPresets.listen(_handleIncomingPayload);
+    PresetShareService.getInitialPreset().then((payload) {
+      if (payload != null) _handleIncomingPayload(payload);
+    });
+  }
+
+  @override
+  void dispose() {
+    _incomingPresetSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _handleIncomingPayload(String payload) async {
+    if (!payload.startsWith('base64:') || !mounted) return;
+    try {
+      final encoded = payload.substring('base64:'.length);
+      final source = utf8.decode(base64Decode(encoded));
+      final preset = EqualizerPresetFileCodec.decode(source);
+      final shouldApply = await _showImportPreview(preset);
+      if (shouldApply != true || !mounted) return;
+      _applyingPreset = true;
+      try {
+        await widget.onApplyConfig(preset.config);
+      } finally {
+        _applyingPreset = false;
+      }
+      if (!mounted) return;
+      final matching = _presets.where((item) => item.config == preset.config);
+      setState(() {
+        _selectedPresetId = matching.isEmpty ? null : matching.first.id;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Imported “${preset.name}” from a shared file.')),
+      );
+    } on FormatException catch (error) {
+      if (mounted) _showFileError('Invalid MDLovFi preset', error);
+    } catch (error) {
+      if (mounted) _showFileError('Could not open shared preset', error);
+    }
   }
 
   @override
@@ -253,6 +293,43 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
       );
     } catch (error) {
       if (mounted) _showFileError('Could not export preset', error);
+    } finally {
+      if (mounted) setState(() => _fileOperationInProgress = false);
+    }
+  }
+
+  Future<void> _share() async {
+    if (_fileOperationInProgress) return;
+
+    final selected = _selected ??
+        EqualizerPreset(
+          id: 'current-eq',
+          name: 'My Equalizer',
+          author: 'User',
+          description: 'Current MDLovFi equalizer settings.',
+          createdAt: DateTime.now().toUtc(),
+          updatedAt: DateTime.now().toUtc(),
+          isBuiltIn: false,
+          config: widget.config,
+        );
+
+    setState(() => _fileOperationInProgress = true);
+    try {
+      final encoded = EqualizerPresetFileCodec.encode(selected);
+      final directory = await getTemporaryDirectory();
+      final fileName = _fileName(selected.name);
+      final file = XFile(
+        directory.path + '/' + fileName,
+        mimeType: EqualizerPresetFileCodec.mimeType,
+      );
+      await file.writeAsBytes(utf8.encode(encoded), flush: true);
+      await Share.shareXFiles(
+        [file],
+        subject: selected.name,
+        text: 'MDLovFi Equalizer preset: ' + selected.name,
+      );
+    } catch (error) {
+      if (mounted) _showFileError('Could not share preset', error);
     } finally {
       if (mounted) setState(() => _fileOperationInProgress = false);
     }
@@ -488,6 +565,11 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
                   onPressed: _fileOperationInProgress ? null : _export,
                   icon: const Icon(Icons.ios_share_outlined),
                   label: const Text('Export'),
+                ),
+                TextButton.icon(
+                  onPressed: _fileOperationInProgress ? null : _share,
+                  icon: const Icon(Icons.share_outlined),
+                  label: const Text('Share'),
                 ),
                 if (selectedIsCustom)
                   TextButton.icon(
