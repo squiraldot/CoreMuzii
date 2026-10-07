@@ -272,7 +272,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
       final file = result.files.single;
       if (!EqualizerPresetFileCodec.isSupportedFileName(file.name)) {
         throw FormatException(
-          'Please select a .\${EqualizerPresetFileCodec.extension} preset file.',
+          'Please select a .${EqualizerPresetFileCodec.extension} preset file.',
         );
       }
 
