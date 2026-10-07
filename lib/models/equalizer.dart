@@ -484,7 +484,7 @@ class EqualizerConfig {
 
   Map<String, Object> toJson() => {
         'format': 'mdlovfi-eq',
-        'version': 1,
+        'version': 2,
         'enabled': enabled,
         'preamp': preampDb,
         'outputGain': outputGainDb,
