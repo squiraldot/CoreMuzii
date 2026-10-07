@@ -20,7 +20,7 @@ void main() {
     expect(EqualizerPresetFileCodec.isSupportedFileName('My_Preset.mdleq.bak'), isFalse);
   });
 
-  test('exports a portable v1 mdleq document and imports it losslessly', () {
+  test('exports a portable v2 mdleq document and imports it losslessly', () {
     final preset = EqualizerPreset(
       id: 'custom-1',
       name: 'My Bass',
@@ -36,7 +36,7 @@ void main() {
     final json = jsonDecode(encoded) as Map<String, Object?>;
 
     expect(json['format'], 'mdlovfi-eq');
-    expect(json['version'], 1);
+    expect(json['version'], 2);
     expect(json['name'], 'My Bass');
     expect(json['author'], 'User');
     expect(json.containsKey('id'), isFalse);
@@ -51,6 +51,62 @@ void main() {
     expect(_portableConfigJson(imported.config), equals(_portableConfigJson(preset.config)));
   });
 
+
+
+  test('preserves advanced DSP controls in mdleq v2', () {
+    final preset = EqualizerPreset(
+      id: 'soundfx-1',
+      name: 'SoundFX',
+      author: 'User',
+      description: 'Advanced DSP preset',
+      createdAt: DateTime.utc(2026, 2, 1),
+      updatedAt: DateTime.utc(2026, 2, 1),
+      isBuiltIn: false,
+      config: baseConfig.copyWith(
+        advancedDsp: AdvancedDspConfig(
+          bassBoostEnabled: true,
+          bassBoostAmountDb: 7,
+          compressorEnabled: true,
+          compressorRatio: 4,
+          soundFxEnabled: true,
+          xBassAmountDb: 6,
+          xTrebleAmountDb: 3,
+          surroundEnabled: true,
+          surroundAmount: 0.5,
+        ),
+      ),
+    );
+
+    final imported = EqualizerPresetFileCodec.decode(
+      EqualizerPresetFileCodec.encode(preset),
+    );
+
+    expect(imported.config.advancedDsp, equals(preset.config.advancedDsp));
+  });
+
+  test('continues importing v1 presets with advanced DSP defaults', () {
+    final imported = EqualizerPresetFileCodec.decode(
+      jsonEncode({
+        'format': 'mdlovfi-eq',
+        'version': 1,
+        'name': 'Legacy',
+        'author': 'User',
+        'enabled': true,
+        'preamp': 0,
+        'bands': [
+          {
+            'type': 'peaking',
+            'frequency': 1000,
+            'gainDb': 0,
+            'q': 1,
+            'enabled': true,
+          },
+        ],
+      }),
+    );
+
+    expect(imported.config.advancedDsp, equals(AdvancedDspConfig()));
+  });
 
   test('exports built-in presets without making the portable file mutable', () {
     final builtIn = EqualizerBuiltInPresets.all.first;
