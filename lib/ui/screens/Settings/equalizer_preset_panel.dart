@@ -33,6 +33,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
   bool _applyingPreset = false;
   bool _fileOperationInProgress = false;
   Future<void> _presetWriteQueue = Future<void>.value();
+  StreamSubscription<String>? _incomingPresetSubscription;
 
   List<EqualizerPreset> get _presets => [
         ...EqualizerBuiltInPresets.all,
