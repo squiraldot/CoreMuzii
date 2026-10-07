@@ -216,7 +216,7 @@ void main() {
       final legacy = EqualizerConfig.graphic10Band().toJson();
       final restored = EqualizerConfig.fromJson(legacy);
 
-      expect(restored.advancedDsp, equals(const AdvancedDspConfig()));
+      expect(restored.advancedDsp, equals(AdvancedDspConfig()));
     });
   });
 
