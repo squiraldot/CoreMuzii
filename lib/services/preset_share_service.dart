@@ -3,14 +3,15 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 
 class PresetShareService {
-  static const _channel = MethodChannel('mdlovfi/preset_share_method');
+  static const _methodChannel = MethodChannel('mdlovfi/preset_share_method');
+  static const _eventChannel = EventChannel('mdlovfi/preset_share');
 
   static Future<String?> getInitialPreset() {
-    return _channel.invokeMethod<String>('getInitialPreset');
+    return _methodChannel.invokeMethod<String>('getInitialPreset');
   }
 
   static Stream<String> get incomingPresets {
-    return _channel
+    return _eventChannel
         .receiveBroadcastStream()
         .where((value) => value is String)
         .cast<String>();
