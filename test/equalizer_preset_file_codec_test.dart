@@ -138,7 +138,7 @@ void main() {
       () => EqualizerPresetFileCodec.decode(
         jsonEncode({
           'format': 'mdlovfi-eq',
-          'version': 2,
+          'version': 3,
           'name': 'Future',
           'author': 'Someone',
           'enabled': true,
