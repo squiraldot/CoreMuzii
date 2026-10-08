@@ -534,7 +534,7 @@ class _SongInfoRow extends StatelessWidget {
   }
 }
 
-$classMarker
+class SongInfoController extends GetxController
     with RemoveSongFromPlaylistMixin {
   final isCurrentSongFav = false.obs;
   final MediaItem song;
