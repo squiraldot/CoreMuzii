@@ -5,75 +5,88 @@ import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import '/ui/widgets/common_dialog_widget.dart';
 
-
 class SongInfoDialog extends StatelessWidget {
   final MediaItem song;
   const SongInfoDialog({super.key, required this.song});
 
   @override
   Widget build(BuildContext context) {
-    final streamInfo = _getStreamInfo(song.id);
     return CommonDialog(
-      child: SizedBox(
-        height: Get.mediaQuery.size.height * .7,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              child: Text(
-                "songInfo".tr,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+      child: SongInfoContent(song: song),
+    );
+  }
+}
+
+class SongInfoContent extends StatelessWidget {
+  final MediaItem song;
+  final VoidCallback? onClose;
+
+  const SongInfoContent({
+    super.key,
+    required this.song,
+    this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final streamInfo = _getStreamInfo(song.id);
+    return SizedBox(
+      height: Get.mediaQuery.size.height * .7,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0),
+            child: Text(
+              "songInfo".tr,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-            const Divider(),
-            Expanded(
-              child: ListView(
-                children: [
-                  InfoItem(title: "id".tr, value: song.id),
-                  InfoItem(title: "title".tr, value: song.title),
-                  InfoItem(title: "album".tr, value: song.album ?? "NA"),
-                  InfoItem(title: "artists".tr, value: song.artist ?? "NA"),
-                  InfoItem(
-                    title: "duration".tr,
-                    value:
-                        "${streamInfo["approxDurationMs"] ?? song.duration?.inMilliseconds ?? "NA"} ms",
-                  ),
-                  InfoItem(
-                    title: "audioCodec".tr,
-                    value: streamInfo["audioCodec"] ?? "NA",
-                  ),
-                  InfoItem(
-                    title: "bitrate".tr,
-                    value: "${streamInfo["bitrate"] ?? "NA"}",
-                  ),
-                  InfoItem(
-                    title: "loudnessDb".tr,
-                    value: "${streamInfo["loudnessDb"] ?? "NA"}",
-                  ),
-                ],
-              ),
+          ),
+          const Divider(),
+          Expanded(
+            child: ListView(
+              children: [
+                InfoItem(title: "id".tr, value: song.id),
+                InfoItem(title: "title".tr, value: song.title),
+                InfoItem(title: "album".tr, value: song.album ?? "NA"),
+                InfoItem(title: "artists".tr, value: song.artist ?? "NA"),
+                InfoItem(
+                  title: "duration".tr,
+                  value:
+                      "${streamInfo["approxDurationMs"] ?? song.duration?.inMilliseconds ?? "NA"} ms",
+                ),
+                InfoItem(
+                  title: "audioCodec".tr,
+                  value: streamInfo["audioCodec"] ?? "NA",
+                ),
+                InfoItem(
+                  title: "bitrate".tr,
+                  value: "${streamInfo["bitrate"] ?? "NA"}",
+                ),
+                InfoItem(
+                  title: "loudnessDb".tr,
+                  value: "${streamInfo["loudnessDb"] ?? "NA"}",
+                ),
+              ],
             ),
-            const Divider(),
-            SizedBox(
-              height: 50,
-              child: Align(
-                alignment: Alignment.center,
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context, rootNavigator: true).pop();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10.0,
-                      horizontal: 25,
-                    ),
-                    child: Text("close".tr),
+          ),
+          const Divider(),
+          SizedBox(
+            height: 50,
+            child: Align(
+              alignment: Alignment.center,
+              child: InkWell(
+                onTap: onClose ?? () => Navigator.of(context).pop(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 10.0,
+                    horizontal: 25,
                   ),
+                  child: Text("close".tr),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -90,9 +103,8 @@ class SongInfoDialog extends StatelessWidget {
       final downloads = Hive.box("SongDownloads");
       if (downloads.containsKey(id)) {
         final downloadedSong = downloads.get(id);
-        final rawStreamInfo = downloadedSong is Map
-            ? downloadedSong["streamInfo"]
-            : null;
+        final rawStreamInfo =
+            downloadedSong is Map ? downloadedSong["streamInfo"] : null;
 
         if (rawStreamInfo is List && rawStreamInfo.length > 1) {
           final selected = rawStreamInfo[1];
