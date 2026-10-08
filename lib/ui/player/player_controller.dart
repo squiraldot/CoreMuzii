@@ -1,4 +1,5 @@
 import '/models/equalizer.dart';
+import '../widgets/song_info_overlay.dart';
 
 import '../../services/constant.dart';
 import 'dart:async';
@@ -67,6 +68,7 @@ class PlayerController extends GetxController
   final isLoopModeEnabled = false.obs;
   final isShuffleModeEnabled = false.obs;
   final currentSong = Rxn<MediaItem>();
+  final songInfoOverlaySong = Rxn<MediaItem>();
   final isCurrentSongFav = false.obs;
   final playinfrom = PlaylingFrom(type: PlaylingFromType.SELECTION).obs;
   final showLyricsflag = false.obs;
@@ -83,6 +85,14 @@ class PlayerController extends GetxController
   final GlobalKey<ScaffoldState> homeScaffoldkey = GlobalKey<ScaffoldState>();
 
   final buttonState = PlayButtonState.paused.obs;
+
+  void showSongInfoOverlay(MediaItem song) {
+    songInfoOverlaySong.value = song;
+  }
+
+  void hideSongInfoOverlay() {
+    songInfoOverlaySong.value = null;
+  }
 
   // track whether wakelock is currently enabled to avoid repeated calls
   bool _wakelockActive = false;
