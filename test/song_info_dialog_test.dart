@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:mdlovfimusic/ui/widgets/song_info_dialog.dart';
+import 'package:mdlovfimusic/ui/widgets/standalone_song_info_dialog.dart';
 
 void main() {
   testWidgets('song info dialog renders without cached stream metadata',
@@ -85,3 +86,59 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 }
+
+
+  testWidgets('standalone song info dialog renders metadata and actions',
+      (tester) async {
+    final song = MediaItem(
+      id: 'standalone-song',
+      title: 'Standalone Song',
+      artist: 'Standalone Artist',
+      album: 'Standalone Album',
+      extras: const {
+        'artists': [
+          {'id': 'artist-id', 'name': 'Standalone Artist'},
+        ],
+      },
+    );
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                showDialog<void>(
+                  context: context,
+                  builder: (_) => const Dialog(
+                    child: StandaloneSongInfoDialog(song: song),
+                  ),
+                );
+              },
+              child: const Text('Open Standalone'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open Standalone'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Standalone Song'), findsOneWidget);
+    expect(find.text('Standalone Artist'), findsOneWidget);
+    expect(find.text('Standalone Album'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    final list = find.byType(ListView);
+    await tester.drag(list, const Offset(0, -1200));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Download'), findsOneWidget);
+    expect(find.text('Start radio'), findsOneWidget);
+    expect(find.text('Add to playlist'), findsOneWidget);
+    expect(find.text('Share this song'), findsOneWidget);
+    expect(find.text('Copy Link'), findsOneWidget);
+    expect(find.text('QR Code'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
