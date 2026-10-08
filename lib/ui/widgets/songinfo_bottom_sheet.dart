@@ -66,10 +66,18 @@ class SongInfoBottomSheet extends StatelessWidget {
                   children: [
                     calledFromPlayer
                         ? IconButton(
-                            onPressed: () => showDialog(
+                            onPressed: () {
+                              SongInfoDiagnostics.enter();
+                              try {
+                                showDialog(
                                   context: context,
                                   builder: (_) => SongInfoDialog(song: song),
-                                ),
+                                ).whenComplete(SongInfoDiagnostics.exit);
+                              } catch (_) {
+                                SongInfoDiagnostics.exit();
+                                rethrow;
+                              }
+                            },
                             icon: Icon(
                               Icons.info,
                               color: Theme.of(context)
