@@ -44,11 +44,11 @@ class SongInfoBottomSheet extends StatelessWidget {
       () => songInfoController.showInfo.value
           ? _buildSongInfoView(context, song)
           : Padding(
-      padding: EdgeInsets.only(bottom: Get.mediaQuery.padding.bottom),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+              padding: EdgeInsets.only(bottom: Get.mediaQuery.padding.bottom),
+              child: SingleChildScrollView(
+                        child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
             ListTile(
               contentPadding:
                   const EdgeInsets.only(left: 15, top: 7, right: 10, bottom: 0),
@@ -341,9 +341,10 @@ class SongInfoBottomSheet extends StatelessWidget {
                 showQrCodeDialog(context, "https://youtube.com/watch?v=${song.id}", song.title);
               },
             ),
-          ],
-        ),
-      ),
+                  ],
+                ),
+              ),
+            ),
     );
 
   }
