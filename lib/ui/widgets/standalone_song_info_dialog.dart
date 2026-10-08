@@ -7,14 +7,13 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/constant.dart';
+import '../../services/downloader.dart';
 import '../navigator.dart';
 import '../player/player_controller.dart';
 import '../screens/Library/library_controller.dart';
 import '../widgets/add_to_playlist.dart';
-import '../widgets/image_widget.dart';
 import '../widgets/qr_code_dialog.dart';
 import '../widgets/sleep_timer_bottom_sheet.dart';
-import '../widgets/song_download_btn.dart';
 import '../widgets/snackbar.dart';
 
 /// Completely standalone Song Info dialog.
@@ -52,14 +51,6 @@ class StandaloneSongInfoDialog extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: ImageWidget(
-                      song: song,
-                      size: 52,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,7 +71,6 @@ class StandaloneSongInfoDialog extends StatelessWidget {
                       ],
                     ),
                   ),
-                  SongDownloadButton(song_: song),
                   IconButton(
                     tooltip: 'close'.tr,
                     onPressed: () => Navigator.of(context).pop(),
@@ -110,6 +100,14 @@ class StandaloneSongInfoDialog extends StatelessWidget {
                   const SizedBox(height: 8),
                   const _SectionTitle(title: 'Actions'),
                   const SizedBox(height: 4),
+                  _ActionTile(
+                    icon: Icons.download,
+                    title: 'Download',
+                    onTap: () {
+                      final downloader = Get.find<Downloader>();
+                      downloader.download(song);
+                    },
+                  ),
                   _ActionTile(
                     icon: Icons.sensors,
                     title: 'startRadio'.tr,
