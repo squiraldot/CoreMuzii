@@ -10,6 +10,23 @@ import '../../services/constant.dart';
 /// Navigator, or BackdropFilter. It is rendered directly in the Player's
 /// existing widget tree so Android route/compositing bugs cannot blank the
 /// player when Song Info is opened.
+void showSongInfoOverlay(BuildContext context, MediaItem song) {
+  final overlay = Overlay.of(context, rootOverlay: true);
+  late final OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (_) => SongInfoOverlay(
+      song: song,
+      onClose: () {
+        if (entry.mounted) {
+          entry.remove();
+        }
+        entry.dispose();
+      },
+    ),
+  );
+  overlay.insert(entry);
+}
+
 class SongInfoOverlay extends StatelessWidget {
   const SongInfoOverlay({
     super.key,
