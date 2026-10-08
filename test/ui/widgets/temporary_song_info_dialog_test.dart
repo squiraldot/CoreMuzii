@@ -2,7 +2,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:coremuzii/ui/widgets/temporary_song_info_dialog.dart';
+import 'package:mdlovfimusic/ui/widgets/temporary_song_info_dialog.dart';
 
 void main() {
   final song = MediaItem(
