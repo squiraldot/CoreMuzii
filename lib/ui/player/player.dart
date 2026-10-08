@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
@@ -83,13 +81,11 @@ class Player extends StatelessWidget {
                 /// Stack second child
                 /// This contains the bottom bar with queue loop, shuffle, clear queue buttons
                 /// and number of songs in queue
-                /// BackdropFilter is used to blur the background
+                /// Avoid backdrop capture while route overlays are pushed over the player.
+                /// Android rendering backends have had navigation + blur regressions.
                 Align(
                   alignment: Alignment.bottomCenter,
-                  child: ClipRRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
+                  child: Container(
                         padding: const EdgeInsets.only(
                             top: 15, bottom: 10, left: 10, right: 10),
                         decoration: BoxDecoration(
@@ -191,7 +187,6 @@ class Player extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
                   ),
                 ),
               ],
