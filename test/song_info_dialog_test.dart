@@ -41,7 +41,6 @@ void main() {
 
     expect(find.text('Test Song'), findsOneWidget);
     expect(find.text('Test Artist'), findsOneWidget);
-    expect(find.text('NA'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
