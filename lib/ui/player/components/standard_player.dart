@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -15,8 +14,7 @@ import 'player_control.dart';
 ///
 /// This widget is used to display the player in the standard mode
 ///
-/// It contains the album art image, lyrics switch, album art with lyrics and player controls
-/// and is used in the [Player] widget
+/// It contains the player UI, album art, lyrics and player controls.
 class StandardPlayer extends StatelessWidget {
   const StandardPlayer({super.key});
 
@@ -36,50 +34,55 @@ class StandardPlayer extends StatelessWidget {
     return Stack(
       children: [
         /// Stack first child
-        /// Album art image in background covering the whole screen
-        BackgroudImage(
-          key: Key("${playerController.currentSong.value?.id}_background"),
-          cacheHeight: 200,
+        /// Album art image in background covering the whole screen.
+        ///
+        /// ImageFiltered is intentional here. The old BackdropFilter blurred
+        /// the full-screen scene behind the player and was re-composited when
+        /// a dialog route was pushed. That is an unnecessary backdrop capture
+        /// for this use case and is especially fragile with Android Impeller.
+        ImageFiltered(
+          imageFilter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: BackgroudImage(
+            key: Key("${playerController.currentSong.value?.id}_background"),
+            cacheHeight: 200,
+          ),
         ),
 
         /// Stack child
-        /// Blur effect on background
-        BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-          child: Stack(
-            children: [
-              /// opacity effect on background
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withValues(alpha: 0.8),
-                  ),
+        /// Color and gradient overlays on the blurred background.
+        Stack(
+          children: [
+            /// opacity effect on background
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.8),
                 ),
               ),
+            ),
 
-              /// used to hide queue header when player is minimized
-              /// gradient to used here
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  height: 65 + Get.mediaQuery.padding.bottom + 120,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Theme.of(context).primaryColor,
-                        Theme.of(context).primaryColor,
-                        Theme.of(context).primaryColor.withValues(alpha: 0.4),
-                        Theme.of(context).primaryColor.withValues(alpha: 0),
-                      ],
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      stops: const [0, 0.5, 0.8, 1],
-                    ),
+            /// used to hide queue header when player is minimized
+            /// gradient to used here
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                height: 65 + Get.mediaQuery.padding.bottom + 120,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).primaryColor,
+                      Theme.of(context).primaryColor,
+                      Theme.of(context).primaryColor.withValues(alpha: 0.4),
+                      Theme.of(context).primaryColor.withValues(alpha: 0),
+                    ],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    stops: const [0, 0.5, 0.8, 1],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
 
         /// Stack child
