@@ -110,7 +110,7 @@ void main() {
               onPressed: () {
                 showDialog<void>(
                   context: context,
-                  builder: (_) => const Dialog(
+                  builder: (_) => Dialog(
                     child: StandaloneSongInfoDialog(song: song),
                   ),
                 );
