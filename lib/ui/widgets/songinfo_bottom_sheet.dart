@@ -345,7 +345,6 @@ class SongInfoBottomSheet extends StatelessWidget {
         ),
       ),
     );
-    );
 
   }
 
