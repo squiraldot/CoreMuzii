@@ -12,10 +12,10 @@ class SongInfoDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Map<dynamic, dynamic> streamInfo = _getStreamInfo(song.id);
+    final streamInfo = _getStreamInfo(song.id);
     return CommonDialog(
       child: SizedBox(
-        height: Get.mediaQuery.size.height * .7,
+        height: MediaQuery.sizeOf(context).height * .7,
         child: Column(
           children: [
             Padding(
@@ -37,7 +37,7 @@ class SongInfoDialog extends StatelessWidget {
                         "${streamInfo["approxDurationMs"] ?? song.duration?.inMilliseconds ?? "NA"} ms"),
                 InfoItem(
                     title: "audioCodec".tr,
-                    value: streamInfo["audioCodec"] ?? "NA"),
+                    value: "${streamInfo["audioCodec"] ?? "NA"}"),
                 InfoItem(
                     title: "bitrate".tr,
                     value: "${streamInfo["bitrate"] ?? "NA"}"),
@@ -69,28 +69,44 @@ class SongInfoDialog extends StatelessWidget {
   }
 
   Map<dynamic, dynamic> _getStreamInfo(String id) {
-    Map<dynamic, dynamic> tempstreamInfo;
-    final nullVal = {
+    final nullVal = <dynamic, dynamic>{
       "audioCodec": null,
       "bitrate": null,
       "loudnessDb": null,
       "approxDurationMs": null
     };
-    if (Hive.box("SongDownloads").containsKey(id)) {
-      final song = Hive.box("SongDownloads").get(id);
 
-      tempstreamInfo =
-          song["streamInfo"] == null ? nullVal : song["streamInfo"][1];
-    } else {
-      final dbStreamData = Hive.box("SongsUrlCache").get(id);
-      tempstreamInfo = dbStreamData != null &&
-              dbStreamData.runtimeType.toString().contains("Map")
-          ? dbStreamData[Hive.box(appPrefsBoxName).get('streamingQuality') == 0
-              ? 'lowQualityAudio'
-              : "highQualityAudio"]
-          : nullVal;
+    if (Hive.box("SongDownloads").containsKey(id)) {
+      final songData = Hive.box("SongDownloads").get(id);
+      if (songData is Map &&
+          songData["streamInfo"] is List &&
+          (songData["streamInfo"] as List).length > 1) {
+        final info = songData["streamInfo"][1];
+        if (info is Map) {
+          return info;
+        }
+      }
+      return nullVal;
     }
-    return tempstreamInfo;
+
+    final dbStreamData = Hive.box("SongsUrlCache").get(id);
+    if (dbStreamData is Map) {
+      final qualitySetting = Hive.box(appPrefsBoxName).get('streamingQuality');
+      final qualityKey =
+          qualitySetting == 0 ? 'lowQualityAudio' : 'highQualityAudio';
+      final audioData = dbStreamData[qualityKey];
+      if (audioData is Map) {
+        return audioData;
+      }
+      final fallbackKey =
+          qualitySetting == 0 ? 'highQualityAudio' : 'lowQualityAudio';
+      final fallbackAudioData = dbStreamData[fallbackKey];
+      if (fallbackAudioData is Map) {
+        return fallbackAudioData;
+      }
+    }
+
+    return nullVal;
   }
 }
 
