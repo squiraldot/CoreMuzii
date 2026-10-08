@@ -308,6 +308,7 @@ class GesturePlayer extends StatelessWidget {
               ),
             ),
           ),
+        ),
         // absorb pointer to prevent the next,prev gesture from being triggered when the user tries to switch app
         Align(
           alignment: Alignment.bottomCenter,
