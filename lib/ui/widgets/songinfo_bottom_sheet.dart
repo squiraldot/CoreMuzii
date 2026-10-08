@@ -23,7 +23,6 @@ import '../navigator.dart';
 import 'song_download_btn.dart';
 import 'image_widget.dart';
 import 'youtube_playlist_picker.dart';
-import 'song_info_overlay.dart';
 
 class SongInfoBottomSheet extends StatelessWidget {
   const SongInfoBottomSheet(this.song,
@@ -41,7 +40,10 @@ class SongInfoBottomSheet extends StatelessWidget {
     final songInfoController =
         Get.put(SongInfoController(song, calledFromPlayer));
     final playerController = Get.find<PlayerController>();
-    return Padding(
+    return Obx(
+      () => songInfoController.showInfo.value
+          ? _buildSongInfoView(context, song)
+          : Padding(
       padding: EdgeInsets.only(bottom: Get.mediaQuery.padding.bottom),
       child: SingleChildScrollView(
         child: Column(
@@ -67,7 +69,7 @@ class SongInfoBottomSheet extends StatelessWidget {
                     calledFromPlayer
                         ? IconButton(
                             onPressed: () {
-                              showSongInfoOverlay(context, song);
+                              songInfoController.showInfo.value = true;
                             },
                             icon: Icon(
                               Icons.info,
@@ -343,6 +345,132 @@ class SongInfoBottomSheet extends StatelessWidget {
         ),
       ),
     );
+    );
+
+  }
+
+  Widget _buildSongInfoView(BuildContext context, MediaItem song) {
+    final streamInfo = _readStreamInfo(song.id);
+    final durationValue =
+        streamInfo['approxDurationMs'] ?? song.duration?.inMilliseconds;
+
+    final rows = <Widget>[
+      _SongInfoRow(label: 'ID', value: song.id),
+      _SongInfoRow(label: 'Title', value: song.title),
+      _SongInfoRow(label: 'Album', value: _stringOrNA(song.album)),
+      _SongInfoRow(label: 'Artists', value: _stringOrNA(song.artist)),
+      _SongInfoRow(
+        label: 'Duration',
+        value: _displayValue(durationValue, suffix: ' ms'),
+      ),
+      _SongInfoRow(
+        label: 'Audio codec',
+        value: _displayValue(streamInfo['audioCodec']),
+      ),
+      _SongInfoRow(
+        label: 'Bitrate',
+        value: _displayValue(streamInfo['bitrate']),
+      ),
+      _SongInfoRow(
+        label: 'Loudness',
+        value: _displayValue(streamInfo['loudnessDb']),
+      ),
+    ];
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(bottom: Get.mediaQuery.padding.bottom),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+          child: Material(
+            color: Theme.of(context).cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+            clipBehavior: Clip.antiAlias,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Song Info',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ),
+                      IconButton(
+                        key: const Key('song_info_inline_close'),
+                        tooltip: 'Close',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  ...rows,
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _stringOrNA(String? value) {
+    if (value == null) return 'NA';
+    final text = value.trim();
+    return text.isEmpty ? 'NA' : text;
+  }
+
+  static String _displayValue(dynamic value, {String suffix = ''}) {
+    if (value == null) return 'NA';
+    final text = value.toString().trim();
+    return text.isEmpty ? 'NA' : '$text$suffix';
+  }
+
+  Map<String, dynamic> _readStreamInfo(String id) {
+    final downloads = _readFromDownloads(id);
+    if (downloads.isNotEmpty) return downloads;
+    return _readFromCache(id);
+  }
+
+  Map<String, dynamic> _readFromDownloads(String id) {
+    try {
+      if (!Hive.isBoxOpen('SongDownloads')) return const {};
+      final data = Hive.box('SongDownloads').get(id);
+      if (data is! Map) return const {};
+
+      final raw = data['streamInfo'];
+      if (raw is List && raw.length > 1 && raw[1] is Map) {
+        return Map<String, dynamic>.from(raw[1] as Map);
+      }
+      if (raw is Map) {
+        return Map<String, dynamic>.from(raw);
+      }
+    } catch (_) {}
+    return const {};
+  }
+
+  Map<String, dynamic> _readFromCache(String id) {
+    try {
+      if (!Hive.isBoxOpen('SongsUrlCache')) return const {};
+      final cache = Hive.box('SongsUrlCache').get(id);
+      if (cache is! Map) return const {};
+
+      final quality = Hive.isBoxOpen('AppPrefs')
+          ? Hive.box('AppPrefs').get('streamingQuality')
+          : null;
+      final qualityKey = quality == 0 ? 'lowQualityAudio' : 'highQualityAudio';
+      final selected = cache[qualityKey];
+
+      if (selected is Map) {
+        return Map<String, dynamic>.from(selected);
+      }
+    } catch (_) {}
+    return const {};
   }
 
   List<Widget> artistWidgetList(MediaItem song, BuildContext context) {
@@ -381,13 +509,39 @@ class SongInfoBottomSheet extends StatelessWidget {
   }
 }
 
-class SongInfoController extends GetxController
+class _SongInfoRow extends StatelessWidget {
+  const _SongInfoRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label),
+          const SizedBox(height: 2),
+          SelectableText(
+            value,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+$classMarker
     with RemoveSongFromPlaylistMixin {
   final isCurrentSongFav = false.obs;
   final MediaItem song;
   final bool calledFromPlayer;
   List artistList = [].obs;
   final isDownloaded = false.obs;
+  final showInfo = false.obs;
   SongInfoController(this.song, this.calledFromPlayer) {
     _setInitStatus(song);
   }
