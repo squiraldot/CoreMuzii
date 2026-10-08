@@ -22,7 +22,7 @@ import '../../models/playlist.dart';
 import '../navigator.dart';
 import 'song_download_btn.dart';
 import 'image_widget.dart';
-import 'song_info_dialog.dart';
+import 'temporary_song_info_dialog.dart';
 import 'youtube_playlist_picker.dart';
 import '/utils/song_info_diagnostics.dart';
 
@@ -72,7 +72,7 @@ class SongInfoBottomSheet extends StatelessWidget {
                               try {
                                 showDialog(
                                   context: context,
-                                  builder: (_) => SongInfoDialog(song: song),
+                                  builder: (_) => TemporarySongInfoDialog(song: song),
                                 ).whenComplete(SongInfoDiagnostics.exit);
                               } catch (_) {
                                 SongInfoDiagnostics.exit();
