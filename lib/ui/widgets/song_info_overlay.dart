@@ -169,8 +169,6 @@ class _SongInfoRow extends StatelessWidget {
 
   final _SongInfoRowData data;
 
-  final _SongInfoRowData data;
-
   @override
   Widget build(BuildContext context) {
     return Padding(
