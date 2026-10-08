@@ -1,15 +1,27 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/constant.dart';
+import '../navigator.dart';
+import '../player/player_controller.dart';
+import '../screens/Library/library_controller.dart';
+import '../widgets/add_to_playlist.dart';
+import '../widgets/image_widget.dart';
+import '../widgets/qr_code_dialog.dart';
+import '../widgets/sleep_timer_bottom_sheet.dart';
+import '../widgets/song_download_btn.dart';
+import '../widgets/snackbar.dart';
 
-/// Experimental, standalone Song Info dialog.
+/// Completely standalone Song Info dialog.
 ///
-/// This widget intentionally has no dependency on the legacy Song Info
-/// bottom-sheet/dialog implementation. It owns its layout and metadata
-/// normalization so optional cache values cannot break rendering.
+/// This dialog intentionally does not depend on the legacy
+/// SongInfoBottomSheet/SongInfoDialog implementation. It owns both the
+/// metadata view and the song actions shown from the player.
 class StandaloneSongInfoDialog extends StatelessWidget {
   final MediaItem song;
 
@@ -22,8 +34,9 @@ class StandaloneSongInfoDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final width = (size.width - 32).clamp(280.0, 560.0).toDouble();
-    final height = (size.height - 48).clamp(280.0, 620.0).toDouble();
+    final height = (size.height - 48).clamp(280.0, 680.0).toDouble();
     final metadata = _readMetadata(song);
+    final artists = _artistEntries(song);
 
     return SizedBox(
       width: width,
@@ -36,15 +49,38 @@ class StandaloneSongInfoDialog extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 12, 14),
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      'songInfo'.tr,
-                      style: Theme.of(context).textTheme.titleLarge,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: ImageWidget(
+                      song: song,
+                      size: 52,
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          song.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _asText(song.artist),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SongDownloadButton(song_: song),
                   IconButton(
                     tooltip: 'close'.tr,
                     onPressed: () => Navigator.of(context).pop(),
@@ -55,17 +91,170 @@ class StandaloneSongInfoDialog extends StatelessWidget {
             ),
             const Divider(height: 1),
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                itemCount: metadata.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final item = metadata[index];
-                  return _MetadataRow(
-                    label: item.label,
-                    value: item.value,
-                  );
-                },
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                children: [
+                  _SectionTitle(title: 'songInfo'.tr),
+                  const SizedBox(height: 8),
+                  ...metadata.map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: _MetadataRow(
+                        label: item.label,
+                        value: item.value,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  const _SectionTitle(title: 'Actions'),
+                  const SizedBox(height: 4),
+                  _ActionTile(
+                    icon: Icons.sensors,
+                    title: 'startRadio'.tr,
+                    onTap: () {
+                      final playerController = Get.find<PlayerController>();
+                      Navigator.of(context).pop();
+                      playerController.startRadio(song);
+                    },
+                  ),
+                  _ActionTile(
+                    icon: Icons.playlist_add,
+                    title: 'addToPlaylist'.tr,
+                    onTap: () {
+                      final navigator =
+                          Navigator.of(context, rootNavigator: true);
+                      navigator.pop();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!navigator.mounted) return;
+                        showDialog<void>(
+                          context: navigator.context,
+                          builder: (_) => AddToPlaylist([song]),
+                        ).whenComplete(
+                          () => Get.delete<AddToPlaylistController>(),
+                        );
+                      });
+                    },
+                  ),
+                  for (final artist in artists)
+                    _ActionTile(
+                      icon: Icons.person,
+                      title: '${'viewArtist'.tr} (${artist.name})',
+                      onTap: () async {
+                        final playerController =
+                            Get.find<PlayerController>();
+                        Navigator.of(context).pop();
+                        playerController.playerPanelController.close();
+                        if (artist.id.isEmpty) return;
+                        await Get.toNamed(
+                          ScreenNavigationSetup.artistScreen,
+                          id: ScreenNavigationSetup.id,
+                          preventDuplicates: true,
+                          arguments: [true, artist.id],
+                        );
+                      },
+                    ),
+                  _ActionTile(
+                    icon: Icons.open_with,
+                    title: 'openIn'.tr,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'YouTube',
+                          onPressed: () => _openUrl(
+                            context,
+                            'https://youtube.com/watch?v=${song.id}',
+                          ),
+                          icon: const Icon(Icons.ondemand_video),
+                        ),
+                        IconButton(
+                          tooltip: 'YouTube Music',
+                          onPressed: () => _openUrl(
+                            context,
+                            'https://music.youtube.com/watch?v=${song.id}',
+                          ),
+                          icon: const Icon(Icons.play_circle),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _ActionTile(
+                    icon: Icons.timer,
+                    title: 'sleepTimer'.tr,
+                    onTap: () {
+                      final playerController = Get.find<PlayerController>();
+                      final scaffoldContext =
+                          playerController.homeScaffoldkey.currentState?.context;
+                      if (scaffoldContext == null) return;
+                      Navigator.of(context).pop();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!scaffoldContext.mounted) return;
+                        showModalBottomSheet<void>(
+                          constraints:
+                              const BoxConstraints(maxWidth: 500),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(10),
+                            ),
+                          ),
+                          isScrollControlled: true,
+                          context: scaffoldContext,
+                          barrierColor: Colors.transparent.withAlpha(100),
+                          builder: (_) => const SleepTimerBottomSheet(),
+                        );
+                      });
+                    },
+                  ),
+                  _ActionTile(
+                    icon: Icons.share,
+                    title: 'shareSong'.tr,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Share.share(
+                        'https://youtube.com/watch?v=${song.id}',
+                      );
+                    },
+                  ),
+                  _ActionTile(
+                    icon: Icons.copy,
+                    title: 'Copy Link',
+                    onTap: () {
+                      final messenger = ScaffoldMessenger.maybeOf(context);
+                      Navigator.of(context).pop();
+                      Clipboard.setData(
+                        ClipboardData(
+                          text: 'https://youtube.com/watch?v=${song.id}',
+                        ),
+                      );
+                      messenger?.showSnackBar(
+                        snackbar(
+                          context,
+                          'Link Copied!',
+                          size: SanckBarSize.MEDIUM,
+                        ),
+                      );
+                    },
+                  ),
+                  _ActionTile(
+                    icon: Icons.qr_code,
+                    title: 'QR Code',
+                    onTap: () {
+                      final navigator =
+                          Navigator.of(context, rootNavigator: true);
+                      navigator.pop();
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!navigator.mounted) return;
+                        showQrCodeDialog(
+                          navigator.context,
+                          'https://youtube.com/watch?v=${song.id}',
+                          song.title,
+                        );
+                      });
+                    },
+                  ),
+                ],
               ),
             ),
             const Divider(height: 1),
@@ -85,6 +274,46 @@ class StandaloneSongInfoDialog extends StatelessWidget {
     );
   }
 
+  static Future<void> _openUrl(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    final opened = await launchUrl(uri);
+    if (!context.mounted || opened) return;
+
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      snackbar(
+        context,
+        'Unable to open link',
+        size: SanckBarSize.MEDIUM,
+      ),
+    );
+  }
+
+  static List<_ArtistEntry> _artistEntries(MediaItem song) {
+    final result = <_ArtistEntry>[];
+    final rawArtists = song.extras?['artists'];
+
+    if (rawArtists is Iterable) {
+      for (final raw in rawArtists) {
+        if (raw is Map) {
+          final id = raw['id']?.toString();
+          final name = raw['name']?.toString();
+          if (id != null && id.isNotEmpty && name != null && name.isNotEmpty) {
+            result.add(_ArtistEntry(id: id, name: name));
+          }
+        }
+      }
+    }
+
+    if (result.isEmpty) {
+      final fallbackName = _asText(song.artist);
+      if (fallbackName != 'NA') {
+        result.add(_ArtistEntry(id: '', name: fallbackName));
+      }
+    }
+
+    return result;
+  }
+
   static List<_MetadataValue> _readMetadata(MediaItem song) {
     final stream = _readOptionalStreamMetadata(song.id);
 
@@ -96,8 +325,7 @@ class StandaloneSongInfoDialog extends StatelessWidget {
       _MetadataValue(
         'Duration',
         _asText(
-          stream['approxDurationMs'] ??
-              song.duration?.inMilliseconds,
+          stream['approxDurationMs'] ?? song.duration?.inMilliseconds,
           suffix: ' ms',
         ),
       ),
@@ -205,11 +433,35 @@ class StandaloneSongInfoDialog extends StatelessWidget {
   }
 }
 
+class _ArtistEntry {
+  final String id;
+  final String name;
+
+  const _ArtistEntry({
+    required this.id,
+    required this.name,
+  });
+}
+
 class _MetadataValue {
   final String label;
   final String value;
 
   const _MetadataValue(this.label, this.value);
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleMedium,
+    );
+  }
 }
 
 class _MetadataRow extends StatelessWidget {
@@ -250,6 +502,32 @@ class _MetadataRow extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback? onTap;
+  final Widget? trailing;
+
+  const _ActionTile({
+    required this.icon,
+    required this.title,
+    this.onTap,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      visualDensity: const VisualDensity(vertical: -1),
+      leading: Icon(icon),
+      title: Text(title),
+      trailing: trailing,
+      onTap: onTap,
     );
   }
 }
