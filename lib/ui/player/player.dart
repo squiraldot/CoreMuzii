@@ -9,7 +9,6 @@ import '../widgets/snackbar.dart';
 import '../widgets/up_next_queue.dart';
 import '/ui/player/player_controller.dart';
 import '../widgets/sliding_up_panel.dart';
-import '../widgets/song_info_overlay.dart';
 
 /// Player screen
 /// Contains the player ui
@@ -27,9 +26,8 @@ class Player extends StatelessWidget {
     return Scaffold(
       /// SlidingUpPanel is used to create a panel that can slide up and down
       /// It is used to show the current queue panel in mobile
-      body: Obx(
-        () => Stack(
-          children: [
+      body: Stack(
+        children: [
             SlidingUpPanel(
           boxShadow: const [],
           minHeight: settingsScreenController.playerUi.value == 0
@@ -201,13 +199,7 @@ class Player extends StatelessWidget {
               ? const StandardPlayer()
               : const GesturePlayer(),
             ),
-            if (playerController.songInfoOverlaySong.value != null)
-              SongInfoOverlay(
-                song: playerController.songInfoOverlaySong.value!,
-                onClose: playerController.hideSongInfoOverlay,
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
