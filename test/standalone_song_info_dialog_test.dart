@@ -45,10 +45,10 @@ void main() {
     expect(find.text('song-id-123'), findsOneWidget);
     expect(find.text('NA'), findsWidgets);
     expect(find.byType(ListView), findsOneWidget);
-    expect(find.text('Close'), findsOneWidget);
+    expect(find.text('close'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.text('Close'));
+    await tester.tap(find.text('close'));
     await tester.pumpAndSettle();
 
     expect(find.text('Test Song'), findsNothing);
