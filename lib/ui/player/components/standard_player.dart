@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../widgets/songinfo_bottom_sheet.dart';
+import '../../widgets/standalone_song_info_dialog.dart';
 import '../player_controller.dart';
 import 'albumart_lyrics.dart';
 import 'backgroud_image.dart';
@@ -210,28 +210,41 @@ class StandardPlayer extends StatelessWidget {
                   ),
                 ),
 
-                /// More button for current song context
-                IconButton(
+                /// More button for the current song.
+                PopupMenuButton<String>(
                   icon: const Icon(
                     Icons.more_vert,
                     size: 25,
                   ),
-                  onPressed: () {
-                    showModalBottomSheet(
-                      constraints: const BoxConstraints(maxWidth: 500),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(10.0)),
+                  tooltip: 'More',
+                  itemBuilder: (context) => const [
+                    PopupMenuItem<String>(
+                      value: 'info',
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.info_outline),
+                        title: Text('Info'),
                       ),
-                      isScrollControlled: true,
-                      context: playerController
-                          .homeScaffoldkey.currentState!.context,
-                      barrierColor: Colors.transparent.withAlpha(100),
-                      builder: (context) => SongInfoBottomSheet(
-                        playerController.currentSong.value!,
-                        calledFromPlayer: true,
+                    ),
+                  ],
+                  onSelected: (value) {
+                    if (value != 'info') return;
+
+                    final song = playerController.currentSong.value;
+                    if (song == null || !context.mounted) return;
+
+                    showDialog<void>(
+                      context: context,
+                      builder: (dialogContext) => Dialog(
+                        constraints: const BoxConstraints(
+                          minWidth: 280,
+                          maxWidth: 560,
+                          minHeight: 280,
+                          maxHeight: 620,
+                        ),
+                        child: StandaloneSongInfoDialog(song: song),
                       ),
-                    ).whenComplete(() => Get.delete<SongInfoController>());
+                    );
                   },
                 ),
               ],
