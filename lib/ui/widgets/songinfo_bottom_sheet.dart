@@ -23,6 +23,7 @@ import '../navigator.dart';
 import 'song_download_btn.dart';
 import 'image_widget.dart';
 import 'youtube_playlist_picker.dart';
+import 'song_info_dialog.dart';
 
 class SongInfoBottomSheet extends StatelessWidget {
   const SongInfoBottomSheet(this.song,
@@ -69,7 +70,11 @@ class SongInfoBottomSheet extends StatelessWidget {
                     calledFromPlayer
                         ? IconButton(
                             onPressed: () {
-                              songInfoController.showInfo.value = true;
+                              showDialog<void>(
+                                context: context,
+                                builder: (dialogContext) =>
+                                    SongInfoDialog(song: song),
+                              );
                             },
                             icon: Icon(
                               Icons.info,
