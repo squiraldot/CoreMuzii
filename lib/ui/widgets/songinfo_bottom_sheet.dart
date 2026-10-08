@@ -24,6 +24,7 @@ import 'song_download_btn.dart';
 import 'image_widget.dart';
 import 'song_info_dialog.dart';
 import 'youtube_playlist_picker.dart';
+import '/utils/song_info_diagnostics.dart';
 
 class SongInfoBottomSheet extends StatelessWidget {
   const SongInfoBottomSheet(this.song,
