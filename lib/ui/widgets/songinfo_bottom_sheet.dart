@@ -68,16 +68,8 @@ class SongInfoBottomSheet extends StatelessWidget {
                     calledFromPlayer
                         ? IconButton(
                             onPressed: () {
-                              SongInfoDiagnostics.enter();
-                              try {
-                                showDialog(
-                                  context: context,
-                                  builder: (_) => TemporarySongInfoDialog(song: song),
-                                ).whenComplete(SongInfoDiagnostics.exit);
-                              } catch (_) {
-                                SongInfoDiagnostics.exit();
-                                rethrow;
-                              }
+                              playerController.showSongInfoOverlay(song);
+                              Navigator.of(context).pop();
                             },
                             icon: Icon(
                               Icons.info,
