@@ -1,5 +1,4 @@
 import '/models/equalizer.dart';
-import '../widgets/song_info_overlay.dart';
 
 import '../../services/constant.dart';
 import 'dart:async';
