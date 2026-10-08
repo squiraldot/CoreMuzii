@@ -10,7 +10,6 @@ import '../../services/constant.dart';
 import '../../services/downloader.dart';
 import '../navigator.dart';
 import '../player/player_controller.dart';
-import '../screens/Library/library_controller.dart';
 import '../widgets/add_to_playlist.dart';
 import '../widgets/qr_code_dialog.dart';
 import '../widgets/sleep_timer_bottom_sheet.dart';
@@ -299,13 +298,6 @@ class StandaloneSongInfoDialog extends StatelessWidget {
             result.add(_ArtistEntry(id: id, name: name));
           }
         }
-      }
-    }
-
-    if (result.isEmpty) {
-      final fallbackName = _asText(song.artist);
-      if (fallbackName != 'NA') {
-        result.add(_ArtistEntry(id: '', name: fallbackName));
       }
     }
 
