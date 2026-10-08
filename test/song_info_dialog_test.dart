@@ -44,4 +44,45 @@ void main() {
     expect(find.text('NA'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('song info content renders inside a modal bottom sheet',
+      (tester) async {
+    final song = MediaItem(
+      id: 'test-song',
+      title: 'Test Song',
+      artist: 'Test Artist',
+      album: 'Test Album',
+    );
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: ElevatedButton(
+              onPressed: () {
+                showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (_) => Material(
+                    child: SizedBox(
+                      height: 500,
+                      child: SongInfoContent(song: song),
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Open Sheet'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open Sheet'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Test Song'), findsOneWidget);
+    expect(find.text('Test Artist'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
