@@ -188,7 +188,6 @@ class Player extends StatelessWidget {
                         ),
                       ),
                   ),
-                ),
               ],
             );
           },
