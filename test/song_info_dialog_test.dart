@@ -85,8 +85,6 @@ void main() {
     expect(find.text('Test Artist'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-}
-
 
   testWidgets('standalone song info dialog renders metadata and actions',
       (tester) async {
@@ -142,3 +140,4 @@ void main() {
     expect(find.text('QR Code'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+}
