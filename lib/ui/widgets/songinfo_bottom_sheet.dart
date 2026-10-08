@@ -23,7 +23,6 @@ import '../navigator.dart';
 import 'song_download_btn.dart';
 import 'image_widget.dart';
 import 'youtube_playlist_picker.dart';
-import 'song_info_dialog.dart';
 
 class SongInfoBottomSheet extends StatelessWidget {
   const SongInfoBottomSheet(this.song,
@@ -41,18 +40,7 @@ class SongInfoBottomSheet extends StatelessWidget {
     final songInfoController =
         Get.put(SongInfoController(song, calledFromPlayer));
     final playerController = Get.find<PlayerController>();
-    var showSongInfo = false;
-
-    return StatefulBuilder(
-      builder: (context, setModalState) {
-        if (showSongInfo) {
-          return SongInfoContent(
-            song: song,
-            onClose: () => Navigator.of(context).pop(),
-          );
-        }
-
-        return Padding(
+    return Padding(
       padding: EdgeInsets.only(bottom: Get.mediaQuery.padding.bottom),
       child: SingleChildScrollView(
         child: Column(
@@ -77,9 +65,10 @@ class SongInfoBottomSheet extends StatelessWidget {
                   children: [
                     calledFromPlayer
                         ? IconButton(
-                            onPressed: () {
-                              setModalState(() => showSongInfo = true);
-                            },
+                            onPressed: () => showDialog(
+                                  context: context,
+                                  builder: (_) => SongInfoDialog(song: song),
+                                ),
                             icon: Icon(
                               Icons.info,
                               color: Theme.of(context)
@@ -353,8 +342,6 @@ class SongInfoBottomSheet extends StatelessWidget {
           ],
         ),
       ),
-        );
-      },
     );
   }
 
