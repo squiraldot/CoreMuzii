@@ -244,7 +244,6 @@ class _MetadataRow extends StatelessWidget {
             Expanded(
               child: SelectableText(
                 value,
-                softWrap: true,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
