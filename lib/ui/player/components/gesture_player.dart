@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 
 import 'package:flutter/material.dart';
@@ -85,9 +83,7 @@ class GesturePlayer extends StatelessWidget {
               height: 142,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                  child: Padding(
+                child: Padding(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 15, vertical: 10),
                     child: Column(children: [
