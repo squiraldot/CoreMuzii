@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 
 import 'package:mdlovfimusic/ui/widgets/standalone_song_info_dialog.dart';
 
@@ -16,7 +17,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
+      GetMaterialApp(
         home: Builder(
           builder: (context) => Scaffold(
             body: ElevatedButton(
