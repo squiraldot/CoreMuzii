@@ -47,7 +47,7 @@ void main() {
     expect(find.text(song.artist!), findsOneWidget);
     expect(find.text(song.album!), findsOneWidget);
     expect(find.byKey(const Key('temporary_song_info_close')), findsOneWidget);
-    expect(find.text('NA'), findsNWidgets(3));
+    expect(find.text('NA'), findsNWidgets(2));
 
     await tester.tap(find.byKey(const Key('temporary_song_info_close')));
     await tester.pumpAndSettle();
