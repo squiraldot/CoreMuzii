@@ -285,11 +285,12 @@ class StandaloneSongInfoDialog extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    ),
-  ),
-);
+            ), // Column
+          ), // Material
+        ), // Container
+      ), // BackdropFilter
+    ), // ClipRRect
+  ); // SizedBox
   }
 
   static Future<void> _openUrl(BuildContext context, String url) async {
