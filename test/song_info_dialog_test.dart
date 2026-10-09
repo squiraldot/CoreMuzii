@@ -86,13 +86,51 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('standalone song info dialog renders metadata and actions',
+  testWidgets('standalone info view renders metadata without actions',
       (tester) async {
     final song = MediaItem(
       id: 'standalone-song',
       title: 'Standalone Song',
       artist: 'Standalone Artist',
       album: 'Standalone Album',
+    );
+
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () {
+                showDialog<void>(
+                  context: context,
+                  builder: (_) => Dialog(
+                    backgroundColor: Colors.transparent,
+                    child: StandaloneSongInfoDialog(song: song),
+                  ),
+                );
+              },
+              child: const Text('Open Info'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open Info'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Standalone Song'), findsOneWidget);
+    expect(find.text('Standalone Artist'), findsOneWidget);
+    expect(find.text('Standalone Album'), findsOneWidget);
+    expect(find.text('Download'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('standalone More view renders all song actions', (tester) async {
+    final song = MediaItem(
+      id: 'standalone-song',
+      title: 'Standalone Song',
+      artist: 'Standalone Artist',
       extras: const {
         'artists': [
           {'id': 'artist-id', 'name': 'Standalone Artist'},
@@ -109,27 +147,22 @@ void main() {
                 showDialog<void>(
                   context: context,
                   builder: (_) => Dialog(
-                    child: StandaloneSongInfoDialog(song: song),
+                    backgroundColor: Colors.transparent,
+                    child: StandaloneSongInfoDialog(
+                      song: song,
+                      view: SongInfoDialogView.more,
+                    ),
                   ),
                 );
               },
-              child: const Text('Open Standalone'),
+              child: const Text('Open More'),
             ),
           ),
         ),
       ),
     );
 
-    await tester.tap(find.text('Open Standalone'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Standalone Song'), findsOneWidget);
-    expect(find.text('Standalone Artist'), findsOneWidget);
-    expect(find.text('Standalone Album'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-
-    final list = find.byType(ListView);
-    await tester.drag(list, const Offset(0, -1200));
+    await tester.tap(find.text('Open More'));
     await tester.pumpAndSettle();
 
     expect(find.text('Download'), findsOneWidget);
@@ -138,6 +171,7 @@ void main() {
     expect(find.text('Share this song'), findsOneWidget);
     expect(find.text('Copy Link'), findsOneWidget);
     expect(find.text('QR Code'), findsOneWidget);
+    expect(find.text('Standalone Album'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
