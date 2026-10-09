@@ -165,6 +165,9 @@ void main() {
     await tester.tap(find.text('Open More'));
     await tester.pumpAndSettle();
 
+    await tester.drag(find.byType(ListView), const Offset(0, -1200));
+    await tester.pumpAndSettle();
+
     expect(find.text('Download'), findsOneWidget);
     expect(find.text('Start radio'), findsOneWidget);
     expect(find.text('Add to playlist'), findsOneWidget);
