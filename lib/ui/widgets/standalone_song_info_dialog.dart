@@ -269,7 +269,6 @@ class StandaloneSongInfoDialog extends StatelessWidget {
                       },
                     ),
                   ],
-                  ],
                 ),
               ),
             ),
