@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +17,8 @@ import '../widgets/qr_code_dialog.dart';
 import '../widgets/sleep_timer_bottom_sheet.dart';
 import '../widgets/snackbar.dart';
 
+enum SongInfoDialogView { info, more }
+
 /// Completely standalone Song Info dialog.
 ///
 /// This dialog intentionally does not depend on the legacy
@@ -22,10 +26,12 @@ import '../widgets/snackbar.dart';
 /// metadata view and the song actions shown from the player.
 class StandaloneSongInfoDialog extends StatelessWidget {
   final MediaItem song;
+  final SongInfoDialogView view;
 
   const StandaloneSongInfoDialog({
     super.key,
     required this.song,
+    this.view = SongInfoDialogView.info,
   });
 
   @override
@@ -39,12 +45,23 @@ class StandaloneSongInfoDialog extends StatelessWidget {
     return SizedBox(
       width: width,
       height: height,
-      child: Material(
-        color: Theme.of(context).dialogTheme.backgroundColor ??
-            Theme.of(context).colorScheme.surface,
-        clipBehavior: Clip.antiAlias,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.58),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.13),
+                width: 1,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              clipBehavior: Clip.antiAlias,
+              child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
@@ -83,23 +100,23 @@ class StandaloneSongInfoDialog extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                 children: [
-                  _SectionTitle(title: 'songInfo'.tr),
-                  const SizedBox(height: 8),
-                  ...metadata.map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _MetadataRow(
-                        label: item.label,
-                        value: item.value,
+                  if (view == SongInfoDialogView.info) ...[
+                    _SectionTitle(title: 'songInfo'.tr),
+                    const SizedBox(height: 8),
+                    ...metadata.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _MetadataRow(
+                          label: item.label,
+                          value: item.value,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Divider(),
-                  const SizedBox(height: 8),
-                  const _SectionTitle(title: 'Actions'),
-                  const SizedBox(height: 4),
-                  _ActionTile(
+                  ],
+                  if (view == SongInfoDialogView.more) ...[
+                    const _SectionTitle(title: 'More'),
+                    const SizedBox(height: 4),
+                      _ActionTile(
                     icon: Icons.download,
                     title: 'Download',
                     onTap: () {
@@ -107,7 +124,7 @@ class StandaloneSongInfoDialog extends StatelessWidget {
                       downloader.download(song);
                     },
                   ),
-                  _ActionTile(
+                    _ActionTile(
                     icon: Icons.sensors,
                     title: 'startRadio'.tr,
                     onTap: () {
@@ -116,7 +133,7 @@ class StandaloneSongInfoDialog extends StatelessWidget {
                       playerController.startRadio(song);
                     },
                   ),
-                  _ActionTile(
+                    _ActionTile(
                     icon: Icons.playlist_add,
                     title: 'addToPlaylist'.tr,
                     onTap: () {
@@ -234,24 +251,26 @@ class StandaloneSongInfoDialog extends StatelessWidget {
                       );
                     },
                   ),
-                  _ActionTile(
-                    icon: Icons.qr_code,
-                    title: 'QR Code',
-                    onTap: () {
-                      final navigator =
-                          Navigator.of(context, rootNavigator: true);
-                      navigator.pop();
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!navigator.mounted) return;
-                        showQrCodeDialog(
-                          navigator.context,
-                          'https://youtube.com/watch?v=${song.id}',
-                          song.title,
-                        );
-                      });
-                    },
-                  ),
-                ],
+                    _ActionTile(
+                      icon: Icons.qr_code,
+                      title: 'QR Code',
+                      onTap: () {
+                        final navigator =
+                            Navigator.of(context, rootNavigator: true);
+                        navigator.pop();
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!navigator.mounted) return;
+                          showQrCodeDialog(
+                            navigator.context,
+                            'https://youtube.com/watch?v=${song.id}',
+                            song.title,
+                          );
+                        });
+                      },
+                    ),
+                  ],
+                  ],
+                ),
               ),
             ),
             const Divider(height: 1),
@@ -268,7 +287,9 @@ class StandaloneSongInfoDialog extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ),
+  ),
+);
   }
 
   static Future<void> _openUrl(BuildContext context, String url) async {
