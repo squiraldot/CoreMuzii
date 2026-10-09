@@ -55,241 +55,233 @@ class StandaloneSongInfoDialog extends StatelessWidget {
               borderRadius: BorderRadius.circular(22),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.13),
-                width: 1,
               ),
             ),
             child: Material(
               color: Colors.transparent,
-              clipBehavior: Clip.antiAlias,
               child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
-              child: Row(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
+                    child: Row(
                       children: [
-                        Text(
-                          song.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                song.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _asText(song.artist),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _asText(song.artist),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium,
+                        IconButton(
+                          tooltip: 'close'.tr,
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    tooltip: 'close'.tr,
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                      children: [
+                        if (view == SongInfoDialogView.info) ...[
+                          _SectionTitle(title: 'songInfo'.tr),
+                          const SizedBox(height: 8),
+                          ...metadata.map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _MetadataRow(
+                                label: item.label,
+                                value: item.value,
+                              ),
+                            ),
+                          ),
+                        ],
+                        if (view == SongInfoDialogView.more) ...[
+                          const _SectionTitle(title: 'More'),
+                          _ActionTile(
+                            icon: Icons.download,
+                            title: 'Download',
+                            onTap: () {
+                              final downloader = Get.find<Downloader>();
+                              downloader.download(song);
+                            },
+                          ),
+                          _ActionTile(
+                            icon: Icons.sensors,
+                            title: 'Start radio',
+                            onTap: () {
+                              final controller = Get.find<PlayerController>();
+                              Navigator.of(context).pop();
+                              controller.startRadio(song);
+                            },
+                          ),
+                          _ActionTile(
+                            icon: Icons.playlist_add,
+                            title: 'addToPlaylist'.tr,
+                            onTap: () {
+                              final navigator =
+                                  Navigator.of(context, rootNavigator: true);
+                              navigator.pop();
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!navigator.mounted) return;
+                                showDialog<void>(
+                                  context: navigator.context,
+                                  builder: (_) => AddToPlaylist([song]),
+                                ).whenComplete(
+                                  () => Get.delete<AddToPlaylistController>(),
+                                );
+                              });
+                            },
+                          ),
+                          ...artists.map(
+                            (artist) => _ActionTile(
+                              icon: Icons.person,
+                              title: '${'viewArtist'.tr} (${artist.name})',
+                              onTap: () async {
+                                final controller = Get.find<PlayerController>();
+                                Navigator.of(context).pop();
+                                controller.playerPanelController.close();
+                                if (artist.id.isEmpty) return;
+                                await Get.toNamed(
+                                  ScreenNavigationSetup.artistScreen,
+                                  id: ScreenNavigationSetup.id,
+                                  preventDuplicates: true,
+                                  arguments: [true, artist.id],
+                                );
+                              },
+                            ),
+                          ),
+                          _ActionTile(
+                            icon: Icons.open_with,
+                            title: 'openIn'.tr,
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: 'YouTube',
+                                  onPressed: () => _openUrl(
+                                    context,
+                                    'https://youtube.com/watch?v=${song.id}',
+                                  ),
+                                  icon: const Icon(Icons.ondemand_video),
+                                ),
+                                IconButton(
+                                  tooltip: 'YouTube Music',
+                                  onPressed: () => _openUrl(
+                                    context,
+                                    'https://music.youtube.com/watch?v=${song.id}',
+                                  ),
+                                  icon: const Icon(Icons.play_circle),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _ActionTile(
+                            icon: Icons.timer,
+                            title: 'sleepTimer'.tr,
+                            onTap: () {
+                              final controller = Get.find<PlayerController>();
+                              final sheetContext = controller
+                                  .homeScaffoldkey.currentState?.context;
+                              if (sheetContext == null) return;
+                              Navigator.of(context).pop();
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!sheetContext.mounted) return;
+                                showModalBottomSheet<void>(
+                                  context: sheetContext,
+                                  isScrollControlled: true,
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 500),
+                                  barrierColor: Colors.black54,
+                                  builder: (_) =>
+                                      const SleepTimerBottomSheet(),
+                                );
+                              });
+                            },
+                          ),
+                          _ActionTile(
+                            icon: Icons.share,
+                            title: 'shareSong'.tr,
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              Share.share(
+                                'https://youtube.com/watch?v=${song.id}',
+                              );
+                            },
+                          ),
+                          _ActionTile(
+                            icon: Icons.copy,
+                            title: 'Copy Link',
+                            onTap: () async {
+                              await Clipboard.setData(
+                                ClipboardData(
+                                  text: 'https://youtube.com/watch?v=${song.id}',
+                                ),
+                              );
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                                snackbar(
+                                  context,
+                                  'Link Copied!',
+                                  size: SanckBarSize.MEDIUM,
+                                ),
+                              );
+                            },
+                          ),
+                          _ActionTile(
+                            icon: Icons.qr_code,
+                            title: 'QR Code',
+                            onTap: () {
+                              final navigator =
+                                  Navigator.of(context, rootNavigator: true);
+                              navigator.pop();
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!navigator.mounted) return;
+                                showQrCodeDialog(
+                                  navigator.context,
+                                  'https://youtube.com/watch?v=${song.id}',
+                                  song.title,
+                                );
+                              });
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text('close'.tr),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                children: [
-                  if (view == SongInfoDialogView.info) ...[
-                    _SectionTitle(title: 'songInfo'.tr),
-                    const SizedBox(height: 8),
-                    ...metadata.map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _MetadataRow(
-                          label: item.label,
-                          value: item.value,
-                        ),
-                      ),
-                    ),
-                  ],
-                  if (view == SongInfoDialogView.more) ...[
-                    const _SectionTitle(title: 'More'),
-                    const SizedBox(height: 4),
-                      _ActionTile(
-                    icon: Icons.download,
-                    title: 'Download',
-                    onTap: () {
-                      final downloader = Get.find<Downloader>();
-                      downloader.download(song);
-                    },
-                  ),
-                    _ActionTile(
-                    icon: Icons.sensors,
-                    title: 'startRadio'.tr,
-                    onTap: () {
-                      final playerController = Get.find<PlayerController>();
-                      Navigator.of(context).pop();
-                      playerController.startRadio(song);
-                    },
-                  ),
-                    _ActionTile(
-                    icon: Icons.playlist_add,
-                    title: 'addToPlaylist'.tr,
-                    onTap: () {
-                      final navigator =
-                          Navigator.of(context, rootNavigator: true);
-                      navigator.pop();
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!navigator.mounted) return;
-                        showDialog<void>(
-                          context: navigator.context,
-                          builder: (_) => AddToPlaylist([song]),
-                        ).whenComplete(
-                          () => Get.delete<AddToPlaylistController>(),
-                        );
-                      });
-                    },
-                  ),
-                  for (final artist in artists)
-                    _ActionTile(
-                      icon: Icons.person,
-                      title: '${'viewArtist'.tr} (${artist.name})',
-                      onTap: () async {
-                        final playerController =
-                            Get.find<PlayerController>();
-                        Navigator.of(context).pop();
-                        playerController.playerPanelController.close();
-                        if (artist.id.isEmpty) return;
-                        await Get.toNamed(
-                          ScreenNavigationSetup.artistScreen,
-                          id: ScreenNavigationSetup.id,
-                          preventDuplicates: true,
-                          arguments: [true, artist.id],
-                        );
-                      },
-                    ),
-                  _ActionTile(
-                    icon: Icons.open_with,
-                    title: 'openIn'.tr,
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip: 'YouTube',
-                          onPressed: () => _openUrl(
-                            context,
-                            'https://youtube.com/watch?v=${song.id}',
-                          ),
-                          icon: const Icon(Icons.ondemand_video),
-                        ),
-                        IconButton(
-                          tooltip: 'YouTube Music',
-                          onPressed: () => _openUrl(
-                            context,
-                            'https://music.youtube.com/watch?v=${song.id}',
-                          ),
-                          icon: const Icon(Icons.play_circle),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _ActionTile(
-                    icon: Icons.timer,
-                    title: 'sleepTimer'.tr,
-                    onTap: () {
-                      final playerController = Get.find<PlayerController>();
-                      final scaffoldContext =
-                          playerController.homeScaffoldkey.currentState?.context;
-                      if (scaffoldContext == null) return;
-                      Navigator.of(context).pop();
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!scaffoldContext.mounted) return;
-                        showModalBottomSheet<void>(
-                          constraints:
-                              const BoxConstraints(maxWidth: 500),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(10),
-                            ),
-                          ),
-                          isScrollControlled: true,
-                          context: scaffoldContext,
-                          barrierColor: Colors.transparent.withAlpha(100),
-                          builder: (_) => const SleepTimerBottomSheet(),
-                        );
-                      });
-                    },
-                  ),
-                  _ActionTile(
-                    icon: Icons.share,
-                    title: 'shareSong'.tr,
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      Share.share(
-                        'https://youtube.com/watch?v=${song.id}',
-                      );
-                    },
-                  ),
-                  _ActionTile(
-                    icon: Icons.copy,
-                    title: 'Copy Link',
-                    onTap: () {
-                      final messenger = ScaffoldMessenger.maybeOf(context);
-                      Navigator.of(context).pop();
-                      Clipboard.setData(
-                        ClipboardData(
-                          text: 'https://youtube.com/watch?v=${song.id}',
-                        ),
-                      );
-                      messenger?.showSnackBar(
-                        snackbar(
-                          context,
-                          'Link Copied!',
-                          size: SanckBarSize.MEDIUM,
-                        ),
-                      );
-                    },
-                  ),
-                    _ActionTile(
-                      icon: Icons.qr_code,
-                      title: 'QR Code',
-                      onTap: () {
-                        final navigator =
-                            Navigator.of(context, rootNavigator: true);
-                        navigator.pop();
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (!navigator.mounted) return;
-                          showQrCodeDialog(
-                            navigator.context,
-                            'https://youtube.com/watch?v=${song.id}',
-                            song.title,
-                          );
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text('close'.tr),
-                ),
-              ),
-            ),
-          ],
-            ), // Column
-          ), // Material
-        ), // Container
-      ), // BackdropFilter
-    ), // ClipRRect
-  ); // SizedBox
+          ),
+        ),
+      ),
+    );
   }
 
   static Future<void> _openUrl(BuildContext context, String url) async {
