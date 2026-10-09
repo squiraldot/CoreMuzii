@@ -217,32 +217,59 @@ class StandardPlayer extends StatelessWidget {
                     size: 25,
                   ),
                   tooltip: 'More',
-                  itemBuilder: (context) => const [
+                  color: Colors.transparent,
+                  elevation: 0,
+                  surfaceTintColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.14),
+                    ),
+                  ),
+                  itemBuilder: (context) => [
                     PopupMenuItem<String>(
                       value: 'info',
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.info_outline),
-                        title: Text('Info'),
+                      child: _GlassMenuItem(
+                        icon: Icons.info_outline,
+                        label: 'Info',
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'more',
+                      child: _GlassMenuItem(
+                        icon: Icons.more_horiz,
+                        label: 'More',
                       ),
                     ),
                   ],
                   onSelected: (value) {
-                    if (value != 'info') return;
-
                     final song = playerController.currentSong.value;
                     if (song == null || !context.mounted) return;
 
                     showDialog<void>(
                       context: context,
+                      barrierColor: Colors.black.withValues(alpha: 0.48),
                       builder: (dialogContext) => Dialog(
+                        backgroundColor: Colors.transparent,
+                        surfaceTintColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        elevation: 0,
+                        insetPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 24,
+                        ),
                         constraints: const BoxConstraints(
                           minWidth: 280,
                           maxWidth: 560,
                           minHeight: 280,
                           maxHeight: 620,
                         ),
-                        child: StandaloneSongInfoDialog(song: song),
+                        child: StandaloneSongInfoDialog(
+                          song: song,
+                          view: value == 'more'
+                              ? SongInfoDialogView.more
+                              : SongInfoDialogView.info,
+                        ),
                       ),
                     );
                   },
@@ -251,6 +278,48 @@ class StandardPlayer extends StatelessWidget {
             ),
           )
       ],
+    );
+  }
+}
+
+
+class _GlassMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _GlassMenuItem({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.38),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.10),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
