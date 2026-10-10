@@ -82,6 +82,10 @@ class _AutoEqPanelState extends State<AutoEqPanel> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
+        // Keep the catalogue visible after a failed request so the user can
+        // select another measurement or retry without reopening the screen.
+        _selected = null;
+        _profile = null;
         _loading = false;
         _error = error.toString();
       });
