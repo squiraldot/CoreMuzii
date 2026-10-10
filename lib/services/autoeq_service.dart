@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -125,28 +126,60 @@ class AutoEqService {
 
   Future<AutoEqProfile> loadProfile(AutoEqProfileSummary summary) async {
     final target = await _selectTarget(summary.form);
-    final response = await _client.post(
-      Uri.parse(baseUrl + '/equalize'),
-      headers: const {'content-type': 'application/json'},
-      body: jsonEncode({
-        'name': summary.name,
-        'source': summary.source,
-        'rig': summary.rig,
-        'target': target,
-        'parametric_eq': true,
-        'parametric_eq_config': '8_PEAKING_WITH_SHELVES',
-        'fs': 48000,
-        'preamp': 0,
-        'response': {
-          'fr_fields': ['frequency', 'parametric_eq'],
-          'fr_f_step': 1,
-        },
-      }),
-    );
-    if (response.statusCode != 200) {
-      throw FormatException(
-        'AutoEq request failed (' + response.statusCode.toString() + ')',
-      );
+    final requestBody = jsonEncode({
+      'name': summary.name,
+      'source': summary.source,
+      'rig': summary.rig,
+      'target': target,
+      'parametric_eq': true,
+      'parametric_eq_config': '8_PEAKING_WITH_SHELVES',
+      'fs': 48000,
+      'preamp': 0,
+      // This screen only needs filter coefficients. Requesting 1 Hz response
+      // curves forces AutoEq to interpolate and serialize large unused arrays.
+      'response': {
+        'fr_fields': <String>[],
+        'fr_f_step': 10,
+      },
+    });
+
+    http.Response response;
+    for (var attempt = 0; ; attempt++) {
+      try {
+        response = await _client
+            .post(
+              Uri.parse(baseUrl + '/equalize'),
+              headers: const {'content-type': 'application/json'},
+              body: requestBody,
+            )
+            .timeout(const Duration(seconds: 30));
+      } on TimeoutException {
+        if (attempt >= 1) {
+          throw const FormatException(
+            'AutoEq server timed out. Please try again in a moment.',
+          );
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 600));
+        continue;
+      }
+
+      if (response.statusCode == 200) break;
+      final retryable = const {502, 503, 504, 520, 522, 524}
+          .contains(response.statusCode);
+      if (!retryable || attempt >= 1) {
+        if (retryable) {
+          throw FormatException(
+            'AutoEq server is temporarily unavailable (' +
+                response.statusCode.toString() +
+                '). Please try again shortly.',
+          );
+        }
+        throw FormatException(
+          'AutoEq request failed (' + response.statusCode.toString() + ')',
+        );
+      }
+      // The public AutoEq API can intermittently return Cloudflare 52x errors.
+      await Future<void>.delayed(const Duration(milliseconds: 600));
     }
     final decoded = jsonDecode(response.body);
     if (decoded is! Map) {
