@@ -569,11 +569,8 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   void onSideBarTabSelected(int index) {
     reverseAnimationtransiton = index > tabIndex.value;
     tabIndex.value = index;
-    // Match SimpMusic's Home reload behavior: returning to Home requests a
-    // fresh FEmusic_home response instead of showing the previous shelf list.
-    if (index == 0) {
-      refreshHome();
-    }
+    // Returning to Home preserves the current feed. Manual refresh remains
+    // available through the Home refresh gesture and long-press Home action.
   }
 
   Future<void> onTrackPlayed(MediaItem item) async {
@@ -627,9 +624,8 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   void onBottonBarTabSelected(int index) {
     reverseAnimationtransiton = index > tabIndex.value;
     tabIndex.value = index;
-    if (index == 0) {
-      refreshHome();
-    }
+    // Do not refetch Home just because the user switches tabs.
+    // Pull-to-refresh and the Home icon long-press still refresh explicitly.
   }
 
   void _checkNewVersion() {

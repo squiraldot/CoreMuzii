@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'services/constant.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
@@ -22,10 +23,23 @@ import 'ui/screens/Home/home_screen_controller.dart';
 import 'ui/screens/Library/library_controller.dart';
 import 'utils/system_tray.dart';
 import 'utils/update_check_flag_file.dart';
+import 'utils/song_info_diagnostics.dart';
 import 'services/local_proxy.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    SongInfoDiagnostics.reportFlutterError(details);
+  };
+  ui.PlatformDispatcher.instance.onError = (error, stack) {
+    final handled = SongInfoDiagnostics.reportPlatformError(error, stack);
+    if (!handled) {
+      debugPrint('PlatformError: $error');
+      debugPrintStack(stackTrace: stack);
+    }
+    return handled;
+  };
   await initHive();
   _setAppInitPrefs();
   startApplicationServices();
