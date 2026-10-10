@@ -89,19 +89,4 @@ class HomeMood {
     return thumbnail is Map ? thumbnail['thumbnails'] : null;
   }
 
-  static String? _text(dynamic value) {
-    if (value is String) return value;
-    if (value is Map) {
-      final simple = value['simpleText'];
-      if (simple is String) return simple;
-      final runs = value['runs'];
-      if (runs is List) {
-        return runs
-            .whereType<Map>()
-            .map((run) => run['text']?.toString() ?? '')
-            .join();
-      }
-    }
-    return null;
-  }
 }
