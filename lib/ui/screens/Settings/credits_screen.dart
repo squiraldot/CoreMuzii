@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Acknowledges the people and services that make the listening experience possible.
 class CreditsScreen extends StatelessWidget {
@@ -229,7 +228,7 @@ class _CreditTile extends StatelessWidget {
             radius: 21,
             backgroundColor: const Color(0xFF242424),
             child: Text(
-              credit.name.characters.first.toUpperCase(),
+              credit.name.substring(0, 1).toUpperCase(),
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
