@@ -17,6 +17,7 @@ import '../Home/home_screen_controller.dart';
 import '/services/music_service.dart';
 import '/ui/player/player_controller.dart';
 import 'advanced_equalizer_screen.dart';
+import 'credits_screen.dart';
 import '/ui/utils/theme_controller.dart';
 import 'components/custom_expansion_tile.dart';
 import 'settings_screen_controller.dart';
@@ -804,6 +805,17 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     KeyboardShortcutsMenu(),
                   ]),
+              ListTile(
+                contentPadding: const EdgeInsets.only(left: 5, right: 10),
+                leading: const Icon(Icons.info_outline_rounded),
+                title: const Text("Credits"),
+                subtitle: const Text(
+                  "Meet the people behind the music",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Get.to(() => const CreditsScreen()),
+              ),
               CustomExpansionTile(
                 icon: Icons.info,
                 title: "appInfo".tr,
