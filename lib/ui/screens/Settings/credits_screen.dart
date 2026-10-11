@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 class CreditsScreen extends StatelessWidget {
   const CreditsScreen({super.key});
 
-  static const Color _accent = Color(0xFFFF6FAE);
   static const Color _muted = Color(0xFF9B9B9B);
   static const Color _divider = Color(0xFF292929);
 
