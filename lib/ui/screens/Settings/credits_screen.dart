@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 /// Acknowledges the people and services that make the listening experience possible.
 class CreditsScreen extends StatelessWidget {
