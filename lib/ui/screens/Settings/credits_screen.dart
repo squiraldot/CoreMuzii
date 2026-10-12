@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Acknowledges the people and services that make the listening experience possible.
 class CreditsScreen extends StatelessWidget {
@@ -16,15 +17,15 @@ class CreditsScreen extends StatelessWidget {
       _Credit('Rabbit', 'UI and UX design'),
       _Credit('Harmony App', 'Design inspiration'),
     ]),
+    _CreditCategory('Manager', Icons.manage_accounts_outlined, [
+      _Credit('Danish Moon', 'Promotion and outreach'),
+    ]),
     _CreditCategory('Branding', Icons.auto_awesome_outlined, [
       _Credit('InstaPrime', 'App branding'),
       _Credit('Ravi Verma', 'Developer at InstaPrime'),
     ]),
-    _CreditCategory('Promoter', Icons.campaign_outlined, [
-      _Credit('Danish Moon', 'Promotion and outreach'),
-    ]),
     _CreditCategory('Helping hand', Icons.volunteer_activism_outlined, [
-      _Credit('Abhii', 'Ideas, guidance, features, presentation and sharing'),
+      _Credit('Abhii', 'Creative Support'),
     ]),
     _CreditCategory('Music source', Icons.music_note_outlined, [
       _Credit('YouTube', 'All music is streamed from YouTube'),
@@ -106,9 +107,11 @@ class CreditsScreen extends StatelessWidget {
 }
 
 class _Credit {
-  const _Credit(this.name, this.description);
+  const _Credit(this.name, this.description, {this.socialLinks = const []});
   final String name;
   final String description;
+  // Add profile URLs here; matching platform icons appear only for configured links.
+  final List<String> socialLinks;
 }
 
 class _CreditCategory {
@@ -195,7 +198,7 @@ class _CategoryHeading extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(category.icon, color: const Color(0xFFFF6FAE), size: 21),
+        Icon(category.icon, color: Colors.white, size: 21),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -257,10 +260,49 @@ class _CreditTile extends StatelessWidget {
               ],
             ),
           ),
+          if (credit.socialLinks.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            for (final url in credit.socialLinks)
+              _SocialLink(url: url),
+          ],
         ],
       ),
     );
   }
+}
+
+class _SocialLink extends StatelessWidget {
+  const _SocialLink({required this.url});
+  final String url;
+
+  IconData get _icon {
+    final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+    if (host.contains('instagram.com')) return Icons.camera_alt_outlined;
+    if (host.contains('telegram.')) return Icons.send_rounded;
+    if (host.contains('youtube.com') || host.contains('youtu.be')) return Icons.play_circle_outline;
+    if (host.contains('t.me')) return Icons.send_rounded;
+    if (host.contains('facebook.com')) return Icons.facebook;
+    if (host.contains('x.com') || host.contains('twitter.com')) return Icons.alternate_email;
+    if (host.contains('github.com')) return Icons.code_rounded;
+    if (host.contains('linkedin.com')) return Icons.work_outline;
+    if (host.contains('discord.')) return Icons.forum_outlined;
+    return Icons.link_rounded;
+  }
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+        tooltip: url,
+        visualDensity: VisualDensity.compact,
+        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+        padding: EdgeInsets.zero,
+        icon: Icon(_icon, color: Colors.white, size: 19),
+        onPressed: () async {
+          final uri = Uri.tryParse(url);
+          if (uri != null && (uri.scheme == 'https' || uri.scheme == 'http')) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
+        },
+      );
 }
 
 class _FooterRow extends StatelessWidget {
@@ -282,7 +324,7 @@ class _FooterRow extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 2),
         minVerticalPadding: 12,
-        leading: Icon(icon, color: const Color(0xFFFF6FAE)),
+        leading: Icon(icon, color: Colors.white),
         title: Text(
           title,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
