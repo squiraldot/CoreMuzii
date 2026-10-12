@@ -107,7 +107,7 @@ class CreditsScreen extends StatelessWidget {
 }
 
 class _Credit {
-  const _Credit(this.name, this.description, {this.socialLinks = const []});
+  const _Credit(this.name, this.description, {required this.socialLinks});
   final String name;
   final String description;
   // Add profile URLs here; matching platform icons appear only for configured links.
