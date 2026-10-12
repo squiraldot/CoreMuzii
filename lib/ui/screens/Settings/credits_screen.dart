@@ -10,28 +10,28 @@ class CreditsScreen extends StatelessWidget {
 
   static const List<_CreditCategory> _categories = [
     _CreditCategory('Developer', Icons.code_rounded, [
-      _Credit('Rabbit', 'App development'),
-      _Credit('Ravi Verma', 'App development'),
+      _Credit('Rabbit', 'App development', socialLinks: []),
+      _Credit('Ravi Verma', 'App development', socialLinks: []),
     ]),
     _CreditCategory('Designer', Icons.brush_outlined, [
-      _Credit('Rabbit', 'UI and UX design'),
-      _Credit('Harmony App', 'Design inspiration'),
+      _Credit('Rabbit', 'UI and UX design', socialLinks: []),
+      _Credit('Harmony App', 'Design inspiration', socialLinks: []),
     ]),
     _CreditCategory('Manager', Icons.manage_accounts_outlined, [
-      _Credit('Danish Moon', 'Promotion and outreach'),
+      _Credit('Danish Moon', 'Promotion and outreach', socialLinks: []),
     ]),
     _CreditCategory('Branding', Icons.auto_awesome_outlined, [
-      _Credit('InstaPrime', 'App branding'),
-      _Credit('Ravi Verma', 'Developer at InstaPrime'),
+      _Credit('InstaPrime', 'App branding', socialLinks: []),
+      _Credit('Ravi Verma', 'Developer at InstaPrime', socialLinks: []),
     ]),
     _CreditCategory('Helping hand', Icons.volunteer_activism_outlined, [
-      _Credit('Abhii', 'Creative Support'),
+      _Credit('Abhii', 'Creative Support', socialLinks: []),
     ]),
     _CreditCategory('Music source', Icons.music_note_outlined, [
-      _Credit('YouTube', 'All music is streamed from YouTube'),
+      _Credit('YouTube', 'All music is streamed from YouTube', socialLinks: []),
     ]),
     _CreditCategory('Artists and creators', Icons.mic_none_rounded, [
-      _Credit('Every artist and channel', 'Songs belong to their owners'),
+      _Credit('Every artist and channel', 'Songs belong to their owners', socialLinks: []),
     ]),
   ];
 
