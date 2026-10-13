@@ -15,7 +15,6 @@ import '../../widgets/snackbar.dart';
 import '/ui/widgets/link_piped.dart';
 import '../Home/home_screen_controller.dart';
 import '/services/music_service.dart';
-import '/ui/player/player_controller.dart';
 import 'advanced_equalizer_screen.dart';
 import 'credits_screen.dart';
 import 'about_screen.dart';
