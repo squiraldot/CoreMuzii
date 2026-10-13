@@ -10,22 +10,36 @@ class CreditsScreen extends StatelessWidget {
 
   static const List<_CreditCategory> _categories = [
     _CreditCategory('Developer', Icons.code_rounded, [
-      _Credit('Rabbit', 'App development', socialLinks: []),
-      _Credit('Ravi Verma', 'App development', socialLinks: []),
+      _Credit('SquiralDot', 'App development', socialLinks: [
+        'https://github.com/squiraldot',
+        'https://instagram.com/squiraldot',
+      ]),
+      _Credit('Ravi Verma', 'App development (owner of InstaPrime)', socialLinks: [
+        'https://telegram.me/InstaPrimeDev',
+      ]),
     ]),
-    _CreditCategory('Designer', Icons.brush_outlined, [
-      _Credit('Rabbit', 'UI and UX design', socialLinks: []),
-      _Credit('Harmony App', 'Design inspiration', socialLinks: []),
+    _CreditCategory('UI/UX', Icons.brush_outlined, [
+      _Credit('Harmony App', 'Design inspiration', socialLinks: [
+        'https://github.com/anandnet/Harmony-Music',
+      ]),
     ]),
     _CreditCategory('Manager', Icons.manage_accounts_outlined, [
-      _Credit('Danish Moon', 'Promotion and outreach', socialLinks: []),
+      _Credit('Danish Moon', 'Promotion and outreach', socialLinks: [
+        'https://instagram.com/danzy.30',
+        'https://telegram.me/danishmoon03',
+      ]),
     ]),
     _CreditCategory('Branding', Icons.auto_awesome_outlined, [
-      _Credit('InstaPrime', 'App branding', socialLinks: []),
-      _Credit('Ravi Verma', 'Developer at InstaPrime', socialLinks: []),
+      _Credit('InstaPrime', 'App branding', socialLinks: [
+        'https://instaprimeofficial.com',
+        'https://telegram.me/instaprimeofficial',
+      ]),
     ]),
     _CreditCategory('Helping hand', Icons.volunteer_activism_outlined, [
-      _Credit('Abhii', 'Creative Support', socialLinks: []),
+      _Credit('Abhii', 'Creative Support', socialLinks: [
+        'https://instagram.com/abhii.archieve',
+        'https://telegram.me/iabhii28',
+      ]),
     ]),
     _CreditCategory('Music source', Icons.music_note_outlined, [
       _Credit('YouTube', 'All music is streamed from YouTube', socialLinks: []),
@@ -170,7 +184,7 @@ class _VinylHero extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Text(
-          'Your App',
+          'MuziiNap',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 color: Colors.white,
@@ -179,7 +193,7 @@ class _VinylHero extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         Text(
-          'The people behind the music',
+          'The people behind the MuziiNap',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF9B9B9B),
@@ -278,7 +292,7 @@ class _SocialLink extends StatelessWidget {
   IconData get _icon {
     final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
     if (host.contains('instagram.com')) return Icons.camera_alt_outlined;
-    if (host.contains('telegram.')) return Icons.send_rounded;
+    if (host.contains('telegram.') || host.contains('telegram.me')) return Icons.send_rounded;
     if (host.contains('youtube.com') || host.contains('youtu.be')) return Icons.play_circle_outline;
     if (host.contains('t.me')) return Icons.send_rounded;
     if (host.contains('facebook.com')) return Icons.facebook;
@@ -286,6 +300,7 @@ class _SocialLink extends StatelessWidget {
     if (host.contains('github.com')) return Icons.code_rounded;
     if (host.contains('linkedin.com')) return Icons.work_outline;
     if (host.contains('discord.')) return Icons.forum_outlined;
+    if (host.contains('instaprimeofficial.com')) return Icons.language_rounded;
     return Icons.link_rounded;
   }
 
