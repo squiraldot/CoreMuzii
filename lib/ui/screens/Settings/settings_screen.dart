@@ -18,6 +18,7 @@ import '/services/music_service.dart';
 import '/ui/player/player_controller.dart';
 import 'advanced_equalizer_screen.dart';
 import 'credits_screen.dart';
+import 'about_screen.dart';
 import '/ui/utils/theme_controller.dart';
 import 'components/custom_expansion_tile.dart';
 import 'settings_screen_controller.dart';
@@ -816,58 +817,17 @@ class SettingsScreen extends StatelessWidget {
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => Get.to(() => const CreditsScreen()),
               ),
-              CustomExpansionTile(
-                icon: Icons.info,
-                title: "appInfo".tr,
-                children: [
-                  ListTile(
-                    contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                    title: Text("github".tr),
-                    subtitle: Text(
-                      "This app is a fork of the original MDLovFi Music app by anandnet, with additional features and improvements added by Merrmist.\n\n${"githubDes".tr}${((Get.find<PlayerController>().playerPanelMinHeight.value) == 0 || !isBottomNavActive) ? "" : "\n\n${settingsController.currentVersion} ${"by".tr} Merrmist"}",
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    isThreeLine: true,
-                    onTap: () {
-                      launchUrl(
-                        Uri.parse(
-                          'https://github.com/Merrmist/MDLovFi-Music',
-                        ),
-                        mode: LaunchMode.externalApplication,
-                      );
-                    },
-                  ),
-                  ListTile(
-                    contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                    title: const Text("Original Repository (anandnet)"),
-                    subtitle: Text(
-                      "View the original unmaintained MDLovFi Music repository by anandnet",
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    onTap: () {
-                      launchUrl(
-                        Uri.parse(
-                          'https://github.com/anandnet/MDLovFi-Music',
-                        ),
-                        mode: LaunchMode.externalApplication,
-                      );
-                    },
-                  ),
-                  const Divider(),
-                  SizedBox(
-                    child: Column(
-                      children: [
-                        Text(
-                          "MDLovFi Music",
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        Text(settingsController.currentVersion,
-                            style: Theme.of(context).textTheme.titleMedium)
-                      ],
-                    ),
-                  ),
-                ],
-              )
+              ListTile(
+                contentPadding: const EdgeInsets.only(left: 5, right: 10),
+                leading: const Icon(Icons.info_outline_rounded),
+                title: const Text("About"),
+                subtitle: const Text(
+                  "About MuziiNap and the project",
+                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => Get.to(() => const AboutScreen()),
+              ),
             ],
           )),
           Padding(
