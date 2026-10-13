@@ -1,18 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:mdlovfimusic/ui/screens/Settings/settings_screen_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Project and application information for MuziiNap.
+import 'credits_screen.dart';
+import 'settings_screen_controller.dart';
+
+/// About MuziiNap: app details, community links, project links and legal info.
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
   static const Color _muted = Color(0xFF9B9B9B);
   static const Color _divider = Color(0xFF292929);
 
-  Future<void> _openLink(String url) async {
-    final uri = Uri.parse(url);
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  Future<void> _openLink(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || (uri.scheme != 'https' && uri.scheme != 'http')) {
+      _showMessage(context, 'This link is not available yet.');
+      return;
+    }
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && context.mounted) {
+        _showMessage(context, 'Could not open this link.');
+      }
+    } catch (_) {
+      if (context.mounted) _showMessage(context, 'Could not open this link.');
+    }
+  }
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -39,21 +56,17 @@ class AboutScreen extends StatelessWidget {
           children: [
             Center(
               child: Container(
-                width: 88,
-                height: 88,
+                width: 76,
+                height: 76,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF202020),
-                  borderRadius: BorderRadius.circular(24),
+                  color: const Color(0xFF242424),
+                  borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: const Color(0xFF383838)),
                 ),
-                child: const Icon(
-                  Icons.music_note_rounded,
-                  color: Colors.white,
-                  size: 48,
-                ),
+                child: const Icon(Icons.music_note_rounded, color: Colors.white, size: 42),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             Text(
               'MuziiNap',
               textAlign: TextAlign.center,
@@ -62,13 +75,13 @@ class AboutScreen extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 5),
             Text(
               'Your music, your way.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(color: _muted),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -82,84 +95,108 @@ class AboutScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 26),
             const Divider(color: _divider),
             const SizedBox(height: 18),
-            Text(
-              'About MuziiNap',
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            _sectionTitle(theme, 'About MuziiNap'),
             const SizedBox(height: 10),
             Text(
               'MuziiNap is a music streaming app built on the MDLovFi Music project. '
               'It brings music discovery, playback, playlists, a personal library, '
-              'YouTube account support, and audio customization features together '
-              'in one place.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: _muted,
-                height: 1.5,
-              ),
+              'YouTube integration and audio customization together in one place.',
+              style: theme.textTheme.bodyMedium?.copyWith(color: _muted, height: 1.5),
             ),
             const SizedBox(height: 24),
-            Text(
-              'Project & source code',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
+            _sectionTitle(theme, 'App'),
+            const SizedBox(height: 6),
             _AboutLinkTile(
-              icon: Icons.code_rounded,
-              title: 'MuziiNap source code',
-              subtitle: 'Explore the app source and its improvements',
-              onTap: () => _openLink('https://github.com/squiraldot/CoreMuzii'),
-            ),
-            _AboutLinkTile(
-              icon: Icons.history_rounded,
-              title: 'Original project',
-              subtitle: 'MDLovFi Music by anandnet',
-              onTap: () => _openLink('https://github.com/anandnet/MDLovFi-Music'),
+              icon: Icons.system_update_alt_rounded,
+              title: 'In-app Update',
+              subtitle: 'Check for the latest version and update the app.',
+              onTap: () => _showMessage(context, 'In-app updates are coming soon.'),
             ),
             const SizedBox(height: 18),
             const Divider(color: _divider),
             const SizedBox(height: 18),
-            Text(
-              'Open source',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
+            _sectionTitle(theme, 'Our Community'),
+            const SizedBox(height: 6),
+            _AboutLinkTile(
+              icon: Icons.send_rounded,
+              title: 'Telegram Channel',
+              subtitle: 'Announcements, updates and news.',
+              onTap: () => _openLink(context, 'https://telegram.me/instaprimeofficial'),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'MuziiNap builds on an existing open-source music app. We appreciate '
-              'the original project and the open-source tools and libraries that '
-              'help make this app possible.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: _muted,
-                height: 1.5,
-              ),
+            _AboutLinkTile(
+              icon: Icons.language_rounded,
+              title: 'Official Website',
+              subtitle: 'Visit our website.',
+              onTap: () => _openLink(context, 'https://instaprimeofficial.com'),
             ),
             const SizedBox(height: 18),
+            const Divider(color: _divider),
+            const SizedBox(height: 18),
+            _sectionTitle(theme, 'Project & Credits'),
+            const SizedBox(height: 6),
+            _AboutLinkTile(
+              icon: Icons.code_rounded,
+              title: 'MuziiNap Source Code',
+              subtitle: 'View the project repository.',
+              onTap: () => _openLink(context, 'https://github.com/squiraldot/CoreMuzii'),
+            ),
+            _AboutLinkTile(
+              icon: Icons.account_tree_outlined,
+              title: 'Original Project',
+              subtitle: 'MDLovFi Music by anandnet.',
+              onTap: () => _openLink(context, 'https://github.com/anandnet/MDLovFi-Music'),
+            ),
+            _AboutLinkTile(
+              icon: Icons.people_alt_outlined,
+              title: 'Credits',
+              subtitle: 'The people behind the MuziiNap.',
+              onTap: () => Get.to(() => const CreditsScreen()),
+            ),
+            const SizedBox(height: 18),
+            const Divider(color: _divider),
+            const SizedBox(height: 18),
+            _sectionTitle(theme, 'Legal'),
+            const SizedBox(height: 6),
+            _AboutLinkTile(
+              icon: Icons.description_outlined,
+              title: 'Licenses',
+              subtitle: 'Open-source licenses used by this app.',
+              onTap: () => showLicensePage(
+                context: context,
+                applicationName: 'MuziiNap',
+                applicationVersion: controller.currentVersion,
+              ),
+            ),
+            _AboutLinkTile(
+              icon: Icons.shield_outlined,
+              title: 'Privacy Policy',
+              subtitle: 'How app and service data is handled.',
+              onTap: () => _showMessage(context, 'Privacy policy link is not configured yet.'),
+            ),
+            const SizedBox(height: 24),
             const Divider(color: _divider),
             const SizedBox(height: 18),
             Text(
               'Made for music lovers.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: _muted,
-                letterSpacing: 0.2,
-              ),
+              style: theme.textTheme.bodyMedium?.copyWith(color: _muted, letterSpacing: 0.2),
             ),
           ],
         ),
       ),
     );
   }
+
+  static Widget _sectionTitle(ThemeData theme, String text) => Text(
+        text,
+        style: theme.textTheme.titleMedium?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
+      );
 }
 
 class _AboutLinkTile extends StatelessWidget {
@@ -189,9 +226,7 @@ class _AboutLinkTile extends StatelessWidget {
       ),
       subtitle: Text(
         subtitle,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF9B9B9B),
-            ),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFF9B9B9B)),
       ),
       trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF9B9B9B)),
       onTap: onTap,
