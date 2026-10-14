@@ -169,7 +169,7 @@ class PlaylistScreen extends StatelessWidget {
                                         Colors.transparent.withAlpha(100),
                                     builder: (context) => ClipRRect(
                                       borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(18),
+                                        top: Radius.circular(24),
                                       ),
                                       child: BackdropFilter(
                                         filter: ui.ImageFilter.blur(
