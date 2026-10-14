@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/gestures.dart' show kSecondaryMouseButton;
 import 'package:flutter/material.dart';
@@ -52,7 +53,16 @@ class QuickPicksWidget extends StatelessWidget {
       isScrollControlled: true,
       context: player.homeScaffoldkey.currentState!.context,
       barrierColor: Colors.transparent.withAlpha(100),
-      builder: (_) => SongInfoBottomSheet(song),
+      builder: (sheetContext) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            color: Theme.of(sheetContext).bottomSheetTheme.backgroundColor?.withValues(alpha: 0.78),
+            child: SongInfoBottomSheet(song),
+          ),
+        ),
+      ),
     ).whenComplete(() => Get.delete<SongInfoController>());
   }
 
