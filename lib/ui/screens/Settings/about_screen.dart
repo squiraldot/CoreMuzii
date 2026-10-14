@@ -124,7 +124,7 @@ class AboutScreen extends StatelessWidget {
               icon: Icons.send_rounded,
               title: 'Telegram Channel',
               subtitle: 'Announcements, updates and news.',
-              onTap: () => _openLink(context, 'https://telegram.me/muziinap'),
+              onTap: () => _openLink(context, 'https://telegram.me/muziinapofficial'),
             ),
             _AboutLinkTile(
               icon: Icons.language_rounded,
