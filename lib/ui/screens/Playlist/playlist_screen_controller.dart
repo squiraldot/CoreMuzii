@@ -82,10 +82,9 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
         playlistId == "LIBRP" ||
         playlistId == "LIBFAV");
 
-    // After YouTube login, Recently Played is the account's YouTube Music
-    // history, not the device's Hive history.
-    if (playlistId == "LIBRP" &&
-        Hive.box("AppPrefs").get('yt_logged_in', defaultValue: false) == true) {
+    // LIBRP belongs exclusively to the signed-in YouTube Music account.
+    // Never let it fall through to the legacy local Hive history branch.
+    if (playlistId == "LIBRP") {
       playlist.value = playlist_ ??
           Playlist(
             title: "recentlyPlayed".tr,
@@ -93,37 +92,25 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
             thumbnailUrl: Playlist.thumbPlaceholderUrl,
           );
       _animationController.forward();
+      songList.clear();
+
+      final isYouTubeLoggedIn =
+          Hive.box("AppPrefs").get("yt_logged_in", defaultValue: false) == true;
+      if (!isYouTubeLoggedIn) {
+        isContentFetched.value = true;
+        return;
+      }
+
       isContentFetched.value = false;
       try {
-        // Use the same authenticated Home shelves that power "Listen again"
-        // so Recently Played shows the same account songs as the Home screen.
-        final homeSections = await _musicServices.getHome(
-          limit: 100,
-          allSections: true,
-        );
-        dynamic listenAgain;
-        for (final section in homeSections) {
-          if (section is! Map) continue;
-          final title = (section['title'] ?? '').toString().toLowerCase();
-          if (title.contains('listen again') || title.contains('speed dial')) {
-            listenAgain = section;
-            break;
-          }
-        }
-
-        final homeSongs = listenAgain is Map ? listenAgain['contents'] : null;
-        if (homeSongs is List) {
-          songList.value = homeSongs.whereType<MediaItem>().toList();
-        } else {
-          // Keep the existing account-history endpoint as a fallback when
-          // YouTube does not return a Listen again shelf.
-          songList.value = await _musicServices.getYouTubeHistory(limit: 100);
-        }
+        // Home Listen again uses this same account-history endpoint.
+        songList.value = await _musicServices.getYouTubeHistory(limit: 100);
       } catch (e) {
         printERROR("Error fetching YouTube listening history: $e");
         songList.clear();
+      } finally {
+        isContentFetched.value = true;
       }
-      isContentFetched.value = true;
       return;
     }
 
