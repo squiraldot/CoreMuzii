@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mdlovfimusic/ui/player/player_controller.dart';
@@ -76,9 +77,18 @@ class UpNextQueue extends StatelessWidget {
                             .homeScaffoldkey.currentState!.context,
                         //constraints: BoxConstraints(maxHeight:Get.height),
                         barrierColor: Colors.transparent.withAlpha(100),
-                        builder: (context) => SongInfoBottomSheet(
-                          playerController.currentQueue[index],
-                          calledFromQueue: true,
+                        builder: (sheetContext) => ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                          child: BackdropFilter(
+                            filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                            child: Container(
+                              color: Theme.of(sheetContext).bottomSheetTheme.backgroundColor?.withValues(alpha: 0.78),
+                              child: SongInfoBottomSheet(
+                                playerController.currentQueue[index],
+                                calledFromQueue: true,
+                              ),
+                            ),
+                          ),
                         ),
                       ).whenComplete(() => Get.delete<SongInfoController>());
                     },
