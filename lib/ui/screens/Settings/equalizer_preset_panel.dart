@@ -5,6 +5,8 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+
+import '/ui/widgets/glass_alert_dialog.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -241,7 +243,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
     if (selected == null || selected.isBuiltIn) return;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => GlassAlertDialog(
         title: const Text('Delete preset?'),
         content: Text('Delete ' + selected.name + '? This cannot be undone.'),
         actions: [
@@ -399,7 +401,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
         preset.config.bands.where((band) => band.enabled).length;
     return showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => GlassAlertDialog(
         title: const Text('Preview imported preset'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -442,7 +444,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
   void _showFileError(String title, Object error) {
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => GlassAlertDialog(
         title: Text(title),
         content: Text(error.toString()),
         actions: [
@@ -473,7 +475,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
   }) {
     return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => GlassAlertDialog(
         title: Text(title),
         content: TextField(
           controller: controller,
