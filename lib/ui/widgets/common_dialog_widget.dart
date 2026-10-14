@@ -15,7 +15,7 @@ class CommonDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-        return Align(
+    return Align(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Dialog(
@@ -28,13 +28,13 @@ class CommonDialog extends StatelessWidget {
             side: BorderSide(color: Colors.white.withValues(alpha: 0.18), width: 1),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(28),
             child: BackdropFilter(
               filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface.withValues(alpha: 0.72),
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(28),
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.12),
                   ),
