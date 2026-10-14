@@ -12,6 +12,7 @@ import '/services/music_service.dart';
 import '/ui/player/player_controller.dart';
 import '../ui/navigator.dart';
 import '../ui/widgets/snackbar.dart';
+import 'package:mdlovfimusic/ui/widgets/common_dialog_widget.dart';
 
 class AppLinksController extends GetxController with ProcessLink {
   late AppLinks _appLinks;
@@ -113,10 +114,18 @@ mixin ProcessLink {
   Future<void> playSong(String songId) async {
     showDialog(
         context: Get.context!,
-        builder: (context) => const Center(
-                child: LoadingIndicator(
-              strokeWidth: 5,
-            )),
+        builder: (context) => const CommonDialog(
+          child: Padding(
+            padding: EdgeInsets.all(28),
+            child: SizedBox(
+              width: 52,
+              height: 52,
+              child: Center(
+                child: LoadingIndicator(strokeWidth: 5),
+              ),
+            ),
+          ),
+        ),
         barrierDismissible: false);
     final result = await Get.find<MusicServices>().getSongWithId(songId);
     Navigator.of(Get.context!).pop();
