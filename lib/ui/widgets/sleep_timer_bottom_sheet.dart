@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -10,9 +12,19 @@ class SleepTimerBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final playerController = Get.find<PlayerController>();
-    return Padding(
-      padding: EdgeInsets.only(bottom: Get.mediaQuery.padding.bottom),
-      child: Obx(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.82),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(bottom: Get.mediaQuery.padding.bottom),
+            child: Obx(
         () => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -101,6 +113,9 @@ class SleepTimerBottomSheet extends StatelessWidget {
                 ),
               ),
           ],
+        ),
+            ),
+          ),
         ),
       ),
     );
