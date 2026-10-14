@@ -47,6 +47,12 @@ class AppLinksController extends GetxController with ProcessLink {
 
 mixin ProcessLink {
   Future<void> filterLinks(Uri uri) async {
+    // Android file shares (for example Telegram .mdleq presets) arrive as
+    // content:// URIs and are handled by MainActivity's preset-share channel.
+    // They are not app/deep links and must never reach the YouTube link
+    // validator, which otherwise displays "Not a Valid Link".
+    if (uri.scheme != 'http' && uri.scheme != 'https') return;
+
     final playerController = Get.find<PlayerController>();
     if (playerController.playerPanelController.isPanelOpen) {
       playerController.playerPanelController.close();
