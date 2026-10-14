@@ -322,7 +322,6 @@ class StandaloneSongInfoDialog extends StatelessWidget {
 
     return [
       _MetadataValue('ID', _asText(song.id)),
-      _MetadataValue('Title', _asText(song.title)),
       _MetadataValue('Album', _asText(song.album)),
       _MetadataValue('Artist', _asText(song.artist)),
       _MetadataValue(
