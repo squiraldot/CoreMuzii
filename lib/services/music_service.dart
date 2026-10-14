@@ -660,41 +660,90 @@ class MusicServices extends getx.GetxService {
 
   Future<List<MediaItem>> getYouTubeHistory({int limit = 20}) async {
     await ensureReady();
-    final data = Map.from(_context);
-    data['browseId'] = 'FEmusic_history';
-    final response = (await _sendRequest('browse', data)).data;
+    if (limit <= 0) return <MediaItem>[];
 
-    final shelves = <Map<String, dynamic>>[];
-
-    void collectShelves(dynamic root) {
-      if (root is Map) {
-        final shelf = root['musicShelfRenderer'];
-        if (shelf is Map) {
-          shelves.add(Map<String, dynamic>.from(shelf));
-        }
-        for (final value in root.values) {
-          if (value is Map || value is List) collectShelves(value);
-        }
-      } else if (root is List) {
-        for (final value in root) {
-          if (value is Map || value is List) collectShelves(value);
-        }
-      }
+    final appPrefs = Hive.box(appPrefsBoxName);
+    if (appPrefs.get('yt_logged_in', defaultValue: false) != true) {
+      throw StateError('Sign in to YouTube Music to view listening history.');
     }
 
-    collectShelves(response);
+    final data = Map<String, dynamic>.from(_context);
+    data['browseId'] = 'FEmusic_history';
+
+    // History is an authenticated InnerTube endpoint. Bound the request so
+    // a stalled connection cannot leave the playlist screen loading forever.
+    final response = (await _sendRequest('browse', data)
+            .timeout(const Duration(seconds: 25)))
+        .data;
+
+    // Match YouTube Music's documented response path first. Recursively
+    // searching for any musicShelfRenderer can accidentally collect unrelated
+    // nested shelves and misses the API's explicit sign-in/error notifier.
+    final sections = nav(response, single_column_tab + section_list);
+    if (sections is! List) {
+      throw StateError('YouTube Music returned an unexpected history response.');
+    }
 
     final result = <MediaItem>[];
     final seen = <String>{};
-    for (final shelf in shelves) {
+    for (final section in sections) {
+      if (section is! Map) continue;
+
+      final shelfData = section['musicShelfRenderer'];
+      if (shelfData is! Map) {
+        final notifier = section['musicNotifierShelfRenderer'];
+        if (notifier is Map) {
+          final message = nav(notifier, title_text)?.toString();
+          if (message != null && message.isNotEmpty) {
+            throw StateError('YouTube Music history: $message');
+          }
+        }
+        continue;
+      }
+
+      final shelf = Map<String, dynamic>.from(shelfData);
       final contents = shelf['contents'];
-      if (contents is! List) continue;
-      for (final item in parsePlaylistItems(contents)) {
-        if (item is! MediaItem || !seen.add(item.id)) continue;
-        result.add(item);
-        if (result.length >= limit) return result;
+      if (contents is List) {
+        for (final item in parsePlaylistItems(contents)) {
+          if (item is! MediaItem || !seen.add(item.id)) continue;
+          result.add(item);
+          if (result.length >= limit) return result;
+        }
+      }
+
+      // The history shelf is paginated for some accounts. Follow the API's
+      // continuation token rather than silently showing only its first page.
+      if (result.length < limit && shelf['continuations'] is List) {
+        Future<dynamic> requestContinuation(String additionalParams) async {
+          return (await _sendRequest(
+            'browse',
+            data,
+            additionalParams: additionalParams,
+          ).timeout(const Duration(seconds: 25)))
+              .data;
+        }
+
+        List<MediaItem> parseContinuation(Map<String, dynamic> continuation) {
+          final items = continuation['contents'];
+          if (items is! List) return <MediaItem>[];
+          return parsePlaylistItems(items).whereType<MediaItem>().toList();
+        }
+
+        final remaining = limit - result.length;
+        final extra = await getContinuations(
+          shelf,
+          'musicShelfContinuation',
+          remaining,
+          requestContinuation,
+          parseContinuation,
+        );
+        for (final item in extra.whereType<MediaItem>()) {
+          if (seen.add(item.id)) result.add(item);
+          if (result.length >= limit) return result;
+        }
       }
     }
+
     return result;
   }
 
