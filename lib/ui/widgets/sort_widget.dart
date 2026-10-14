@@ -7,6 +7,7 @@ import 'package:mdlovfimusic/ui/screens/Library/library_controller.dart';
 
 import 'additional_operation_dialog.dart';
 import 'modified_text_field.dart';
+import 'common_dialog_widget.dart';
 
 enum OperationMode { arrange, delete, addToPlaylist, none }
 
@@ -83,63 +84,68 @@ class SortWidget extends StatelessWidget {
   void _showImportDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        title: Text(
-          "importPlaylist".tr,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "importPlaylistDesc".tr,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "importLargeFileNote".tr,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: Theme.of(context).colorScheme.secondary,
-                  ),
-            ),
-            const SizedBox(height: 24),
-            Center(
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                icon: const Icon(Icons.file_open),
-                label: Text("selectFile".tr),
-                onPressed: () {
-                  Get.find<LibraryPlaylistsController>()
-                      .importPlaylistFromJson(context);
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
+      builder: (context) => CommonDialog(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "importPlaylist".tr,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.secondary,
-            ),
-            onPressed: () => Navigator.pop(context),
-            child: Text("close".tr),
+              const SizedBox(height: 16),
+              Text(
+                "importPlaylistDesc".tr,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "importLargeFileNote".tr,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic,
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  icon: const Icon(Icons.file_open),
+                  label: Text("selectFile".tr),
+                  onPressed: () {
+                    Get.find<LibraryPlaylistsController>()
+                        .importPlaylistFromJson(context);
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.secondary,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("close".tr),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
