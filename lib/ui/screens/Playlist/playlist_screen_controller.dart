@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:audio_service/audio_service.dart' show MediaItem;
 import 'package:flutter/material.dart';
+import 'package:mdlovfimusic/ui/widgets/common_dialog_widget.dart';
 import 'package:get/get.dart';
 import 'package:mdlovfimusic/models/thumbnail.dart';
 import 'package:mdlovfimusic/services/permission_service.dart';
@@ -635,33 +636,35 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   // Helper method to show progress dialog
   void _showProgressDialog(BuildContext context, String title) {
     Get.dialog(
-      AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+      CommonDialog(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 20),
+              Obx(() => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      LinearProgressIndicator(
+                        value: exportProgress.value,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "${(exportProgress.value * 100).toInt()}%",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  )),
+            ],
+          ),
         ),
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        content: Obx(() => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(
-                  value: exportProgress.value,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).colorScheme.secondary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "${(exportProgress.value * 100).toInt()}%",
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            )),
       ),
       barrierDismissible: false,
     );
