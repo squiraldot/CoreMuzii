@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 
-import '/ui/widgets/glass_alert_dialog.dart';
 import 'package:get/get.dart';
 import 'package:mdlovfimusic/ui/screens/Library/library_controller.dart';
 
@@ -84,7 +83,7 @@ class SortWidget extends StatelessWidget {
   void _showImportDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => GlassAlertDialog(
+      builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
         ),
