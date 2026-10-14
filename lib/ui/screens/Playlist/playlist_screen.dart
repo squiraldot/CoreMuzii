@@ -1,5 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
@@ -165,9 +167,29 @@ class PlaylistScreen extends StatelessWidget {
                                         .context,
                                     barrierColor:
                                         Colors.transparent.withAlpha(100),
-                                    builder: (context) => SizedBox(
-                                      height: 140,
-                                      child: Column(
+                                    builder: (context) => ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(18),
+                                      ),
+                                      child: BackdropFilter(
+                                        filter: ui.ImageFilter.blur(
+                                          sigmaX: 18,
+                                          sigmaY: 18,
+                                        ),
+                                        child: Container(
+                                          height: 140,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .surface
+                                                .withValues(alpha: 0.82),
+                                            border: Border.all(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.10,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Column(
                                         children: [
                                           ListTile(
                                             leading: const Icon(Icons.edit),
@@ -217,6 +239,8 @@ class PlaylistScreen extends StatelessWidget {
                                             },
                                           ),
                                         ],
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   );
