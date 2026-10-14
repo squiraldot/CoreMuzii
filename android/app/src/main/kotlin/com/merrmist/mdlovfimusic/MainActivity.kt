@@ -148,14 +148,16 @@ class MainActivity : AudioServiceActivity() {
         if (intent == null) return
         val action = intent.action ?: return
         if (action != Intent.ACTION_SEND && action != Intent.ACTION_VIEW) return
-        val type = intent.type ?: return
-        if (type != "application/json" && !type.contains("mdleq")) return
         val uri = when (action) {
             Intent.ACTION_SEND -> intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
             else -> intent.data
         } ?: return
         try {
             val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return
+            // Telegram and other apps may share .mdleq files as application/octet-stream.
+            // Validate the preset signature instead of relying on the incoming MIME type.
+            val source = bytes.toString(Charsets.UTF_8)
+            if (!source.contains("\\"format\\"\\s*:\\s*\\"mdlovfi-eq\\"".toRegex())) return
             val content = Base64.encodeToString(bytes, Base64.NO_WRAP)
             val payload = "base64:" + content
             if (presetEventSink != null) {
