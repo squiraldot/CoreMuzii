@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.media.audiofx.Visualizer
 import android.util.Base64
+import org.json.JSONObject
 import android.os.Build
 import androidx.annotation.Keep
 import com.ryanheise.audioservice.AudioServiceActivity
@@ -157,7 +158,7 @@ class MainActivity : AudioServiceActivity() {
             // Telegram and other apps may share .mdleq files as application/octet-stream.
             // Validate the preset signature instead of relying on the incoming MIME type.
             val source = bytes.toString(Charsets.UTF_8)
-            if (!source.contains("\\"format\\"\\s*:\\s*\\"mdlovfi-eq\\"".toRegex())) return
+            if (JSONObject(source).optString("format") != "mdlovfi-eq") return
             val content = Base64.encodeToString(bytes, Base64.NO_WRAP)
             val payload = "base64:" + content
             if (presetEventSink != null) {
