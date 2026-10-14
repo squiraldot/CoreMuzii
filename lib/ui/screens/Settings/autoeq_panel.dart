@@ -255,9 +255,11 @@ class _AutoEqCurvePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (bands.isEmpty) return;
     final paint = Paint()
+      ..color = Colors.white
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     final grid = Paint()
+      ..color = Colors.white.withValues(alpha: 0.22)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
