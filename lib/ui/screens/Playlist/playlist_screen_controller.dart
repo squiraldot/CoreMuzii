@@ -95,8 +95,30 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       _animationController.forward();
       isContentFetched.value = false;
       try {
-        songList.value =
-            await _musicServices.getYouTubeHistory(limit: 100);
+        // Use the same authenticated Home shelves that power "Listen again"
+        // so Recently Played shows the same account songs as the Home screen.
+        final homeSections = await _musicServices.getHome(
+          limit: 100,
+          allSections: true,
+        );
+        dynamic listenAgain;
+        for (final section in homeSections) {
+          if (section is! Map) continue;
+          final title = (section['title'] ?? '').toString().toLowerCase();
+          if (title.contains('listen again') || title.contains('speed dial')) {
+            listenAgain = section;
+            break;
+          }
+        }
+
+        final homeSongs = listenAgain is Map ? listenAgain['contents'] : null;
+        if (homeSongs is List) {
+          songList.value = homeSongs.whereType<MediaItem>().toList();
+        } else {
+          // Keep the existing account-history endpoint as a fallback when
+          // YouTube does not return a Listen again shelf.
+          songList.value = await _musicServices.getYouTubeHistory(limit: 100);
+        }
       } catch (e) {
         printERROR("Error fetching YouTube listening history: $e");
         songList.clear();
