@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -311,7 +312,16 @@ class SongInfoBottomSheet extends StatelessWidget {
                     context:
                         playerController.homeScaffoldkey.currentState!.context,
                     barrierColor: Colors.transparent.withAlpha(100),
-                    builder: (context) => const SleepTimerBottomSheet(),
+                    builder: (sheetContext) => ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                        child: Container(
+                          color: Theme.of(sheetContext).bottomSheetTheme.backgroundColor?.withValues(alpha: 0.78),
+                          child: const SleepTimerBottomSheet(),
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),
