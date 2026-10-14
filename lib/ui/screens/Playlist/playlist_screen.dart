@@ -789,7 +789,29 @@ class PlaylistScreen extends StatelessWidget {
       isScrollControlled: true,
       context: context,
       barrierColor: Colors.transparent.withAlpha(100),
-      builder: (context) => SongInfoBottomSheet(song),
+      builder: (context) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surface
+                  .withValues(alpha: 0.82),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.10),
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+            ),
+            child: SongInfoBottomSheet(song),
+          ),
+        ),
+      ),
     ).whenComplete(() => Get.delete<SongInfoController>());
   }
 }
