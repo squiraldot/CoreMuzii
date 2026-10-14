@@ -87,7 +87,14 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     final isYouTubeLoggedIn =
         Hive.box("AppPrefs").get('yt_logged_in', defaultValue: false) == true;
     if (playlistId == "LIBRP" && !isYouTubeLoggedIn) {
-      playlist.value = null;
+      // Keep the non-nullable playlist model valid while preventing the
+      // legacy device-local history query from running when signed out.
+      playlist.value = playlist_ ??
+          Playlist(
+            title: "recentlyPlayed".tr,
+            playlistId: "LIBRP",
+            thumbnailUrl: Playlist.thumbPlaceholderUrl,
+          );
       songList.clear();
       isContentFetched.value = true;
       return;
