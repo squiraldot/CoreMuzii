@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -435,8 +436,34 @@ class MiniPlayer extends StatelessWidget {
                                                     barrierColor: Colors
                                                         .transparent
                                                         .withAlpha(100),
-                                                    builder: (context) =>
-                                                        const SleepTimerBottomSheet(),
+                                                    builder: (context) => ClipRRect(
+                                                      borderRadius:
+                                                          const BorderRadius.vertical(
+                                                        top: Radius.circular(24),
+                                                      ),
+                                                      child: BackdropFilter(
+                                                        filter: ui.ImageFilter.blur(
+                                                          sigmaX: 18,
+                                                          sigmaY: 18,
+                                                        ),
+                                                        child: DecoratedBox(
+                                                          decoration: BoxDecoration(
+                                                            color: Theme.of(context)
+                                                                .colorScheme.surface
+                                                                .withValues(alpha: 0.82),
+                                                            border: Border(
+                                                              top: BorderSide(
+                                                                color: Theme.of(context)
+                                                                    .colorScheme.primary
+                                                                    .withValues(alpha: 0.24),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          child:
+                                                              const SleepTimerBottomSheet(),
+                                                        ),
+                                                      ),
+                                                    ),
                                                   );
                                                 },
                                                 icon: Icon(playerController
