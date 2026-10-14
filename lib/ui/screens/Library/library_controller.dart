@@ -2,6 +2,7 @@ import '../../../services/constant.dart';
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:mdlovfimusic/ui/widgets/common_dialog_widget.dart';
 import 'package:get/get.dart';
 import 'package:mdlovfimusic/ui/widgets/snackbar.dart';
 import 'package:hive/hive.dart';
@@ -663,35 +664,40 @@ class LibraryPlaylistsController extends GetxController
   // Helper method to show import progress dialog
   void _showImportProgressDialog(BuildContext context) {
     Get.dialog(
-      AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+      CommonDialog(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "importingPlaylist".tr,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 20),
+              Obx(() => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      LinearProgressIndicator(
+                        value: Get.isRegistered<LibraryPlaylistsController>()
+                            ? importProgress.value
+                            : 0,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "${(Get.isRegistered<LibraryPlaylistsController>() ? importProgress.value * 100 : 0).toInt()}%",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  )),
+            ],
+          ),
         ),
-        title: Text(
-          "importingPlaylist".tr,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        content: Obx(() => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(
-                  value: Get.isRegistered<LibraryPlaylistsController>()
-                      ? importProgress.value
-                      : 0,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).colorScheme.secondary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "${(Get.isRegistered<LibraryPlaylistsController>() ? importProgress.value * 100 : 0).toInt()}%",
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            )),
       ),
       barrierDismissible: false,
     );
