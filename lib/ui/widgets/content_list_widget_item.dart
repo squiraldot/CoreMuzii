@@ -45,11 +45,19 @@ class _ContentListItemState extends State<ContentListItem> {
             widget.content.playlistId == 'LIBRP' &&
             Hive.box('AppPrefs').get('yt_logged_in', defaultValue: false) !=
                 true) {
-          Get.snackbar(
-            'YouTube Music login required',
-            'Please log in to YouTube Music first to view Recently Played.',
-            snackPosition: SnackPosition.BOTTOM,
-          );
+          // Use the tile's ScaffoldMessenger so the message works with the
+          // app's nested Library navigator as well.
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Please log in to YouTube Music first to view Recently Played.',
+                ),
+                behavior: SnackBarBehavior.floating,
+                duration: Duration(seconds: 3),
+              ),
+            );
           return;
         }
         if (isAlbum) {
