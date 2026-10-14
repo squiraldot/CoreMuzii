@@ -82,10 +82,18 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
         playlistId == "LIBRP" ||
         playlistId == "LIBFAV");
 
-    // After YouTube login, Recently Played is the account's YouTube Music
-    // history, not the device's Hive history.
-    if (playlistId == "LIBRP" &&
-        Hive.box("AppPrefs").get('yt_logged_in', defaultValue: false) == true) {
+    // LIBRP is reserved for YouTube Music account history. Never fall back
+    // to the legacy device-local listening history when signed out.
+    final isYouTubeLoggedIn =
+        Hive.box("AppPrefs").get('yt_logged_in', defaultValue: false) == true;
+    if (playlistId == "LIBRP" && !isYouTubeLoggedIn) {
+      playlist.value = null;
+      songList.clear();
+      isContentFetched.value = true;
+      return;
+    }
+
+    if (playlistId == "LIBRP" && isYouTubeLoggedIn) {
       playlist.value = playlist_ ??
           Playlist(
             title: "recentlyPlayed".tr,
