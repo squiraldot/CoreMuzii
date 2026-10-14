@@ -208,8 +208,35 @@ class StandaloneSongInfoDialog extends StatelessWidget {
                                   constraints:
                                       const BoxConstraints(maxWidth: 500),
                                   barrierColor: Colors.black54,
-                                  builder: (_) =>
-                                      const SleepTimerBottomSheet(),
+                                  builder: (_) => ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(24),
+                                    ),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(
+                                        sigmaX: 18,
+                                        sigmaY: 18,
+                                      ),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(sheetContext)
+                                              .colorScheme
+                                              .surface
+                                              .withValues(alpha: 0.82),
+                                          border: Border.all(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.10,
+                                            ),
+                                          ),
+                                          borderRadius:
+                                              const BorderRadius.vertical(
+                                            top: Radius.circular(24),
+                                          ),
+                                        ),
+                                        child: const SleepTimerBottomSheet(),
+                                      ),
+                                    ),
+                                  ),
                                 );
                               });
                             },
