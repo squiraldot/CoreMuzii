@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -165,7 +166,13 @@ class PlaylistScreen extends StatelessWidget {
                                         .context,
                                     barrierColor:
                                         Colors.transparent.withAlpha(100),
-                                    builder: (context) => SizedBox(
+                                    builder: (sheetContext) => ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                                      child: BackdropFilter(
+                                        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                                        child: Container(
+                                          color: Theme.of(sheetContext).bottomSheetTheme.backgroundColor?.withValues(alpha: 0.78),
+                                          child: SizedBox(
                                       height: 140,
                                       child: Column(
                                         children: [
