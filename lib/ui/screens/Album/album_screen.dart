@@ -571,11 +571,15 @@ class AlbumScreen extends StatelessWidget {
       context: context,
       barrierColor: Colors.transparent.withAlpha(100),
       builder: (sheetContext) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            color: Theme.of(sheetContext).bottomSheetTheme.backgroundColor?.withValues(alpha: 0.78),
+            decoration: BoxDecoration(
+              color: Theme.of(sheetContext).colorScheme.surface.withValues(alpha: 0.82),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            ),
             child: SongInfoBottomSheet(song),
           ),
         ),
