@@ -215,12 +215,9 @@ class LibraryPlaylistsController extends GetxController
   late AnimationController controller;
 
   final playlistCreationMode = "local".obs;
+  // These local library shortcuts remain available without a YouTube login.
+  // YouTube listening history (LIBRP) is added separately only for logged-in users.
   static final initPlst = [
-    Playlist(
-        title: "recentlyPlayed".tr,
-        playlistId: "LIBRP",
-        thumbnailUrl: Playlist.thumbPlaceholderUrl,
-        isCloudPlaylist: false),
     Playlist(
         title: "favorites".tr,
         playlistId: "LIBFAV",
@@ -265,9 +262,20 @@ class LibraryPlaylistsController extends GetxController
       final playlist = Playlist.fromJson(item);
       mergedPlaylists[playlist.playlistId] = playlist;
     }
+    final appPrefsBox = Hive.box(appPrefsBoxName);
+    // Show Recently Played only when it represents YouTube Music account history.
+    if (appPrefsBox.get('yt_logged_in', defaultValue: false) == true) {
+      mergedPlaylists['LIBRP'] = Playlist(
+        title: "recentlyPlayed".tr,
+        playlistId: "LIBRP",
+        thumbnailUrl: Playlist.thumbPlaceholderUrl,
+        isCloudPlaylist: true,
+      );
+    } else {
+      mergedPlaylists.remove('LIBRP');
+    }
     libraryPlaylists.value = mergedPlaylists.values.toList();
 
-    final appPrefsBox = Hive.box(appPrefsBoxName);
     if (appPrefsBox.containsKey("piped")) {
       if (appPrefsBox.get("piped")['isLoggedIn']) await syncPipedPlaylist();
     }
@@ -498,10 +506,18 @@ class LibraryPlaylistsController extends GetxController
 
   void onSort(SortType sortType, bool isAscending) {
     final playlists = libraryPlaylists.toList();
-    playlists.removeRange(0, 4);
+    final pinnedIds = initPlst.map((playlist) => playlist.playlistId).toSet()
+      ..addAll(
+        playlists
+            .where((playlist) => playlist.playlistId == 'LIBRP')
+            .map((playlist) => playlist.playlistId),
+      );
+    playlists.removeWhere((playlist) => pinnedIds.contains(playlist.playlistId));
     sortPlayLists(playlists, sortType, isAscending);
-    playlists.insertAll(0, initPlst);
-    libraryPlaylists.value = playlists;
+    final pinnedPlaylists = libraryPlaylists
+        .where((playlist) => pinnedIds.contains(playlist.playlistId))
+        .toList();
+    libraryPlaylists.value = [...pinnedPlaylists, ...playlists];
   }
 
   void onSearchStart(String? tag) {
