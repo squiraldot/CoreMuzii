@@ -42,7 +42,17 @@ class SongInfoBottomSheet extends StatelessWidget {
     final songInfoController =
         Get.put(SongInfoController(song, calledFromPlayer));
     final playerController = Get.find<PlayerController>();
-    return Obx(
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.82),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+          ),
+          child: Obx(
       () => songInfoController.showInfo.value
           ? _buildSongInfoView(context, song)
           : Padding(
@@ -360,6 +370,9 @@ class SongInfoBottomSheet extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+        ),
+      ),
     );
 
   }
