@@ -104,7 +104,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       isContentFetched.value = false;
       try {
         // Home Listen again uses this same account-history endpoint.
-        songList.value = await _musicServices.getYouTubeHistory(limit: 100);
+        songList.value = await _musicServices.getYouTubeHistory(limit: 20);
       } catch (e) {
         printERROR("Error fetching YouTube listening history: $e");
         songList.clear();
