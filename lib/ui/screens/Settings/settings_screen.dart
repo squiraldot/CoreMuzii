@@ -95,111 +95,86 @@ class SettingsScreen extends StatelessWidget {
                   Offstage(
                     offstage: true,
                     child: ListTile(
-                                        contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                                        title: Text("language".tr),
-                                        subtitle: Text("languageDes".tr,
-                                            style: Theme.of(context).textTheme.bodyMedium),
-                                        trailing: Obx(
-                                          () => DropdownButton(
-                                            menuMaxHeight: Get.height - 250,
-                                            dropdownColor: Theme.of(context).cardColor,
-                                            underline: const SizedBox.shrink(),
-                                            style: Theme.of(context).textTheme.titleSmall,
-                                            value: settingsController.currentAppLanguageCode.value,
-                                            items: langMap.entries
-                                                .map((lang) => DropdownMenuItem(
-                                                      value: lang.key,
-                                                      child: Text(lang.value),
-                                                    ))
-                                                .whereType<DropdownMenuItem<String>>()
-                                                .toList(),
-                                            selectedItemBuilder: (context) =>
-                                                langMap.entries.map<Widget>((item) {
-                                              return Container(
-                                                alignment: Alignment.centerRight,
-                                                constraints: const BoxConstraints(minWidth: 50),
-                                                child: Text(
-                                                  item.value,
-                                                ),
-                                              );
-                                            }).toList(),
-                                            onChanged: settingsController.setAppLanguage,
-                                          ),
-                                        ),
-                                      ),,
+                      contentPadding: const EdgeInsets.only(left: 5, right: 10),
+                      title: Text("language".tr),
+                      subtitle: Text("languageDes".tr,
+                          style: Theme.of(context).textTheme.bodyMedium),
+                      trailing: Obx(
+                        () => DropdownButton(
+                          menuMaxHeight: Get.height - 250,
+                          dropdownColor: Theme.of(context).cardColor,
+                          underline: const SizedBox.shrink(),
+                          style: Theme.of(context).textTheme.titleSmall,
+                          value: settingsController.currentAppLanguageCode.value,
+                          items: langMap.entries.map((lang) => DropdownMenuItem(
+                            value: lang.key, child: Text(lang.value),
+                          )).whereType<DropdownMenuItem<String>>().toList(),
+                          selectedItemBuilder: (context) => langMap.entries.map<Widget>((item) =>
+                            Container(
+                              alignment: Alignment.centerRight,
+                              constraints: const BoxConstraints(minWidth: 50),
+                              child: Text(item.value),
+                            )).toList(),
+                          onChanged: settingsController.setAppLanguage,
+                        ),
+                      ),
+                    ),
                   ),
                   if (!isDesktop)
                     Offstage(
                       offstage: true,
-                      child: if (!isDesktop)
-                                          ListTile(
-                                            contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                                            title: Text("playerUi".tr),
-                                            subtitle: Text("playerUiDes".tr,
-                                                style: Theme.of(context).textTheme.bodyMedium),
-                                            trailing: Obx(
-                                              () => DropdownButton(
-                                                dropdownColor: Theme.of(context).cardColor,
-                                                underline: const SizedBox.shrink(),
-                                                value: settingsController.playerUi.value,
-                                                items: [
-                                                  DropdownMenuItem(
-                                                      value: 0, child: Text("standard".tr)),
-                                                  DropdownMenuItem(
-                                                    value: 1,
-                                                    child: Text("gesture".tr),
-                                                  ),
-                                                ],
-                                                onChanged: settingsController.setPlayerUi,
-                                              ),
-                                            ),
-                                          ),,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.only(left: 5, right: 10),
+                        title: Text("playerUi".tr),
+                        subtitle: Text("playerUiDes".tr, style: Theme.of(context).textTheme.bodyMedium),
+                        trailing: Obx(() => DropdownButton(
+                          dropdownColor: Theme.of(context).cardColor,
+                          underline: const SizedBox.shrink(),
+                          value: settingsController.playerUi.value,
+                          items: [
+                            DropdownMenuItem(value: 0, child: Text("standard".tr)),
+                            DropdownMenuItem(value: 1, child: Text("gesture".tr)),
+                          ],
+                          onChanged: settingsController.setPlayerUi,
+                        )),
+                      ),
                     ),
                   if (!isDesktop)
                     Offstage(
                       offstage: true,
-                      child: if (!isDesktop)
-                                          ListTile(
-                                              contentPadding:
-                                                  const EdgeInsets.only(left: 5, right: 10),
-                                              title: Text("enableBottomNav".tr),
-                                              subtitle: Text("enableBottomNavDes".tr,
-                                                  style: Theme.of(context).textTheme.bodyMedium),
-                                              trailing: Obx(
-                                                () => CustSwitch(
-                                                    value: settingsController
-                                                        .isBottomNavBarEnabled.isTrue,
-                                                    onChanged: settingsController.enableBottomNavBar),
-                                              )),,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.only(left: 5, right: 10),
+                        title: Text("enableBottomNav".tr),
+                        subtitle: Text("enableBottomNavDes".tr, style: Theme.of(context).textTheme.bodyMedium),
+                        trailing: Obx(() => CustSwitch(
+                          value: settingsController.isBottomNavBarEnabled.isTrue,
+                          onChanged: settingsController.enableBottomNavBar,
+                        )),
+                      ),
                     ),
                   Offstage(
                     offstage: true,
                     child: ListTile(
-                                          contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                                          title: Text("disableTransitionAnimation".tr),
-                                          subtitle: Text("disableTransitionAnimationDes".tr,
-                                              style: Theme.of(context).textTheme.bodyMedium),
-                                          trailing: Obx(
-                                            () => CustSwitch(
-                                                value: settingsController
-                                                    .isTransitionAnimationDisabled.isTrue,
-                                                onChanged:
-                                                    settingsController.disableTransitionAnimation),
-                                          )),,
+                      contentPadding: const EdgeInsets.only(left: 5, right: 10),
+                      title: Text("disableTransitionAnimation".tr),
+                      subtitle: Text("disableTransitionAnimationDes".tr, style: Theme.of(context).textTheme.bodyMedium),
+                      trailing: Obx(() => CustSwitch(
+                        value: settingsController.isTransitionAnimationDisabled.isTrue,
+                        onChanged: settingsController.disableTransitionAnimation,
+                      )),
+                    ),
                   ),
                   Offstage(
                     offstage: true,
                     child: ListTile(
-                                          contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                                          title: Text("enableSlidableAction".tr),
-                                          subtitle: Text("enableSlidableActionDes".tr,
-                                              style: Theme.of(context).textTheme.bodyMedium),
-                                          trailing: Obx(
-                                            () => CustSwitch(
-                                                value:
-                                                    settingsController.slidableActionEnabled.isTrue,
-                                                onChanged: settingsController.toggleSlidableAction),
-                                          )),,
+                      contentPadding: const EdgeInsets.only(left: 5, right: 10),
+                      title: Text("enableSlidableAction".tr),
+                      subtitle: Text("enableSlidableActionDes".tr, style: Theme.of(context).textTheme.bodyMedium),
+                      trailing: Obx(() => CustSwitch(
+                        value: settingsController.slidableActionEnabled.isTrue,
+                        onChanged: settingsController.toggleSlidableAction,
+                      )),
+                    ),
                   ),
                 ],
               ),
@@ -405,33 +380,26 @@ class SettingsScreen extends StatelessWidget {
                     Offstage(
                       offstage: true,
                       child: ListTile(
-                                            contentPadding:
-                                                const EdgeInsets.only(left: 5, right: 10, top: 0),
-                                            title: Text("Piped".tr),
-                                            subtitle: Text("linkPipedDes".tr,
-                                                style: Theme.of(context).textTheme.bodyMedium),
-                                            trailing: TextButton(
-                                                child: Obx(() => Text(
-                                                      settingsController.isLinkedWithPiped.value
-                                                          ? "unLink".tr
-                                                          : "link".tr,
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .titleMedium!
-                                                          .copyWith(fontSize: 15),
-                                                    )),
-                                                onPressed: () {
-                                                  if (settingsController.isLinkedWithPiped.isFalse) {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (context) => const LinkPiped(),
-                                                    ).whenComplete(
-                                                        () => Get.delete<PipedLinkedController>());
-                                                  } else {
-                                                    settingsController.unlinkPiped();
-                                                  }
-                                                }),
-                                          ),,
+                        contentPadding: const EdgeInsets.only(left: 5, right: 10, top: 0),
+                        title: Text("Piped".tr),
+                        subtitle: Text("linkPipedDes".tr, style: Theme.of(context).textTheme.bodyMedium),
+                        trailing: TextButton(
+                          child: Obx(() => Text(
+                            settingsController.isLinkedWithPiped.value ? "unLink".tr : "link".tr,
+                            style: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 15),
+                          )),
+                          onPressed: () {
+                            if (settingsController.isLinkedWithPiped.isFalse) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => const LinkPiped(),
+                              ).whenComplete(() => Get.delete<PipedLinkedController>());
+                            } else {
+                              settingsController.unlinkPiped();
+                            }
+                          },
+                        ),
+                      ),
                     ),
                     Obx(() => (settingsController.isLinkedWithPiped.isTrue)
                         ? ListTile(
