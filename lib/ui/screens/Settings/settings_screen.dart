@@ -88,10 +88,12 @@ class SettingsScreen extends StatelessWidget {
                       )
                     : const SizedBox.shrink(),
               ),
-              CustomExpansionTile(
-                title: "personalisation".tr,
-                icon: Icons.palette,
-                children: [
+              Offstage(
+                offstage: true,
+                child: CustomExpansionTile(
+                  title: "personalisation".tr,
+                  icon: Icons.palette,
+                  children: [
                   Offstage(
                     offstage: true,
                     child: ListTile(
@@ -176,7 +178,8 @@ class SettingsScreen extends StatelessWidget {
                       )),
                     ),
                   ),
-                ],
+                  ],
+                ),
               ),
               CustomExpansionTile(
                   title: "YouTube Account",
