@@ -274,7 +274,14 @@ class LibraryPlaylistsController extends GetxController
     } else {
       mergedPlaylists.remove('LIBRP');
     }
-    libraryPlaylists.value = mergedPlaylists.values.toList();
+    final mergedList = mergedPlaylists.values.toList();
+    // Keep account-backed YouTube history at the front when signed in.
+    if (mergedPlaylists.containsKey('LIBRP')) {
+      mergedList
+        ..removeWhere((playlist) => playlist.playlistId == 'LIBRP')
+        ..insert(0, mergedPlaylists['LIBRP']!);
+    }
+    libraryPlaylists.value = mergedList;
 
     if (appPrefsBox.containsKey("piped")) {
       if (appPrefsBox.get("piped")['isLoggedIn']) await syncPipedPlaylist();
@@ -516,7 +523,13 @@ class LibraryPlaylistsController extends GetxController
     sortPlayLists(playlists, sortType, isAscending);
     final pinnedPlaylists = libraryPlaylists
         .where((playlist) => pinnedIds.contains(playlist.playlistId))
-        .toList();
+        .toList()
+      ..sort((a, b) {
+        if (a.playlistId == 'LIBRP') return -1;
+        if (b.playlistId == 'LIBRP') return 1;
+        return initPlst.indexWhere((p) => p.playlistId == a.playlistId)
+            .compareTo(initPlst.indexWhere((p) => p.playlistId == b.playlistId));
+      });
     libraryPlaylists.value = [...pinnedPlaylists, ...playlists];
   }
 
