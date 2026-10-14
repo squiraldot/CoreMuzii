@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '/models/equalizer.dart';
 import '/models/equalizer_preset.dart';
@@ -622,6 +623,19 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
                   label: const Text('Duplicate'),
                 ),
                 TextButton.icon(
+                  onPressed: _fileOperationInProgress ? null : _share,
+                  icon: const Icon(Icons.share_outlined),
+                  label: const Text('Share'),
+                ),
+                TextButton.icon(
+                  onPressed: () async {
+                    final uri = Uri.parse('https://telegram.me/muziinap/193');
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  },
+                  icon: const Icon(Icons.library_music_outlined),
+                  label: const Text('EQ Presets'),
+                ),
+                TextButton.icon(
                   onPressed: _fileOperationInProgress ? null : _import,
                   icon: const Icon(Icons.file_open_outlined),
                   label: const Text('Import'),
@@ -630,11 +644,6 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
                   onPressed: _fileOperationInProgress ? null : _export,
                   icon: const Icon(Icons.ios_share_outlined),
                   label: const Text('Export'),
-                ),
-                TextButton.icon(
-                  onPressed: _fileOperationInProgress ? null : _share,
-                  icon: const Icon(Icons.share_outlined),
-                  label: const Text('Share'),
                 ),
                 if (selectedIsCustom)
                   TextButton.icon(
