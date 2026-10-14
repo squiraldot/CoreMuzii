@@ -423,31 +423,32 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Preview imported preset', style: Theme.of(context).textTheme.titleLarge),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              preset.name,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text('Author: ${preset.author}'),
-            if (preset.description.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(preset.description),
-            ],
-            const SizedBox(height: 12),
-            Text('Bands: ${enabledBands} enabled'),
-            Text('Preamp: ${preset.config.preampDb.toStringAsFixed(1)} dB'),
-            Text('Limiter: ${preset.config.limiterEnabled ? 'On' : 'Off'}'),
-            Text(
-              'Output gain: '
-              '${preset.config.outputGainDb.toStringAsFixed(1)} dB',
-            ),
-          ],
-        ),
+              Text(
+                'Preview imported preset',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                preset.name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text('Author: ${preset.author}'),
+              if (preset.description.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(preset.description),
+              ],
+              const SizedBox(height: 12),
+              Text('Bands: ${enabledBands} enabled'),
+              Text('Preamp: ${preset.config.preampDb.toStringAsFixed(1)} dB'),
+              Text('Limiter: ${preset.config.limiterEnabled ? 'On' : 'Off'}'),
+              Text(
+                'Output gain: '
+                '${preset.config.outputGainDb.toStringAsFixed(1)} dB',
+              ),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
