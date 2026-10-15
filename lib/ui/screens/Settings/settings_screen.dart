@@ -472,45 +472,9 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ),
                   if (GetPlatform.isAndroid)
-                    ListTile(
-                        contentPadding:
-                            const EdgeInsets.only(left: 5, right: 10),
-                        title: Text("loudnessNormalization".tr),
-                        subtitle: Text("loudnessNormalizationDes".tr,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        trailing: Obx(
-                          () => CustSwitch(
-                              value: settingsController
-                                  .loudnessNormalizationEnabled.value,
-                              onChanged: settingsController
-                                  .toggleLoudnessNormalization),
-                        )),
-                  if (!isDesktop)
-                    ListTile(
-                        contentPadding:
-                            const EdgeInsets.only(left: 5, right: 10),
-                        title: Text("cacheSongs".tr),
-                        subtitle: Text("cacheSongsDes".tr,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        trailing: Obx(
-                          () => CustSwitch(
-                              value: settingsController.cacheSongs.value,
-                              onChanged:
-                                  settingsController.toggleCachingSongsValue),
-                        )),
-                  if (!isDesktop)
-                    ListTile(
-                        contentPadding:
-                            const EdgeInsets.only(left: 5, right: 10),
-                        title: Text("skipSilence".tr),
-                        subtitle: Text("skipSilenceDes".tr,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        trailing: Obx(
-                          () => CustSwitch(
-                              value:
-                                  settingsController.skipSilenceEnabled.value,
-                              onChanged: settingsController.toggleSkipSilence),
-                        )),
+  
+
+
                   if (isDesktop)
                     ListTile(
                         contentPadding:
