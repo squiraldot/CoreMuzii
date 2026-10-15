@@ -232,7 +232,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         //     _player.play();
         //   }
         // });
-        customAction("playByIndex", {'index': currentIndex, 'newUrl': true});
+        await customAction("playByIndex", {'index': currentIndex, 'newUrl': true});
         await _player.seek(curPos, index: 0);
       }
     });
@@ -258,7 +258,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     if (loopModeEnabled) {
       await _player.seek(Duration.zero);
       if (!_player.playing) {
-        _player.play();
+        await _player.play();
       }
       return;
     }
