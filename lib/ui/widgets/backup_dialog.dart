@@ -197,29 +197,51 @@ class BackupDialogController extends GetxController {
   Future<void> backup() async {
     if (scanning.value || backupRunning.value) return;
     errorMessage.value = '';
+    Directory? temporaryDirectory;
     try {
-      // The Android system document picker grants folder access; app-private
-      // Hive data does not require broad MANAGE_EXTERNAL_STORAGE permission.
-      final pickedFolderPath = await FilePicker.platform.getDirectoryPath(
-        dialogTitle: 'Select backup file folder',
-      );
-      if (pickedFolderPath == null || pickedFolderPath.isEmpty) return;
       scanning.value = true;
       filesToExport.clear();
       await scanFilesToBackup();
-      scanning.value = false;
       if (filesToExport.isEmpty) {
         errorMessage.value = 'No app data files were found to back up.';
         return;
       }
+
       backupRunning.value = true;
       final now = DateTime.now();
       final date = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}-${now.second.toString().padLeft(2, '0')}';
-      final outputPath = '$pickedFolderPath/hm-backup-$date.hmb';
-      await compressFilesInBackground(filesToExport, outputPath);
-      final output = File(outputPath);
-      if (!await output.exists() || await output.length() == 0) {
-        throw Exception('Backup file was not created.');
+      final fileName = 'hm-backup-$date.hmb';
+
+      if (GetPlatform.isAndroid) {
+        // Android's scoped storage blocks writing directly to paths such as
+        // /storage/emulated/0/Music. Build the archive in app-private temp
+        // storage, then let the system Save/Create Document picker write it.
+        temporaryDirectory = await Directory.systemTemp.createTemp('hm-backup-');
+        final temporaryArchive = File('${temporaryDirectory.path}/$fileName');
+        await compressFilesInBackground(filesToExport, temporaryArchive.path);
+        final bytes = await temporaryArchive.readAsBytes();
+        final savedPath = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save backup file',
+          fileName: fileName,
+          type: FileType.custom,
+          allowedExtensions: ['hmb'],
+          bytes: bytes,
+        );
+        if (savedPath == null || savedPath.isEmpty) {
+          errorMessage.value = 'Backup cancelled; no file was saved.';
+          return;
+        }
+      } else {
+        final pickedFolderPath = await FilePicker.platform.getDirectoryPath(
+          dialogTitle: 'Select backup file folder',
+        );
+        if (pickedFolderPath == null || pickedFolderPath.isEmpty) return;
+        final outputPath = '$pickedFolderPath/$fileName';
+        await compressFilesInBackground(filesToExport, outputPath);
+        final output = File(outputPath);
+        if (!await output.exists() || await output.length() == 0) {
+          throw Exception('Backup file was not created.');
+        }
       }
       isbackupCompleted.value = true;
     } catch (e) {
@@ -228,9 +250,15 @@ class BackupDialogController extends GetxController {
     } finally {
       scanning.value = false;
       backupRunning.value = false;
+      if (temporaryDirectory != null && await temporaryDirectory.exists()) {
+        try {
+          await temporaryDirectory.delete(recursive: true);
+        } catch (e) {
+          printERROR('Could not clean temporary backup files: $e');
+        }
+      }
     }
-  }
-}
+  }}
 
 // Function to convert file paths to base64-encoded file data
 List<String> filePathsToBase64(List<String> filePaths) {
