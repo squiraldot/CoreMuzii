@@ -328,28 +328,6 @@ class SettingsScreen extends StatelessWidget {
                 title: "music&Playback".tr,
                 icon: Icons.music_note,
                 children: [
-                  ListTile(
-                    contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                    title: Text("streamingQuality".tr),
-                    subtitle: Text("streamingQualityDes".tr,
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    trailing: Obx(
-                      () => DropdownButton(
-                        dropdownColor: Theme.of(context).cardColor,
-                        underline: const SizedBox.shrink(),
-                        value: settingsController.streamingQuality.value,
-                        items: [
-                          DropdownMenuItem(
-                              value: AudioQuality.Low, child: Text("low".tr)),
-                          DropdownMenuItem(
-                            value: AudioQuality.High,
-                            child: Text("high".tr),
-                          ),
-                        ],
-                        onChanged: settingsController.setStreamingQuality,
-                      ),
-                    ),
-                  ),
                   if (GetPlatform.isAndroid)
   
 
