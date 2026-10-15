@@ -258,7 +258,8 @@ class BackupDialogController extends GetxController {
         }
       }
     }
-  }}
+  }
+}
 
 // Function to convert file paths to base64-encoded file data
 List<String> filePathsToBase64(List<String> filePaths) {
