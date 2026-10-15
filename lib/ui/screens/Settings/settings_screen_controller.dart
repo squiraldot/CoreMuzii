@@ -325,17 +325,22 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> toggleCacheHomeScreenData(bool val) async {
+    // Persist first so Home refreshes observe the latest preference.
     await setBox.put("cacheHomeScreenData", val);
     cacheHomeScreenData.value = val;
+
+    // homeScreenData is a shared Hive box used by HomeScreenController.
+    // Never close it from Settings: a login-triggered Home refresh can be
+    // using the same box concurrently, which made subsequent settings/cache
+    // operations fail intermittently with a closed-box error.
+    final box = await Hive.openBox("homeScreenData");
     if (!val) {
-      final box = await Hive.openBox("homeScreenData");
       await box.clear();
-      await box.close();
-    } else {
-      await Hive.openBox("homeScreenData");
-      await Get.find<HomeScreenController>()
-          .cachedHomeScreenData(updateAll: true);
+      return;
     }
+
+    await Get.find<HomeScreenController>()
+        .cachedHomeScreenData(updateAll: true);
   }
 
   Future<void> toggleAutoDownloadFavoriteSong(bool val) async {
