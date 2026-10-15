@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:get/get.dart';
 import 'package:mdlovfimusic/services/permission_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -327,13 +328,13 @@ class SettingsScreenController extends GetxController {
     await setBox.put("cacheHomeScreenData", val);
     cacheHomeScreenData.value = val;
     if (!val) {
-      Hive.openBox("homeScreenData").then((box) async {
-        await box.clear();
-        await box.close();
-      });
+      final box = await Hive.openBox("homeScreenData");
+      await box.clear();
+      await box.close();
     } else {
       await Hive.openBox("homeScreenData");
-      Get.find<HomeScreenController>().cachedHomeScreenData(updateAll: true);
+      await Get.find<HomeScreenController>()
+          .cachedHomeScreenData(updateAll: true);
     }
   }
 
@@ -388,8 +389,16 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> resetAppSettingsToDefault() async {
+    // Clear storage first, then reload defaults before applying runtime changes.
     await setBox.clear();
     await _setInitValue();
+
+    // Clearing Hive alone does not change settings already applied to the player.
+    final playerController = Get.find<PlayerController>();
+    await playerController.toggleSkipSilence(false);
+    await playerController.toggleLoudnessNormalization(false);
+    await Get.find<AudioHandler>().customAction("resetEqualizer");
+    await toggleKeepScreenAwake(keepScreenAwake.value);
   }
 
   Future<void> toggleStopPlyabackOnSwipeAway(bool val) async {
