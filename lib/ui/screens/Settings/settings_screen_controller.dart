@@ -54,10 +54,18 @@ class SettingsScreenController extends GetxController {
 
   @override
   void onInit() {
-    _setInitValue();
-    if (updateCheckFlag) _checkNewVersion();
-    _createInAppSongDownDir();
     super.onInit();
+    _initializeSettings();
+  }
+
+  Future<void> _initializeSettings() async {
+    try {
+      await _setInitValue();
+      await _createInAppSongDownDir();
+    } catch (e) {
+      printERROR("Failed to initialize settings: $e");
+    }
+    if (updateCheckFlag) _checkNewVersion();
   }
 
   get currentVision => currentVersion;
@@ -162,7 +170,10 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> setStreamingQuality(dynamic val) async {
-    await setBox.put("streamingQuality", AudioQuality.values.indexOf(val));
+    if (val is! AudioQuality) return;
+    final index = AudioQuality.values.indexOf(val);
+    if (index < 0) return;
+    await setBox.put("streamingQuality", index);
     streamingQuality.value = val;
   }
 
@@ -320,21 +331,20 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> toggleKeepScreenAwake(bool val) async {
-    await setBox.put('keepScreenAwake', val);
-    keepScreenAwake.value = val;
     try {
-        if (val) {
-          // enable wakelock immediately if music is playing
-          if (Get.find<PlayerController>().buttonState.value ==
-              PlayButtonState.playing) {
-            WakelockPlus.enable();
-          }
-        } else {
-          WakelockPlus.disable();
-        }
-     
+      final player = Get.find<PlayerController>();
+      if (val && player.buttonState.value == PlayButtonState.playing) {
+        await WakelockPlus.enable();
+      } else if (!val) {
+        await WakelockPlus.disable();
+      }
+      await setBox.put('keepScreenAwake', val);
+      keepScreenAwake.value = val;
     } catch (e) {
-      // ignore if player/controller not available
+      printERROR("Failed to update keep-screen-awake setting: $e");
+      // Keep the preference usable even if the platform wakelock API fails.
+      await setBox.put('keepScreenAwake', val);
+      keepScreenAwake.value = val;
     }
   }
 
