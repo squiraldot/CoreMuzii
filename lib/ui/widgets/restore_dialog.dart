@@ -141,7 +141,7 @@ class RestoreDialogController extends GetxController {
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Select backup file',
         type: FileType.custom,
-        allowedExtensions: ['muziinap', 'hmb', 'zip'],
+        allowedExtensions: ['muziinap'],
         allowMultiple: false,
         withData: false,
       );
