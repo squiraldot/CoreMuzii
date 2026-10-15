@@ -527,17 +527,6 @@ class SettingsScreen extends StatelessWidget {
                         )),
                   ListTile(
                       contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                      title: Text("keepScreenOnWhilePlaying".tr),
-                      subtitle: Text("keepScreenOnWhilePlayingDes".tr,
-                          style: Theme.of(context).textTheme.bodyMedium),
-                      trailing: Obx(
-                        () => CustSwitch(
-                            value: settingsController.keepScreenAwake.value,
-                            onChanged:
-                                settingsController.toggleKeepScreenAwake),
-                      )),
-                  ListTile(
-                      contentPadding: const EdgeInsets.only(left: 5, right: 10),
                       title: Text("restoreLastPlaybackSession".tr),
                       subtitle: Text("restoreLastPlaybackSessionDes".tr,
                           style: Theme.of(context).textTheme.bodyMedium),
@@ -569,20 +558,6 @@ class SettingsScreen extends StatelessWidget {
                       onTap: () {
                         Get.to(() => const AdvancedEqualizerScreen());
                       },
-                    ),
-                  if (!isDesktop)
-                    ListTile(
-                      contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                      title: Text("stopMusicOnTaskClear".tr),
-                      subtitle: Text("stopMusicOnTaskClearDes".tr,
-                          style: Theme.of(context).textTheme.bodyMedium),
-                      trailing: Obx(
-                        () => CustSwitch(
-                            value: settingsController
-                                .stopPlyabackOnSwipeAway.value,
-                            onChanged: settingsController
-                                .toggleStopPlyabackOnSwipeAway),
-                      ),
                     ),
                   GetPlatform.isAndroid
                       ? Obx(
