@@ -119,19 +119,12 @@ class SettingsScreenController extends GetxController {
     restorePlaybackSession.value =
         setBox.get("restrorePlaybackSession") ?? false;
     cacheHomeScreenData.value = setBox.get("cacheHomeScreenData") ?? true;
-    streamingQuality.value =
-        AudioQuality.values[setBox.get('streamingQuality') ?? 1];
     playerUi.value = isDesktop ? 0 : (setBox.get('playerUi') ?? 0);
     backgroundPlayEnabled.value = setBox.get("backgroundPlayEnabled") ?? true;
     keepScreenAwake.value =
         setBox.get("keepScreenAwake") ?? (GetPlatform.isDesktop ? true : false);
-    final downloadPath =
-        setBox.get('downloadLocationPath') ?? await _createInAppSongDownDir();
-    downloadLocationPath.value =
-        (isDesktop && downloadPath.contains("emulated"))
-            ? await _createInAppSongDownDir()
-            : downloadPath;
-
+    // Read synchronous preferences before the first await, so late
+    // initialization cannot overwrite a user's tap with stale values.
     exportLocationPath.value =
         setBox.get("exportLocationPath") ?? "/storage/emulated/0/Music";
     downloadingFormat.value = setBox.get('downloadingFormat') ?? "m4a";
@@ -142,12 +135,31 @@ class SettingsScreenController extends GetxController {
     }
     stopPlyabackOnSwipeAway.value =
         setBox.get('stopPlyabackOnSwipeAway') ?? false;
-    if (GetPlatform.isAndroid) {
-      isIgnoringBatteryOptimizations.value =
-          (await Permission.ignoreBatteryOptimizations.isGranted);
-    }
     autoDownloadFavoriteSongEnabled.value =
         setBox.get("autoDownloadFavoriteSongEnabled") ?? false;
+
+    final storedQualityIndex = setBox.get('streamingQuality') ?? 1;
+    final safeQualityIndex = storedQualityIndex is int &&
+            storedQualityIndex >= 0 &&
+            storedQualityIndex < AudioQuality.values.length
+        ? storedQualityIndex
+        : 1;
+    streamingQuality.value = AudioQuality.values[safeQualityIndex];
+
+    final storedDownloadPath = setBox.get('downloadLocationPath');
+    final downloadPath = storedDownloadPath is String &&
+            storedDownloadPath.isNotEmpty
+        ? storedDownloadPath
+        : await _createInAppSongDownDir();
+    downloadLocationPath.value =
+        (isDesktop && downloadPath.contains("emulated"))
+            ? await _createInAppSongDownDir()
+            : downloadPath;
+
+    if (GetPlatform.isAndroid) {
+      isIgnoringBatteryOptimizations.value =
+          await Permission.ignoreBatteryOptimizations.isGranted;
+    }
   }
 
   Future<void> setAppLanguage(String? val) async {
