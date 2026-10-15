@@ -12,7 +12,6 @@ import '../../widgets/backup_dialog.dart';
 import '../../widgets/restore_dialog.dart';
 import '../Library/library_controller.dart';
 import '../../widgets/snackbar.dart';
-import '/ui/widgets/link_piped.dart';
 import '../Home/home_screen_controller.dart';
 import '/services/music_service.dart';
 import 'advanced_equalizer_screen.dart';
