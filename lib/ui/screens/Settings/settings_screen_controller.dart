@@ -233,18 +233,24 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> setExportedLocation() async {
-    if (!await PermissionService.getExtStoragePermission()) {
-      return;
+    try {
+      // Use Android's system folder picker instead of requiring broad storage
+      // access before the user can select an export destination.
+      final pickedFolderPath = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: "Select export file folder",
+      );
+      if (pickedFolderPath == null ||
+          pickedFolderPath.isEmpty ||
+          pickedFolderPath == '/') {
+        return;
+      }
+      final directory = Directory(pickedFolderPath);
+      await directory.create(recursive: true);
+      await setBox.put("exportLocationPath", pickedFolderPath);
+      exportLocationPath.value = pickedFolderPath;
+    } catch (e) {
+      printERROR("Failed to select export folder: $e");
     }
-
-    final String? pickedFolderPath = await FilePicker.platform
-        .getDirectoryPath(dialogTitle: "Select export file folder");
-    if (pickedFolderPath == '/' || pickedFolderPath == null) {
-      return;
-    }
-
-    await setBox.put("exportLocationPath", pickedFolderPath);
-    exportLocationPath.value = pickedFolderPath;
   }
 
   Future<void> setDownloadLocation() async {
