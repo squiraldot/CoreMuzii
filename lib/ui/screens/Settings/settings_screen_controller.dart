@@ -389,16 +389,45 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> resetAppSettingsToDefault() async {
-    // Clear storage first, then reload defaults before applying runtime changes.
+    // Keep Harmony Music's Hive-backed preference model: reset the persisted
+    // values first, then restore the same defaults consumed by _setInitValue.
     await setBox.clear();
-    await _setInitValue();
+    await setBox.putAll({
+      'currentAppLanguageCode': 'en',
+      'noOfHomeScreenContent': 3,
+      'isTransitionAnimationDisabled': false,
+      'cacheSongs': false,
+      'themeModeType': 0,
+      'skipSilenceEnabled': false,
+      'loudnessNormalizationEnabled': false,
+      'autoOpenPlayer': true,
+      'restrorePlaybackSession': false,
+      'cacheHomeScreenData': true,
+      'playerUi': 0,
+      'backgroundPlayEnabled': true,
+      'keepScreenAwake': GetPlatform.isDesktop,
+      'exportLocationPath': '/storage/emulated/0/Music',
+      'downloadingFormat': 'm4a',
+      'discoverContentType': 'QP',
+      'slidableActionEnabled': true,
+      'stopPlyabackOnSwipeAway': false,
+      'autoDownloadFavoriteSongEnabled': false,
+      'streamingQuality': 1,
+      'isBottomNavBarEnabled': !GetPlatform.isDesktop,
+      'themePrimaryColor': 4278199603,
+      'newVersionVisibility': updateCheckFlag,
+    });
 
-    // Clearing Hive alone does not change settings already applied to the player.
-    final playerController = Get.find<PlayerController>();
-    await playerController.toggleSkipSilence(false);
-    await playerController.toggleLoudnessNormalization(false);
+    // Reload every Settings observable from the same persisted defaults.
+    await _setInitValue();
+    await Get.find<PlayerController>().toggleSkipSilence(false);
+    await Get.find<PlayerController>().toggleLoudnessNormalization(false);
     await Get.find<AudioHandler>().customAction("resetEqualizer");
     await toggleKeepScreenAwake(keepScreenAwake.value);
+    await Get.find<ThemeController>()
+        .changeThemeModeType(themeModetype.value);
+    await Get.find<HomeScreenController>()
+        .changeDiscoverContent(discoverContentType.value);
   }
 
   Future<void> toggleStopPlyabackOnSwipeAway(bool val) async {
