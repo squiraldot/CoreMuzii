@@ -30,7 +30,7 @@ class SettingsScreenController extends GetxController {
   final themeModetype = ThemeType.dynamic.obs;
   final skipSilenceEnabled = false.obs;
   final loudnessNormalizationEnabled = false.obs;
-  final noOfHomeScreenContent = 3.obs;
+  final noOfHomeScreenContent = 11.obs;
   final streamingQuality = AudioQuality.High.obs;
   final playerUi = 0.obs;
   final slidableActionEnabled = true.obs;
@@ -103,7 +103,7 @@ class SettingsScreenController extends GetxController {
     );
     final shouldPersistBottomNavDefault =
         !isDesktop && storedBottomNavBarEnabled == null;
-    noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 3;
+    noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 11;
     isTransitionAnimationDisabled.value =
         setBox.get("isTransitionAnimationDisabled") ?? false;
     cacheSongs.value = setBox.get('cacheSongs') ?? false;
@@ -400,7 +400,7 @@ class SettingsScreenController extends GetxController {
     await setBox.clear();
     await setBox.putAll({
       'currentAppLanguageCode': 'en',
-      'noOfHomeScreenContent': 3,
+      'noOfHomeScreenContent': 11,
       'isTransitionAnimationDisabled': false,
       'cacheSongs': false,
       'themeModeType': 0,
