@@ -52,8 +52,10 @@ class BackupDialog extends StatelessWidget {
                       Column(
                         children: [
                           Obx(() => Text(
-                                backupDialogController.scanning.isTrue
-                                    ? "scanning".tr
+                                backupDialogController.errorMessage.isNotEmpty
+                                    ? backupDialogController.errorMessage.value
+                                    : backupDialogController.scanning.isTrue
+                                        ? "scanning".tr
                                     : backupDialogController
                                             .backupRunning.isTrue
                                         ? "backupInProgress".tr
@@ -227,7 +229,8 @@ class BackupDialogController extends GetxController {
       scanning.value = false;
       backupRunning.value = false;
     }
-  }}
+  }
+}
 
 // Function to convert file paths to base64-encoded file data
 List<String> filePathsToBase64(List<String> filePaths) {
