@@ -10,7 +10,6 @@ import 'package:terminate_restart/terminate_restart.dart';
 
 import '/ui/screens/Settings/settings_screen_controller.dart';
 import '/utils/helper.dart';
-import '../../services/permission_service.dart';
 import 'common_dialog_widget.dart';
 
 class RestoreDialog extends StatelessWidget {
@@ -37,9 +36,11 @@ class RestoreDialog extends StatelessWidget {
               SizedBox(
                 height: 150,
                 child: Center(
-                  child: Obx(() => restoreDialogController.restoreProgress
-                              .toInt() ==
-                          restoreDialogController.filesToRestore.toInt()
+                  child: Obx(() => restoreDialogController.errorMessage.isNotEmpty
+                      ? Text(restoreDialogController.errorMessage.value, textAlign: TextAlign.center)
+                      : restoreDialogController.restoreProgress.toInt() ==
+                          restoreDialogController.filesToRestore.toInt() &&
+                          restoreDialogController.filesToRestore.value > 0
                       ? Text(
                           "restoreMsg".tr,
                           textAlign: TextAlign.center,
@@ -129,92 +130,85 @@ class RestoreDialogController extends GetxController {
   final restoreProgress = (-1).obs;
   final filesToRestore = (0).obs;
   final processingFiles = false.obs;
+  final errorMessage = ''.obs;
 
   Future<void> restore() async {
-    if (!await PermissionService.getExtStoragePermission()) {
-      return;
-    }
-
-    if (!await PermissionService.getExtStoragePermission()) {
-      return;
-    }
-
-    final FilePickerResult? pickedFileResult = await FilePicker.platform
-        .pickFiles(
-            dialogTitle: "Select backup file",
-            type: GetPlatform.isWindows ? FileType.custom : FileType.any,
-            allowedExtensions: GetPlatform.isWindows ? ['hmb'] : null,
-            allowMultiple: false);
-
-    final String? pickedFile = pickedFileResult?.files.first.path;
-
-    // is this check necessary?
-    if (pickedFile == '/' || pickedFile == null) {
-      return;
-    }
-    processingFiles.value = true;
-    await Future.delayed(const Duration(seconds: 4));
-    final restoreFilePath = pickedFile.toString();
-    final supportDirPath = Get.find<SettingsScreenController>().supportDirPath;
-    final dbDirPath = await Get.find<SettingsScreenController>().dbDir;
-    final Directory dbDir = Directory(dbDirPath);
-    printInfo(info: dbDir.path);
-    await Get.find<SettingsScreenController>().closeAllDatabases();
-
-    //delele all the files with extension .hive
-    for (final file in dbDir.listSync()) {
-      if (file is File && file.path.endsWith('.hive')) {
-        await file.delete();
+    if (processingFiles.value || restoreRunning.value) return;
+    errorMessage.value = '';
+    try {
+      // The system picker grants access to the selected backup file. No
+      // broad external-storage permission is needed for app-private data.
+      final result = await FilePicker.platform.pickFiles(
+        dialogTitle: 'Select backup file',
+        type: FileType.custom,
+        allowedExtensions: ['hmb', 'zip'],
+        allowMultiple: false,
+        withData: false,
+      );
+      if (result == null || result.files.isEmpty || result.files.first.path == null) return;
+      final restoreFilePath = result.files.first.path!;
+      processingFiles.value = true;
+      final bytes = await File(restoreFilePath).readAsBytes();
+      final archive = ZipDecoder().decodeBytes(bytes, verify: true);
+      final files = archive.files.where((file) => file.isFile).toList();
+      if (files.isEmpty || !files.any((file) => file.name.endsWith('.hive'))) {
+        throw const FormatException('The selected file is not a valid app backup.');
       }
-    }
-    final bytes = await File(restoreFilePath).readAsBytes();
-    final archive = ZipDecoder().decodeBytes(bytes);
-    filesToRestore.value = archive.length;
-    restoreProgress.value = 0;
-    processingFiles.value = false;
-    restoreRunning.value = true;
-    for (final file in archive) {
-      final filename = file.name;
-      printINFO(filename);
-      if (file.isFile) {
+      final settings = Get.find<SettingsScreenController>();
+      final supportDirPath = settings.supportDirPath;
+      final dbDirPath = await settings.dbDir;
+      final dbDir = Directory(dbDirPath);
+      await dbDir.create(recursive: true);
+      // Do not delete existing databases until the archive has been validated.
+      await settings.closeAllDatabases();
+      for (final entity in await dbDir.list().toList()) {
+        if (entity is File && entity.path.endsWith('.hive')) await entity.delete();
+      }
+      filesToRestore.value = files.length;
+      restoreProgress.value = 0;
+      processingFiles.value = false;
+      restoreRunning.value = true;
+      for (final file in files) {
+        final filename = file.name.split('/').last.split(r'\\').last;
+        if (filename.isEmpty || filename == '.' || filename == '..') continue;
         final data = file.content as List<int>;
-        final targetFileDir =
-            filename.endsWith(".m4a") || filename.endsWith(".opus")
-                ? "$supportDirPath/Music"
-                : filename.endsWith(".png")
-                    ? "$supportDirPath/thumbnails"
-                    : dbDirPath;
-        final outputFile = File('$targetFileDir/$filename');
-        await outputFile.create(recursive: true);
-        await outputFile.writeAsBytes(data);
+        final targetDir = filename.endsWith('.m4a') || filename.endsWith('.opus')
+            ? '$supportDirPath/Music'
+            : filename.endsWith('.png')
+                ? '$supportDirPath/thumbnails'
+                : dbDirPath;
+        final outputFile = File('$targetDir/$filename');
+        await outputFile.parent.create(recursive: true);
+        await outputFile.writeAsBytes(data, flush: true);
         restoreProgress.value++;
       }
-    }
-    // Clear file picker temp directory
-    final tempFilePickerDirPath =
-        "${(await getApplicationCacheDirectory()).path}/file_picker";
-    final tempFilePickerDir = Directory(tempFilePickerDirPath);
-    if (tempFilePickerDir.existsSync()) {
-      await tempFilePickerDir.delete(recursive: true);
-    }
-
-    // change file download path to support dir path in songs if system is windows or linux
-    if (GetPlatform.isWindows || GetPlatform.isLinux) {
-      // open the restored box
-      final newSongBox = await Hive.openBox("SongDownloads");
-      final downloadedSongs = newSongBox.values.toList();
-      for(final song in downloadedSongs) {
-        final songPath = song["url"];
-        if (songPath != null && songPath is String) {
-          final fileName = songPath.split("/").last;
-          final newFilePath = "$supportDirPath/Music/$fileName";
-          song["url"] = newFilePath;
-          song['streamInfo'][1]['url'] = newFilePath;
-          await newSongBox.put(song["videoId"], song);
+      final tempPath = '${(await getApplicationCacheDirectory()).path}/file_picker';
+      final tempDir = Directory(tempPath);
+      if (await tempDir.exists()) await tempDir.delete(recursive: true);
+      if (GetPlatform.isWindows || GetPlatform.isLinux) {
+        final songBox = await Hive.openBox('SongDownloads');
+        for (final song in songBox.values.toList()) {
+          if (song is Map) {
+            final songPath = song['url'];
+            if (songPath is String) {
+              final fileName = songPath.split('/').last;
+              final newPath = '$supportDirPath/Music/$fileName';
+              song['url'] = newPath;
+              final streamInfo = song['streamInfo'];
+              if (streamInfo is List && streamInfo.length > 1 && streamInfo[1] is Map) {
+                streamInfo[1]['url'] = newPath;
+              }
+              final videoId = song['videoId'];
+              if (videoId != null) await songBox.put(videoId, song);
+            }
+          }
         }
       }
+    } catch (e) {
+      errorMessage.value = 'Restore failed: $e';
+      printERROR(errorMessage.value);
+    } finally {
+      processingFiles.value = false;
+      restoreRunning.value = false;
     }
-
-    restoreRunning.value = false;
-  }
-}
+  }}
