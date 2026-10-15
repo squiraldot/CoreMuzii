@@ -192,6 +192,10 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
           MediaControl.skipToPrevious,
           if (playing) MediaControl.pause else MediaControl.play,
           MediaControl.skipToNext,
+          // Android's expanded media notification exposes this stop/dismiss
+          // action. It clears the active media item so the notification can
+          // be removed instead of leaving a paused card behind.
+          MediaControl.stop,
         ],
         systemActions: const {
           MediaAction.seek,
@@ -969,7 +973,19 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   @override
   Future<void> stop() async {
     await _player.stop();
-    return super.stop();
+    currentSongUrl = null;
+    isSongLoading = false;
+    mediaItem.add(null);
+    queue.add(<MediaItem>[]);
+    playbackState.add(playbackState.value.copyWith(
+      controls: const [],
+      playing: false,
+      processingState: AudioProcessingState.idle,
+      updatePosition: Duration.zero,
+      bufferedPosition: Duration.zero,
+      queueIndex: null,
+    ));
+    await super.stop();
   }
 
 // Work around used [useNewInstanceOfExplode = false] to Fix Connection closed before full header was received issue
