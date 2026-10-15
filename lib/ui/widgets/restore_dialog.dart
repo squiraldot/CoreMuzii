@@ -211,4 +211,5 @@ class RestoreDialogController extends GetxController {
       processingFiles.value = false;
       restoreRunning.value = false;
     }
-  }}
+  }
+}
