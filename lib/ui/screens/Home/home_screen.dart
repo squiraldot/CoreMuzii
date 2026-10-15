@@ -161,19 +161,6 @@ class _HomeHeader extends StatelessWidget {
             ),
           ),
           IconButton(
-            tooltip: 'History',
-            visualDensity: VisualDensity.compact,
-            onPressed: () {
-              Get.snackbar(
-                'History',
-                'Your listening history is shown in Listen again.',
-                snackPosition: SnackPosition.BOTTOM,
-                duration: const Duration(seconds: 2),
-              );
-            },
-            icon: const Icon(Icons.history_rounded),
-          ),
-          IconButton(
             tooltip: 'Settings',
             visualDensity: VisualDensity.compact,
             onPressed: () => home.onBottonBarTabSelected(3),
