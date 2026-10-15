@@ -791,12 +791,12 @@ class PlayerController extends GetxController
     _audioHandler.customAction("playByIndex", {"index": index});
   }
 
-  void toggleSkipSilence(bool enable) {
-    _audioHandler.customAction("toggleSkipSilence", {"enable": enable});
+  Future<void> toggleSkipSilence(bool enable) async {
+    await _audioHandler.customAction("toggleSkipSilence", {"enable": enable});
   }
 
-  void toggleLoudnessNormalization(bool enable) {
-    _audioHandler
+  Future<void> toggleLoudnessNormalization(bool enable) async {
+    await _audioHandler
         .customAction("toggleLoudnessNormalization", {"enable": enable});
   }
 
