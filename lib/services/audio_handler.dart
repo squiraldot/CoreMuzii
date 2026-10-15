@@ -64,6 +64,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   bool queueLoopModeEnabled = false;
   bool shuffleModeEnabled = false;
   bool loudnessNormalizationEnabled = false;
+  // Serialize audio-setting mutations so startup restoration and rapid user
+  // toggles cannot complete out of order and overwrite each other.
+  Future<void> _audioSettingsQueue = Future<void>.value();
   // var networkErrorPause = false;
   bool isSongLoading = true;
   int _playSessionId = 0;
@@ -121,9 +124,22 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     }
   }
 
+  Future<void> _serializeAudioSetting(Future<void> Function() operation) {
+    final result = _audioSettingsQueue.then((_) => operation());
+    // Keep the queue alive after a platform failure while preserving the
+    // original error for the caller that requested this setting change.
+    _audioSettingsQueue = result.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {
+        printERROR("Audio setting update failed: $error");
+      },
+    );
+    return result;
+  }
+
   Future<void> _applyInitialSkipSilenceSetting(bool enabled) async {
     try {
-      await _player.setSkipSilenceEnabled(enabled);
+      await _serializeAudioSetting(() => _player.setSkipSilenceEnabled(enabled));
     } catch (e) {
       printERROR("Failed to restore skip-silence setting: $e");
     }
@@ -696,43 +712,48 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
       case 'toggleSkipSilence':
         final enable = (extras!['enable'] as bool);
-        await _player.setSkipSilenceEnabled(enable);
+        await _serializeAudioSetting(
+          () => _player.setSkipSilenceEnabled(enable),
+        );
         break;
 
       case 'toggleLoudnessNormalization':
-        loudnessNormalizationEnabled = (extras!['enable'] as bool);
-        if (!loudnessNormalizationEnabled) {
-          await _player.setVolume(1.0);
-          break;
-        }
+        final enable = (extras!['enable'] as bool);
+        await _serializeAudioSetting(() async {
+          loudnessNormalizationEnabled = enable;
+          if (!enable) {
+            await _player.setVolume(1.0);
+            return;
+          }
 
-        try {
-          if (queue.value.isNotEmpty &&
-              currentIndex != null &&
-              currentIndex >= 0 &&
-              currentIndex < queue.value.length) {
-            final currentSongId = queue.value[currentIndex].id;
-            if (Hive.box("SongsUrlCache").containsKey(currentSongId)) {
-              final songJson = Hive.box("SongsUrlCache").get(currentSongId);
-              final loudnessDb =
-                  songJson["highQualityAudio"]?["loudnessDb"];
-              if (loudnessDb is num) {
-                await _normalizeVolume(loudnessDb.toDouble());
-              }
-            } else if (Hive.box("SongDownloads").containsKey(currentSongId)) {
-              final streamInfo =
-                  Hive.box("SongDownloads").get(currentSongId)["streamInfo"];
-              final loudnessDb = streamInfo is List && streamInfo.length > 1
-                  ? streamInfo[1]["loudnessDb"]
-                  : null;
-              if (loudnessDb is num) {
-                await _normalizeVolume(loudnessDb.toDouble());
+          try {
+            if (queue.value.isNotEmpty &&
+                currentIndex != null &&
+                currentIndex >= 0 &&
+                currentIndex < queue.value.length) {
+              final currentSongId = queue.value[currentIndex].id;
+              if (Hive.box("SongsUrlCache").containsKey(currentSongId)) {
+                final songJson = Hive.box("SongsUrlCache").get(currentSongId);
+                final loudnessDb =
+                    songJson["highQualityAudio"]?["loudnessDb"];
+                if (loudnessDb is num) {
+                  await _normalizeVolume(loudnessDb.toDouble());
+                }
+              } else if (Hive.box("SongDownloads").containsKey(currentSongId)) {
+                final streamInfo =
+                    Hive.box("SongDownloads").get(currentSongId)["streamInfo"];
+                final loudnessDb = streamInfo is List && streamInfo.length > 1
+                    ? streamInfo[1]["loudnessDb"]
+                    : null;
+                if (loudnessDb is num) {
+                  await _normalizeVolume(loudnessDb.toDouble());
+                }
               }
             }
+          } catch (e) {
+            printERROR(e);
           }
-        } catch (e) {
-          printERROR(e);
-        }
+        });
         break;
 
       case 'shuffleQueue':
