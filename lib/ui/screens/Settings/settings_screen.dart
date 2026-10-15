@@ -526,18 +526,6 @@ class SettingsScreen extends StatelessWidget {
                                   settingsController.toggleBackgroundPlay),
                         )),
                   ListTile(
-                      contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                      title: Text("restoreLastPlaybackSession".tr),
-                      subtitle: Text("restoreLastPlaybackSessionDes".tr,
-                          style: Theme.of(context).textTheme.bodyMedium),
-                      trailing: Obx(
-                        () => CustSwitch(
-                            value:
-                                settingsController.restorePlaybackSession.value,
-                            onChanged: settingsController
-                                .toggleRestorePlaybackSession),
-                      )),
-                  ListTile(
                     contentPadding: const EdgeInsets.only(left: 5, right: 10),
                     title: Text("autoOpenPlayer".tr),
                     subtitle: Text("autoOpenPlayerDes".tr,
