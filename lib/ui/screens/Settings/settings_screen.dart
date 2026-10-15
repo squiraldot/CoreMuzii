@@ -394,28 +394,6 @@ class SettingsScreen extends StatelessWidget {
                 title: "download".tr,
                 icon: Icons.download,
                 children: [
-                  ListTile(
-                    contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                    title: Text("downloadingFormat".tr),
-                    subtitle: Text("downloadingFormatDes".tr,
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    trailing: Obx(
-                      () => DropdownButton(
-                        dropdownColor: Theme.of(context).cardColor,
-                        underline: const SizedBox.shrink(),
-                        value: settingsController.downloadingFormat.value,
-                        items: const [
-                          DropdownMenuItem(
-                              value: "opus", child: Text("Opus/Ogg")),
-                          DropdownMenuItem(
-                            value: "m4a",
-                            child: Text("M4a"),
-                          ),
-                        ],
-                        onChanged: settingsController.changeDownloadingFormat,
-                      ),
-                    ),
-                  ),
                   if (GetPlatform.isAndroid)
                     ListTile(
                       contentPadding: const EdgeInsets.only(left: 5, right: 10),
