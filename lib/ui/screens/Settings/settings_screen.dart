@@ -493,19 +493,6 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   ListTile(
                     contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                    title: Text("autoDownFavSong".tr),
-                    subtitle: Text("autoDownFavSongDes".tr,
-                        style: Theme.of(context).textTheme.bodyMedium),
-                    trailing: Obx(
-                      () => CustSwitch(
-                          value: settingsController
-                              .autoDownloadFavoriteSongEnabled.value,
-                          onChanged: settingsController
-                              .toggleAutoDownloadFavoriteSong),
-                    ),
-                  ),
-                  ListTile(
-                    contentPadding: const EdgeInsets.only(left: 5, right: 10),
                     title: Text("downloadingFormat".tr),
                     subtitle: Text("downloadingFormatDes".tr,
                         style: Theme.of(context).textTheme.bodyMedium),
@@ -525,31 +512,6 @@ class SettingsScreen extends StatelessWidget {
                         onChanged: settingsController.changeDownloadingFormat,
                       ),
                     ),
-                  ),
-                  ListTile(
-                    trailing: TextButton(
-                      child: Text(
-                        "reset".tr,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium!
-                            .copyWith(fontSize: 15),
-                      ),
-                      onPressed: () {
-                        settingsController.resetDownloadLocation();
-                      },
-                    ),
-                    contentPadding:
-                        const EdgeInsets.only(left: 5, right: 10, top: 0),
-                    title: Text("downloadLocation".tr),
-                    subtitle: Obx(() => Text(
-                        settingsController.isCurrentPathsupportDownDir
-                            ? "In App storage directory"
-                            : settingsController.downloadLocationPath.value,
-                        style: Theme.of(context).textTheme.bodyMedium)),
-                    onTap: () async {
-                      settingsController.setDownloadLocation();
-                    },
                   ),
                   if (GetPlatform.isAndroid)
                     ListTile(
