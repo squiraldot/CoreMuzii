@@ -113,7 +113,7 @@ class SettingsScreenController extends GetxController {
     loudnessNormalizationEnabled.value = isDesktop
         ? false
         : (setBox.get("loudnessNormalizationEnabled") ?? false);
-    autoOpenPlayer.value = (setBox.get("autoOpenPlayer") ?? true);
+    autoOpenPlayer.value = (setBox.get("autoOpenPlayer") ?? false);
     restorePlaybackSession.value =
         setBox.get("restrorePlaybackSession") ?? false;
     cacheHomeScreenData.value = setBox.get("cacheHomeScreenData") ?? true;
@@ -406,7 +406,7 @@ class SettingsScreenController extends GetxController {
       'themeModeType': 0,
       'skipSilenceEnabled': false,
       'loudnessNormalizationEnabled': false,
-      'autoOpenPlayer': true,
+      'autoOpenPlayer': false,
       'restrorePlaybackSession': false,
       'cacheHomeScreenData': true,
       'playerUi': 0,
