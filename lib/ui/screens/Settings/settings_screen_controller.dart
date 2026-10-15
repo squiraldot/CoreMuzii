@@ -274,13 +274,18 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> toggleSkipSilence(bool val) async {
-    Get.find<PlayerController>().toggleSkipSilence(val);
+    final playerController = Get.find<PlayerController>();
+    // Apply the player setting before publishing it as enabled in Settings.
+    await playerController.toggleSkipSilence(val);
     await setBox.put('skipSilenceEnabled', val);
     skipSilenceEnabled.value = val;
   }
 
   Future<void> toggleLoudnessNormalization(bool val) async {
-    Get.find<PlayerController>().toggleLoudnessNormalization(val);
+    final playerController = Get.find<PlayerController>();
+    // Wait for the audio service to apply the change so rapid toggles cannot
+    // leave the UI and actual player in different states.
+    await playerController.toggleLoudnessNormalization(val);
     await setBox.put("loudnessNormalizationEnabled", val);
     loudnessNormalizationEnabled.value = val;
   }
