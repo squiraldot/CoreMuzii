@@ -209,8 +209,8 @@ class BackupDialogController extends GetxController {
 
       backupRunning.value = true;
       final now = DateTime.now();
-      final date = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}-${now.second.toString().padLeft(2, '0')}';
-      final fileName = 'hm-backup-$date.muziinap';
+      final date = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final fileName = 'muziinap-backup-$date.muziinap';
 
       if (GetPlatform.isAndroid) {
         // Android's scoped storage blocks writing directly to paths such as
