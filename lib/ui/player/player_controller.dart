@@ -833,7 +833,7 @@ class PlayerController extends GetxController
   }
 
   Future<void> setVolume(int value) async {
-    final safeValue = value.clamp(0, 100);
+    final safeValue = value.clamp(0, 100).toInt();
     await _audioHandler.customAction("setVolume", {"value": safeValue});
     await Hive.box(appPrefsBoxName).put("volume", safeValue);
     volume.value = safeValue;
