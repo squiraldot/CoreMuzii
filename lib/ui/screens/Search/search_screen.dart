@@ -62,12 +62,7 @@ class SearchScreen extends StatelessWidget {
                           "search".tr,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        IconButton(
-                          onPressed: () {
-                            Get.toNamed(ScreenNavigationSetup.qrScannerScreen, id: ScreenNavigationSetup.id);
-                          },
-                          icon: const Icon(Icons.qr_code_scanner),
-                        ),
+
                       ],
                     ),
                     const SizedBox(
