@@ -39,7 +39,7 @@ class SettingsScreenController extends GetxController {
   final discoverContentType = "QP".obs;
   final isNewVersionAvailable = false.obs;
   final isLinkedWithPiped = false.obs;
-  final stopPlyabackOnSwipeAway = false.obs;
+  final stopPlyabackOnSwipeAway = true.obs;
   final currentAppLanguageCode = "en".obs;
   final downloadLocationPath = "".obs;
   final exportLocationPath = "".obs;
@@ -132,7 +132,7 @@ class SettingsScreenController extends GetxController {
       isLinkedWithPiped.value = setBox.get("piped")['isLoggedIn'];
     }
     stopPlyabackOnSwipeAway.value =
-        setBox.get('stopPlyabackOnSwipeAway') ?? false;
+        setBox.get('stopPlyabackOnSwipeAway') ?? true;
     autoDownloadFavoriteSongEnabled.value =
         setBox.get("autoDownloadFavoriteSongEnabled") ?? false;
 
@@ -416,7 +416,7 @@ class SettingsScreenController extends GetxController {
       'downloadingFormat': 'm4a',
       'discoverContentType': 'QP',
       'slidableActionEnabled': true,
-      'stopPlyabackOnSwipeAway': false,
+      'stopPlyabackOnSwipeAway': true,
       'autoDownloadFavoriteSongEnabled': false,
       'streamingQuality': 1,
       'isBottomNavBarEnabled': !GetPlatform.isDesktop,
