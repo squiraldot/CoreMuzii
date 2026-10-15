@@ -374,21 +374,20 @@ class PlayerController extends GetxController
     });
   }
 
-  void _setWakelock(bool enable) {
-    if (_wakelockActive == enable) return; // no-op if already in desired state
+  Future<void> _setWakelock(bool enable) async {
+    if (_wakelockActive == enable) return;
 
     try {
       if (enable) {
         printINFO("Enabling wakelock");
-        WakelockPlus.enable();
-        _wakelockActive = true;
+        await WakelockPlus.enable();
       } else {
         printINFO("Disabling wakelock");
-        WakelockPlus.disable();
-        _wakelockActive = false;
+        await WakelockPlus.disable();
       }
+      _wakelockActive = enable;
     } catch (e) {
-      printERROR(e);
+      printERROR("Failed to update wakelock: $e");
     }
   }
 
@@ -834,9 +833,10 @@ class PlayerController extends GetxController
   }
 
   Future<void> setVolume(int value) async {
-    _audioHandler.customAction("setVolume", {"value": value});
-    volume.value = value;
-    await Hive.box(appPrefsBoxName).put("volume", value);
+    final safeValue = value.clamp(0, 100);
+    await _audioHandler.customAction("setVolume", {"value": safeValue});
+    await Hive.box(appPrefsBoxName).put("volume", safeValue);
+    volume.value = safeValue;
   }
 
   void volumeUp() {
@@ -872,7 +872,8 @@ class PlayerController extends GetxController
         await Hive.box(appPrefsBoxName).put("volume", vol);
       }
     }
-    _audioHandler.customAction("setVolume", {"value": vol!});
+    await _audioHandler.customAction("setVolume", {"value": vol!});
+    await Hive.box(appPrefsBoxName).put("volume", vol);
     volume.value = vol;
   }
 
