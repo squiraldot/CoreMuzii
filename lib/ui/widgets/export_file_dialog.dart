@@ -31,9 +31,12 @@ class ExportFileDialog extends StatelessWidget {
               SizedBox(
                 height: 150,
                 child: Center(
-                  child: Obx(() => exportFileDialogController.exportProgress
-                              .toInt() ==
-                          exportFileDialogController.filesToExport.length
+                  child: Obx(() => exportFileDialogController.errorMessage.isNotEmpty
+                      ? Text(exportFileDialogController.errorMessage.value,
+                          textAlign: TextAlign.center)
+                      : exportFileDialogController.exportProgress.toInt() >= 0 &&
+                              exportFileDialogController.exportProgress.toInt() ==
+                                  exportFileDialogController.filesToExport.length
                       ? Text("exportMsg".tr)
                       : exportFileDialogController.exportRunning.isTrue
                           ? Column(
@@ -76,8 +79,9 @@ class ExportFileDialog extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10)),
                     child: InkWell(
                       onTap: () {
-                        if (exportFileDialogController.exportProgress.toInt() ==
-                            exportFileDialogController.filesToExport.length) {
+                        if (exportFileDialogController.exportProgress.toInt() >= 0 &&
+                            exportFileDialogController.exportProgress.toInt() ==
+                                exportFileDialogController.filesToExport.length) {
                           Navigator.of(context).pop();
                         } else {
                           exportFileDialogController.export();
