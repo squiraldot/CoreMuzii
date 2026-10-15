@@ -349,37 +349,6 @@ class SettingsScreen extends StatelessWidget {
                             const DiscoverContentSelectorDialog(),
                       ),
                     ),
-                    ListTile(
-                      contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                      title: Text("homeContentCount".tr),
-                      subtitle: Text("homeContentCountDes".tr,
-                          style: Theme.of(context).textTheme.bodyMedium),
-                      trailing: Obx(
-                        () => DropdownButton(
-                          dropdownColor: Theme.of(context).cardColor,
-                          underline: const SizedBox.shrink(),
-                          value: settingsController.noOfHomeScreenContent.value,
-                          items: ([3, 5, 7, 9, 11])
-                              .map((e) =>
-                                  DropdownMenuItem(value: e, child: Text("$e")))
-                              .toList(),
-                          onChanged: settingsController.setContentNumber,
-                        ),
-                      ),
-                    ),
-                    ListTile(
-                        contentPadding:
-                            const EdgeInsets.only(left: 5, right: 10),
-                        title: Text("cacheHomeScreenData".tr),
-                        subtitle: Text("cacheHomeScreenDataDes".tr,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        trailing: Obx(
-                          () => CustSwitch(
-                              value:
-                                  settingsController.cacheHomeScreenData.value,
-                              onChanged:
-                                  settingsController.toggleCacheHomeScreenData),
-                        )),
                     Offstage(
                       offstage: true,
                       child: ListTile(
@@ -429,21 +398,6 @@ class SettingsScreen extends StatelessWidget {
                                 }),
                           )
                         : const SizedBox.shrink()),
-                    ListTile(
-                      contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                      title: Text("clearImgCache".tr),
-                      subtitle: Text(
-                        "clearImgCacheDes".tr,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      isThreeLine: true,
-                      onTap: () {
-                        settingsController.clearImagesCache().then((value) =>
-                            ScaffoldMessenger.of(Get.context!).showSnackBar(
-                                snackbar(Get.context!, "clearImgCacheAlert".tr,
-                                    size: SanckBarSize.BIG)));
-                      },
-                    ),
                   ]),
               CustomExpansionTile(
                 title: "music&Playback".tr,
