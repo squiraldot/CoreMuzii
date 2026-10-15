@@ -169,7 +169,7 @@ class RestoreDialogController extends GetxController {
       processingFiles.value = false;
       restoreRunning.value = true;
       for (final file in files) {
-        final filename = file.name.split('/').last.split(r'\\').last;
+        final filename = file.name.split('/').last;
         if (filename.isEmpty || filename == '.' || filename == '..') continue;
         final data = file.content as List<int>;
         final targetDir = filename.endsWith('.m4a') || filename.endsWith('.opus')
