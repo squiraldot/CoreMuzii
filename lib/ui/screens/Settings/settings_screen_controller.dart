@@ -100,11 +100,8 @@ class SettingsScreenController extends GetxController {
       isDesktop: isDesktop,
       storedValue: storedBottomNavBarEnabled,
     );
-    if (!isDesktop && storedBottomNavBarEnabled == null) {
-      // First launch after the mobile bottom-nav migration: persist the
-      // default once, but never overwrite a user's later choice.
-      await setBox.put("isBottomNavBarEnabled", true);
-    }
+    final shouldPersistBottomNavDefault =
+        !isDesktop && storedBottomNavBarEnabled == null;
     noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 3;
     isTransitionAnimationDisabled.value =
         setBox.get("isTransitionAnimationDisabled") ?? false;
@@ -159,6 +156,14 @@ class SettingsScreenController extends GetxController {
     if (GetPlatform.isAndroid) {
       isIgnoringBatteryOptimizations.value =
           await Permission.ignoreBatteryOptimizations.isGranted;
+    }
+
+    // Persist this migration default only after all synchronous preferences
+    // have been loaded. Awaiting Hive here earlier yielded control while the
+    // remaining Rx settings still held defaults, allowing early UI taps to be
+    // overwritten by stale values later in initialization.
+    if (shouldPersistBottomNavDefault) {
+      await setBox.put("isBottomNavBarEnabled", true);
     }
   }
 
