@@ -12,7 +12,6 @@ import 'package:hive/hive.dart';
 import '/ui/screens/Settings/settings_screen_controller.dart';
 import '/ui/widgets/loader.dart';
 import '/utils/helper.dart';
-import '../../services/permission_service.dart';
 import 'common_dialog_widget.dart';
 
 class BackupDialog extends StatelessWidget {
@@ -168,12 +167,15 @@ class BackupDialogController extends GetxController {
   final isbackupCompleted = false.obs;
   final backupRunning = false.obs;
   final isDownloadedfilesSeclected = false.obs;
+  final errorMessage = ''.obs;
   List<String> filesToExport = [];
   final supportDirPath = Get.find<SettingsScreenController>().supportDirPath;
 
   Future<void> scanFilesToBackup() async {
     final dbDir = await Get.find<SettingsScreenController>().dbDir;
-    filesToExport.addAll(await processDirectoryInIsolate(dbDir));
+    if (await Directory(dbDir).exists()) {
+      filesToExport.addAll(await processDirectoryInIsolate(dbDir));
+    }
     if (isDownloadedfilesSeclected.value) {
       List<String> downlodedSongFilePaths = Hive.box("SongDownloads")
           .values
@@ -191,41 +193,41 @@ class BackupDialogController extends GetxController {
   }
 
   Future<void> backup() async {
-    if (!await PermissionService.getExtStoragePermission()) {
-      return;
-    }
-
-    if (!await PermissionService.getExtStoragePermission()) {
-      return;
-    }
-
-    final String? pickedFolderPath = await FilePicker.platform
-        .getDirectoryPath(dialogTitle: "Select backup file folder");
-    if (pickedFolderPath == '/' || pickedFolderPath == null) {
-      return;
-    }
-
-    scanning.value = true;
-    await Future.delayed(const Duration(seconds: 4));
-    await scanFilesToBackup();
-    scanning.value = false;
-
-    backupRunning.value = true;
-    final exportDirPath = pickedFolderPath.toString();
-
-    final now = DateTime.now();
-    final formattedDate = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}-${now.second.toString().padLeft(2, '0')}';
-
-    compressFilesInBackground(filesToExport,
-            '$exportDirPath/hm-backup-$formattedDate.hmb')
-        .then((_) {
-      backupRunning.value = false;
+    if (scanning.value || backupRunning.value) return;
+    errorMessage.value = '';
+    try {
+      // The Android system document picker grants folder access; app-private
+      // Hive data does not require broad MANAGE_EXTERNAL_STORAGE permission.
+      final pickedFolderPath = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Select backup file folder',
+      );
+      if (pickedFolderPath == null || pickedFolderPath.isEmpty) return;
+      scanning.value = true;
+      filesToExport.clear();
+      await scanFilesToBackup();
+      scanning.value = false;
+      if (filesToExport.isEmpty) {
+        errorMessage.value = 'No app data files were found to back up.';
+        return;
+      }
+      backupRunning.value = true;
+      final now = DateTime.now();
+      final date = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}-${now.second.toString().padLeft(2, '0')}';
+      final outputPath = '$pickedFolderPath/hm-backup-$date.hmb';
+      await compressFilesInBackground(filesToExport, outputPath);
+      final output = File(outputPath);
+      if (!await output.exists() || await output.length() == 0) {
+        throw Exception('Backup file was not created.');
+      }
       isbackupCompleted.value = true;
-    }).catchError((e) {
-      printERROR('Error during compression: $e');
-    });
-  }
-}
+    } catch (e) {
+      errorMessage.value = 'Backup failed: $e';
+      printERROR(errorMessage.value);
+    } finally {
+      scanning.value = false;
+      backupRunning.value = false;
+    }
+  }}
 
 // Function to convert file paths to base64-encoded file data
 List<String> filePathsToBase64(List<String> filePaths) {
