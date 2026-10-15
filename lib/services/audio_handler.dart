@@ -96,8 +96,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     _listenToPlaybackForNextSong();
     _listenForSequenceStateChanges();
     final appPrefsBox = Hive.box(appPrefsBoxName);
-    _player
-        .setSkipSilenceEnabled(appPrefsBox.get("skipSilenceEnabled") ?? false);
+    _applyInitialSkipSilenceSetting(
+      appPrefsBox.get("skipSilenceEnabled") ?? false,
+    );
     loopModeEnabled = appPrefsBox.get("isLoopModeEnabled") ?? false;
     shuffleModeEnabled = appPrefsBox.get("isShuffleModeEnabled") ?? false;
     queueLoopModeEnabled =
@@ -117,6 +118,14 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     _listenForDurationChanges();
     if (GetPlatform.isAndroid) {
       _listenSessionIdStream();
+    }
+  }
+
+  Future<void> _applyInitialSkipSilenceSetting(bool enabled) async {
+    try {
+      await _player.setSkipSilenceEnabled(enabled);
+    } catch (e) {
+      printERROR("Failed to restore skip-silence setting: $e");
     }
   }
 
@@ -824,7 +833,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         break;
 
       case 'setVolume':
-        _player.setVolume(extras!['value'] / 100);
+        final rawValue = extras!['value'];
+        final value = (rawValue as num).toDouble().clamp(0.0, 100.0);
+        await _player.setVolume(value / 100.0);
         break;
 
       case 'shuffleCmd':
