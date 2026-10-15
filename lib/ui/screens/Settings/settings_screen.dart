@@ -575,29 +575,6 @@ class SettingsScreen extends StatelessWidget {
                           () => Get.delete<RestoreDialogController>()),
                     ),
                   ]),
-              CustomExpansionTile(
-                  icon: Icons.miscellaneous_services,
-                  title: "misc".tr,
-                  children: [
-                    ListTile(
-                      contentPadding: const EdgeInsets.only(left: 5, right: 10),
-                      title: Text("resetToDefault".tr),
-                      subtitle: Text(
-                        "resetToDefaultDes".tr,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      onTap: () {
-                        settingsController
-                            .resetAppSettingsToDefault()
-                            .then((_) {
-                          ScaffoldMessenger.of(Get.context!).showSnackBar(
-                              snackbar(Get.context!, "resetToDefaultMsg".tr,
-                                  size: SanckBarSize.BIG,
-                                  duration: const Duration(seconds: 2)));
-                        });
-                      },
-                    ),
-                  ]),
 
               ListTile(
                 contentPadding: const EdgeInsets.only(left: 5, right: 10),
