@@ -391,6 +391,7 @@ class SettingsScreenController extends GetxController {
   Future<void> resetAppSettingsToDefault() async {
     // Keep Harmony Music's Hive-backed preference model: reset the persisted
     // values first, then restore the same defaults consumed by _setInitValue.
+    final pipedAccount = setBox.get('piped');
     await setBox.clear();
     await setBox.putAll({
       'currentAppLanguageCode': 'en',
@@ -416,6 +417,7 @@ class SettingsScreenController extends GetxController {
       'isBottomNavBarEnabled': !GetPlatform.isDesktop,
       'themePrimaryColor': 4278199603,
       'newVersionVisibility': updateCheckFlag,
+      if (pipedAccount != null) 'piped': pipedAccount,
     });
 
     // Reload every Settings observable from the same persisted defaults.
@@ -424,9 +426,8 @@ class SettingsScreenController extends GetxController {
     await Get.find<PlayerController>().toggleLoudnessNormalization(false);
     await Get.find<AudioHandler>().customAction("resetEqualizer");
     await toggleKeepScreenAwake(keepScreenAwake.value);
-    await Get.find<ThemeController>()
-        .changeThemeModeType(themeModetype.value);
-    await Get.find<HomeScreenController>()
+    Get.find<ThemeController>().changeThemeModeType(themeModetype.value);
+    Get.find<HomeScreenController>()
         .changeDiscoverContent(discoverContentType.value);
   }
 
