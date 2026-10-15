@@ -559,7 +559,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
         isSongLoading = false;
         if (loudnessNormalizationEnabled && GetPlatform.isAndroid) {
-          _normalizeVolume(streamInfo.audio!.loudnessDb);
+          await _normalizeVolume(streamInfo.audio!.loudnessDb);
         }
 
         if (restoreSession) {
@@ -677,7 +677,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
         // Normalize audio
         if (loudnessNormalizationEnabled && GetPlatform.isAndroid) {
-          _normalizeVolume(streamInfo.audio!.loudnessDb);
+          await _normalizeVolume(streamInfo.audio!.loudnessDb);
         }
 
         final playFuture = _player.play();
@@ -693,29 +693,36 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       case 'toggleLoudnessNormalization':
         loudnessNormalizationEnabled = (extras!['enable'] as bool);
         if (!loudnessNormalizationEnabled) {
-          _player.setVolume(1.0);
-          return;
+          await _player.setVolume(1.0);
+          break;
         }
 
-        if (loudnessNormalizationEnabled) {
-          try {
-            final currentSongId = (queue.value[currentIndex]).id;
+        try {
+          if (queue.value.isNotEmpty &&
+              currentIndex != null &&
+              currentIndex >= 0 &&
+              currentIndex < queue.value.length) {
+            final currentSongId = queue.value[currentIndex].id;
             if (Hive.box("SongsUrlCache").containsKey(currentSongId)) {
               final songJson = Hive.box("SongsUrlCache").get(currentSongId);
-              _normalizeVolume((songJson)["highQualityAudio"]["loudnessDb"]);
-              return;
-            }
-
-            if (Hive.box("SongDownloads").containsKey(currentSongId)) {
+              final loudnessDb =
+                  songJson["highQualityAudio"]?["loudnessDb"];
+              if (loudnessDb is num) {
+                await _normalizeVolume(loudnessDb.toDouble());
+              }
+            } else if (Hive.box("SongDownloads").containsKey(currentSongId)) {
               final streamInfo =
-                  (Hive.box("SongDownloads").get(currentSongId))["streamInfo"];
-
-              _normalizeVolume(
-                  streamInfo == null ? 0 : streamInfo[1]["loudnessDb"]);
+                  Hive.box("SongDownloads").get(currentSongId)["streamInfo"];
+              final loudnessDb = streamInfo is List && streamInfo.length > 1
+                  ? streamInfo[1]["loudnessDb"]
+                  : null;
+              if (loudnessDb is num) {
+                await _normalizeVolume(loudnessDb.toDouble());
+              }
             }
-          } catch (e) {
-            printERROR(e);
           }
+        } catch (e) {
+          printERROR(e);
         }
         break;
 
@@ -861,16 +868,14 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     currentShuffleIndex = 0;
   }
 
-  void _normalizeVolume(double currentLoudnessDb) {
-    double loudnessDifference = -5 - currentLoudnessDb;
+  Future<void> _normalizeVolume(double currentLoudnessDb) async {
+    final loudnessDifference = -5 - currentLoudnessDb;
 
-    // Converted loudness difference to a volume multiplier
-    // We use a factor to convert dB difference to a linear scale
-    // 10^(difference / 20) converts dB difference to a linear volume factor
+    // Convert the dB difference to a linear volume multiplier.
     final volumeAdjustment = pow(10.0, loudnessDifference / 20.0);
     printINFO(
         "loudness:$currentLoudnessDb Normalized volume: $volumeAdjustment");
-    _player.setVolume(volumeAdjustment.toDouble().clamp(0, 1.0));
+    await _player.setVolume(volumeAdjustment.toDouble().clamp(0, 1.0));
   }
 
   Future<void> saveSessionData() async {
