@@ -166,7 +166,7 @@ class PlaylistNAlbumLibraryWidget extends StatelessWidget {
                     isAdditionalOperationRequired: false,
                     isSearchFeatureRequired: true,
                     itemCountTitle:
-                        "${librplstCntrller.libraryPlaylists.length} ${"items".tr}",
+                        "${librplstCntrller.libraryPlaylists.where((playlist) => playlist.playlistId != "LIBRP" && playlist.playlistId != "SongsCache").length} ${"items".tr}",
                     requiredSortTypes: buildSortTypeSet(),
                     onSort: (type, ascending) {
                       librplstCntrller.onSort(type, ascending);
@@ -179,10 +179,16 @@ class PlaylistNAlbumLibraryWidget extends StatelessWidget {
           ),
           Expanded(
             child: Obx(
-              () => (isAlbumContent
-                      ? libralbumCntrller.libraryAlbums.isNotEmpty
-                      : librplstCntrller.libraryPlaylists.isNotEmpty)
-                  ? LayoutBuilder(builder: (context, constraints) {
+              () {
+                final visiblePlaylists = librplstCntrller.libraryPlaylists
+                    .where((playlist) =>
+                        playlist.playlistId != "LIBRP" &&
+                        playlist.playlistId != "SongsCache")
+                    .toList();
+                return (isAlbumContent
+                        ? libralbumCntrller.libraryAlbums.isNotEmpty
+                        : visiblePlaylists.isNotEmpty)
+                    ? LayoutBuilder(builder: (context, constraints) {
                       //Fix for grid in mobile screen
                       final availableWidth = constraints.maxWidth > 300 &&
                               constraints.maxWidth < 394
@@ -206,23 +212,23 @@ class PlaylistNAlbumLibraryWidget extends StatelessWidget {
                                 const EdgeInsets.only(bottom: 200, top: 10),
                             itemCount: isAlbumContent
                                 ? libralbumCntrller.libraryAlbums.length
-                                : librplstCntrller.libraryPlaylists.length,
+                                : visiblePlaylists.length,
                             itemBuilder: (context, index) => Center(
                                   child: ContentListItem(
                                     content: isAlbumContent
                                         ? libralbumCntrller.libraryAlbums[index]
-                                        : librplstCntrller
-                                            .libraryPlaylists[index],
+                                        : visiblePlaylists[index],
                                     isLibraryItem: true,
                                   ),
                                 )),
                       );
                     })
-                  : Center(
-                      child: Text(
-                      "noBookmarks".tr,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    )),
+                    : Center(
+                        child: Text(
+                        "noBookmarks".tr,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ));
+              },
             ),
           )
         ],
