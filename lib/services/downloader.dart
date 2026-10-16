@@ -162,7 +162,7 @@ class Downloader extends GetxService {
     //       Get.context!, playerResponse.statusMSG,
     //       size: SanckBarSize.BIG,
     //       duration: const Duration(seconds: 2),
-    //       top: !GetPlatform.isDesktop));
+    //       top: true));
     //   complete.complete();
     //   return complete.future;
     // }
