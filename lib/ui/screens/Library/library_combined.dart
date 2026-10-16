@@ -57,7 +57,6 @@ class CombinedLibrary extends StatelessWidget {
           tabs: [
             Tab(text: "songs".tr),
             Tab(text: "playlists".tr),
-            Tab(text: "albums".tr),
             Tab(text: "artists".tr),
           ],
         ),
@@ -90,7 +89,7 @@ class CombinedLibraryController extends GetxController
   @override
   void onInit() {
     super.onInit();
-    tabController = TabController(vsync: this, length: 4);
+    tabController = TabController(vsync: this, length: 3);
   }
 
   @override
