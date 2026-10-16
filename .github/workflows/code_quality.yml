@@ -28,6 +28,6 @@ jobs:
       - name: Install packages
         run: flutter pub get
       - name: Linter
-        run: flutter analyze --no-fatal-infos lib test
+        run: flutter analyze --fatal-infos lib test
       - name: Tests
         run: flutter test --no-pub
