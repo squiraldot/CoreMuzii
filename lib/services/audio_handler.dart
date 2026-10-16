@@ -10,7 +10,6 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audio_service/audio_service.dart';
 // ignore: depend_on_referenced_packages
@@ -34,8 +33,6 @@ import '/services/utils.dart';
 import '../ui/screens/Settings/settings_screen_controller.dart';
 import '../utils/home_history.dart';
 import '../ui/screens/Library/library_controller.dart';
-// ignore: unused_import, implementation_imports, depend_on_referenced_packages
-import "package:media_kit/src/player/platform_player.dart" show MPVLogLevel;
 
 Future<AudioHandler> initAudioService() async {
   return await AudioService.init(
@@ -79,11 +76,6 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
 
   MyAudioHandler() {
-    if (GetPlatform.isWindows || GetPlatform.isLinux) {
-      JustAudioMediaKit.title = 'MDLovFi music';
-      JustAudioMediaKit.protocolWhitelist = const ['http', 'https', 'file'];
-      JustAudioMediaKit.ensureInitialized(linux: true, windows: true);
-    }
     _mediaLibrary = MediaLibrary();
     _player = AudioPlayer(
       useProxyForRequestHeaders: false,
@@ -259,11 +251,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   }
 
   void _listenToPlaybackForNextSong() {
-    final playerDurationOffset = GetPlatform.isWindows
-        ? 200
-        : GetPlatform.isLinux
-            ? 700
-            : 0;
+    const playerDurationOffset = 0;
     _player.positionStream.listen((value) async {
       if (_player.duration != null && _player.duration?.inSeconds != 0) {
         if (value.inMilliseconds >=
@@ -345,27 +333,12 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     final streamHeaders =
         (mediaItem.extras!['streamHeaders'] as Map?)?.cast<String, String>();
 
-    final isDesktop =
-        GetPlatform.isWindows || GetPlatform.isLinux || GetPlatform.isMacOS;
+    // Android uses native request headers; bypass the desktop-only proxy path.
+    final url = originalUrl;
 
-    // Android/iOS support request headers natively when
-    // useProxyForRequestHeaders=false. Avoiding our own proxy here removes
-    // the first-play race where the proxy server had not finished binding.
-    // Desktop media backends still use our proxy so YouTube headers survive.
-    final url = (!originalUrl.startsWith('http'))
-        ? originalUrl
-        : isDesktop
-            ? await LocalProxy.addUrlAsync(
-                originalUrl,
-                headers: streamHeaders,
-              )
-            : originalUrl;
-
-    // LockCachingAudioSource is broken on just_audio_media_kit (it ignores cache and drops headers).
-    // So we disable it on Desktop.
-    if (!isDesktop && (originalUrl.contains('/cache') ||
+    if (originalUrl.contains('/cache') ||
         (Get.find<SettingsScreenController>().cacheSongs.isTrue &&
-            url.contains("http")))) {
+            url.contains("http"))) {
       printINFO("Playing Using LockCaching");
       isPlayingUsingLockCachingSource = true;
       // ignore: experimental_member_use
@@ -387,7 +360,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
     return AudioSource.uri(
       uri,
-      headers: isDesktop ? null : streamHeaders,
+      headers: streamHeaders,
       tag: mediaItem,
     );
   }
