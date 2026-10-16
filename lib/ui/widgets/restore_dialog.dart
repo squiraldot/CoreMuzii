@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
+import '../../../services/constant.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:terminate_restart/terminate_restart.dart';
 
@@ -132,15 +134,23 @@ class RestoreDialogController extends GetxController {
   final processingFiles = false.obs;
   final errorMessage = ''.obs;
 
+  bool _isSensitivePreference(String key) {
+    final normalized = key.toLowerCase();
+    return normalized.startsWith('yt_') ||
+        normalized.contains('youtube') ||
+        normalized.contains('cookie') ||
+        normalized.contains('auth') ||
+        normalized.contains('session') ||
+        normalized.contains('identitytoken') ||
+        normalized.contains('datasync') ||
+        normalized.contains('visitor') ||
+        normalized == 'piped';
+  }
+
   Future<void> restore() async {
     if (processingFiles.value || restoreRunning.value) return;
     errorMessage.value = '';
     try {
-      // The system picker grants access to the selected backup file. No
-      // broad external-storage permission is needed for app-private data.
-      // Android's document provider may reject custom MIME filters for
-      // app-specific extensions such as .muziinap. Use the system picker
-      // without a native filter, then enforce the extension ourselves.
       final result = await FilePicker.platform.pickFiles(
         dialogTitle: 'Select MuziiNap backup file',
         type: FileType.any,
@@ -153,63 +163,148 @@ class RestoreDialogController extends GetxController {
         errorMessage.value = 'Unsupported file. Please select a .muziinap backup.';
         return;
       }
+
       processingFiles.value = true;
       final bytes = await File(restoreFilePath).readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes, verify: true);
       final files = archive.files.where((file) => file.isFile).toList();
-      if (files.isEmpty || !files.any((file) => file.name.endsWith('.hive'))) {
-        throw const FormatException('The selected file is not a valid app backup.');
+      final entries = <String, List<int>>{
+        for (final file in files) file.name: file.content as List<int>,
+      };
+      if (!entries.containsKey('manifest.json') ||
+          !entries.containsKey('data/settings.json') ||
+          !entries.containsKey('data/favorites.json') ||
+          !entries.containsKey('data/downloads.json') ||
+          !entries.containsKey('data/playlists.json')) {
+        throw const FormatException('The selected file is not a valid MuziiNap backup.');
       }
+      final manifest = jsonDecode(utf8.decode(entries['manifest.json']!));
+      if (manifest is! Map ||
+          manifest['format'] != 'muziinap' ||
+          manifest['version'] != 1) {
+        throw const FormatException('Unsupported or invalid MuziiNap backup format.');
+      }
+
       final settings = Get.find<SettingsScreenController>();
       final supportDirPath = settings.supportDirPath;
       final dbDirPath = await settings.dbDir;
-      final dbDir = Directory(dbDirPath);
-      await dbDir.create(recursive: true);
-      // Do not delete existing databases until the archive has been validated.
-      await settings.closeAllDatabases();
-      for (final entity in await dbDir.list().toList()) {
-        if (entity is File && entity.path.endsWith('.hive')) await entity.delete();
+      final settingsData = jsonDecode(utf8.decode(entries['data/settings.json']!));
+      final favoritesData = jsonDecode(utf8.decode(entries['data/favorites.json']!));
+      final downloadsData = jsonDecode(utf8.decode(entries['data/downloads.json']!));
+      final playlistsData = jsonDecode(utf8.decode(entries['data/playlists.json']!));
+      if (settingsData is! Map ||
+          favoritesData is! List ||
+          downloadsData is! List ||
+          playlistsData is! List) {
+        throw const FormatException('Backup data is invalid.');
       }
-      filesToRestore.value = files.length;
-      restoreProgress.value = 0;
+
       processingFiles.value = false;
       restoreRunning.value = true;
-      for (final file in files) {
-        final filename = file.name.split('/').last;
-        if (filename.isEmpty || filename == '.' || filename == '..') continue;
-        final data = file.content as List<int>;
-        final targetDir = filename.endsWith('.m4a') || filename.endsWith('.opus')
-            ? '$supportDirPath/Music'
-            : filename.endsWith('.png')
-                ? '$supportDirPath/thumbnails'
-                : dbDirPath;
-        final outputFile = File('$targetDir/$filename');
-        await outputFile.parent.create(recursive: true);
-        await outputFile.writeAsBytes(data, flush: true);
-        restoreProgress.value++;
+      restoreProgress.value = 0;
+      filesToRestore.value = 4 + playlistsData.length +
+          entries.keys.where((key) => key.startsWith('files/Music/')).length;
+
+      // Restore only safe preferences. Never import YouTube authentication,
+      // cookies, session tokens, or account-linked settings.
+      final prefsBox = Hive.box(appPrefsBoxName);
+      for (final entry in settingsData.entries) {
+        final key = entry.key.toString();
+        if (!_isSensitivePreference(key)) {
+          await prefsBox.put(key, entry.value);
+        }
       }
-      final tempPath = '${(await getApplicationCacheDirectory()).path}/file_picker';
-      final tempDir = Directory(tempPath);
-      if (await tempDir.exists()) await tempDir.delete(recursive: true);
-      if (GetPlatform.isWindows || GetPlatform.isLinux) {
-        final songBox = await Hive.openBox('SongDownloads');
-        for (final song in songBox.values.toList()) {
-          if (song is Map) {
-            final songPath = song['url'];
-            if (songPath is String) {
-              final fileName = songPath.split('/').last;
-              final newPath = '$supportDirPath/Music/$fileName';
-              song['url'] = newPath;
-              final streamInfo = song['streamInfo'];
-              if (streamInfo is List && streamInfo.length > 1 && streamInfo[1] is Map) {
-                streamInfo[1]['url'] = newPath;
-              }
-              final videoId = song['videoId'];
-              if (videoId != null) await songBox.put(videoId, song);
+      restoreProgress.value++;
+
+      final favoritesBox = await Hive.openBox('LIBFAV');
+      await favoritesBox.clear();
+      for (var i = 0; i < favoritesData.length; i++) {
+        await favoritesBox.put(i, favoritesData[i]);
+      }
+      await favoritesBox.close();
+      restoreProgress.value++;
+
+      final musicDir = Directory('$supportDirPath/Music');
+      await musicDir.create(recursive: true);
+      final downloadsBox = await Hive.openBox('SongDownloads');
+      await downloadsBox.clear();
+      for (final raw in downloadsData) {
+        if (raw is! Map) continue;
+        final song = Map<String, dynamic>.from(raw);
+        final storedPath = song['url'];
+        if (storedPath is String && storedPath.startsWith('files/Music/')) {
+          final archiveName = storedPath;
+          final data = entries[archiveName];
+          final fileName = archiveName.split('/').last;
+          if (data != null && fileName.isNotEmpty) {
+            final output = File('$supportDirPath/Music/$fileName');
+            await output.parent.create(recursive: true);
+            await output.writeAsBytes(data, flush: true);
+            song['url'] = output.path;
+            final streamInfo = song['streamInfo'];
+            if (streamInfo is List && streamInfo.length > 1 && streamInfo[1] is Map) {
+              streamInfo[1]['url'] = output.path;
             }
           }
         }
+        final id = song['videoId'] ?? song['id'];
+        if (id != null) await downloadsBox.put(id, song);
       }
+      await downloadsBox.close();
+      restoreProgress.value++;
+
+      final playlistsBox = await Hive.openBox('LibraryPlaylists');
+      final oldLocalIds = <String>[];
+      for (final raw in playlistsBox.values) {
+        if (raw is Map) {
+          final id = raw['playlistId']?.toString() ?? '';
+          if (id.startsWith('LIB') &&
+              id != 'LIBFAV' &&
+              id != 'LIBRP' &&
+              raw['isCloudPlaylist'] != true &&
+              raw['isPipedPlaylist'] != true) {
+            oldLocalIds.add(id);
+          }
+        }
+      }
+      for (final id in oldLocalIds) {
+        await playlistsBox.delete(id);
+        if (await Hive.boxExists(id)) {
+          final oldSongsBox = await Hive.openBox(id);
+          await oldSongsBox.clear();
+          await oldSongsBox.close();
+        }
+      }
+      for (final raw in playlistsData) {
+        if (raw is! Map) continue;
+        final playlist = Map<String, dynamic>.from(raw);
+        final id = playlist['playlistId']?.toString() ?? '';
+        if (!id.startsWith('LIB') ||
+            id == 'LIBFAV' ||
+            id == 'LIBRP' ||
+            playlist['isCloudPlaylist'] == true ||
+            playlist['isPipedPlaylist'] == true) {
+          continue;
+        }
+        await playlistsBox.put(id, playlist);
+        final songsEntry = entries['data/playlist_songs/$id.json'];
+        if (songsEntry != null) {
+          final songs = jsonDecode(utf8.decode(songsEntry));
+          if (songs is List) {
+            final songsBox = await Hive.openBox(id);
+            await songsBox.clear();
+            for (var i = 0; i < songs.length; i++) {
+              await songsBox.put(i, songs[i]);
+            }
+            await songsBox.close();
+          }
+        }
+        restoreProgress.value++;
+      }
+      await playlistsBox.close();
+      restoreProgress.value++;
+      await settings.closeAllDatabases();
+      restoreProgress.value = filesToRestore.value;
     } catch (e) {
       errorMessage.value = 'Restore failed: $e';
       printERROR(errorMessage.value);
@@ -217,5 +312,4 @@ class RestoreDialogController extends GetxController {
       processingFiles.value = false;
       restoreRunning.value = false;
     }
-  }
-}
+  }}
