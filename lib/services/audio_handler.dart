@@ -390,10 +390,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
   @override
   Future<void> play() async {
-    if (currentSongUrl == null ||
-        (GetPlatform.isDesktop &&
-            (_player.duration == null ||
-                _player.duration?.inMilliseconds == 0))) {
+    if (currentSongUrl == null) {
       await customAction("playByIndex", {'index': currentIndex});
       return;
     }
@@ -565,7 +562,6 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         }
 
         if (restoreSession) {
-          if (!GetPlatform.isDesktop) {
             final position = extras['position'];
             await _player.load();
             await _player.seek(
@@ -579,7 +575,6 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
               ),
             );
             _applyEqualizerAfterPlaybackStarts();
-          }
         } else {
           final playFuture = _player.play();
           _applyEqualizerAfterPlaybackStarts();
