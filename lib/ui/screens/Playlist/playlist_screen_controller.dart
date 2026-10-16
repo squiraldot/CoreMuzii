@@ -606,7 +606,9 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     }
   }
 
-  String _getLocationMessage(String path) => "Downloads/MDLovFiMusic";
+  String _getLocationMessage(String path) => path.contains("/Download/")
+      ? "Downloads/MDLovFiMusic"
+      : path.split(Platform.pathSeparator).last;
 
   // Helper method to show progress dialog
   void _showProgressDialog(BuildContext context, String title) {
