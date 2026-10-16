@@ -138,15 +138,21 @@ class RestoreDialogController extends GetxController {
     try {
       // The system picker grants access to the selected backup file. No
       // broad external-storage permission is needed for app-private data.
+      // Android's document provider may reject custom MIME filters for
+      // app-specific extensions such as .muziinap. Use the system picker
+      // without a native filter, then enforce the extension ourselves.
       final result = await FilePicker.platform.pickFiles(
-        dialogTitle: 'Select backup file',
-        type: FileType.custom,
-        allowedExtensions: ['muziinap'],
+        dialogTitle: 'Select MuziiNap backup file',
+        type: FileType.any,
         allowMultiple: false,
         withData: false,
       );
       if (result == null || result.files.isEmpty || result.files.first.path == null) return;
       final restoreFilePath = result.files.first.path!;
+      if (!restoreFilePath.toLowerCase().endsWith('.muziinap')) {
+        errorMessage.value = 'Unsupported file. Please select a .muziinap backup.';
+        return;
+      }
       processingFiles.value = true;
       final bytes = await File(restoreFilePath).readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes, verify: true);
