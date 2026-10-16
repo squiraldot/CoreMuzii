@@ -74,7 +74,6 @@ class CombinedLibrary extends StatelessWidget {
           ),
           PlaylistNAlbumLibraryWidget(
               isAlbumContent: false, isBottomNavActive: true),
-          PlaylistNAlbumLibraryWidget(isBottomNavActive: true),
           LibraryArtistWidget(isBottomNavActive: true),
         ],
       ),
