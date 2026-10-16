@@ -226,8 +226,7 @@ class SongListTile extends StatelessWidget with RemoveSongFromPlaylistMixin {
                       ),
                     ],
                   ),
-                  if (GetPlatform.isDesktop)
-                    IconButton(
+                  IconButton(
                         splashRadius: 20,
                         onPressed: () {
                           showModalBottomSheet(
