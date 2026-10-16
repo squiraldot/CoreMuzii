@@ -132,7 +132,7 @@ class StandaloneSongInfoDialog extends StatelessWidget {
                           ),
                           _ActionTile(
                             icon: Icons.playlist_add,
-                            title: 'addToPlaylist'.tr,
+                            title: _translatedOrFallback('addToPlaylist', 'Add to playlist'),
                             onTap: () {
                               final navigator =
                                   Navigator.of(context, rootNavigator: true);
@@ -243,7 +243,7 @@ class StandaloneSongInfoDialog extends StatelessWidget {
                           ),
                           _ActionTile(
                             icon: Icons.share,
-                            title: 'shareSong'.tr,
+                            title: _translatedOrFallback('shareSong', 'Share this song'),
                             onTap: () {
                               Navigator.of(context).pop();
                               Share.share(
@@ -309,6 +309,11 @@ class StandaloneSongInfoDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static String _translatedOrFallback(String key, String fallback) {
+    final translated = key.tr;
+    return translated == key ? fallback : translated;
   }
 
   static Future<void> _openUrl(BuildContext context, String url) async {
