@@ -89,7 +89,6 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> _setInitValue() async {
-    final isDesktop = GetPlatform.isDesktop;
     final appLang = setBox.get('currentAppLanguageCode') ?? "en";
     currentAppLanguageCode.value = appLang == "zh_Hant"
         ? "zh-TW"
@@ -97,30 +96,25 @@ class SettingsScreenController extends GetxController {
             ? "zh-CN"
             : appLang;
     final storedBottomNavBarEnabled = setBox.get("isBottomNavBarEnabled");
-    isBottomNavBarEnabled.value = resolveBottomNavBarPreference(
-      isDesktop: isDesktop,
-      storedValue: storedBottomNavBarEnabled,
-    );
-    final shouldPersistBottomNavDefault =
-        !isDesktop && storedBottomNavBarEnabled == null;
+    isBottomNavBarEnabled.value = storedBottomNavBarEnabled is bool
+        ? storedBottomNavBarEnabled
+        : true;
+    final shouldPersistBottomNavDefault = storedBottomNavBarEnabled == null;
     noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 11;
     isTransitionAnimationDisabled.value =
         setBox.get("isTransitionAnimationDisabled") ?? false;
     cacheSongs.value = setBox.get('cacheSongs') ?? false;
     themeModetype.value = ThemeType.values[setBox.get('themeModeType') ?? 0];
-    skipSilenceEnabled.value =
-        isDesktop ? false : (setBox.get("skipSilenceEnabled") ?? false);
-    loudnessNormalizationEnabled.value = isDesktop
-        ? false
-        : (setBox.get("loudnessNormalizationEnabled") ?? false);
+    skipSilenceEnabled.value = setBox.get("skipSilenceEnabled") ?? false;
+    loudnessNormalizationEnabled.value =
+        setBox.get("loudnessNormalizationEnabled") ?? false;
     autoOpenPlayer.value = (setBox.get("autoOpenPlayer") ?? false);
     restorePlaybackSession.value =
         setBox.get("restrorePlaybackSession") ?? false;
     cacheHomeScreenData.value = setBox.get("cacheHomeScreenData") ?? true;
-    playerUi.value = isDesktop ? 0 : (setBox.get('playerUi') ?? 0);
+    playerUi.value = setBox.get('playerUi') ?? 0;
     backgroundPlayEnabled.value = setBox.get("backgroundPlayEnabled") ?? true;
-    keepScreenAwake.value =
-        setBox.get("keepScreenAwake") ?? (GetPlatform.isDesktop ? true : false);
+    keepScreenAwake.value = setBox.get("keepScreenAwake") ?? false;
     // Read synchronous preferences before the first await, so late
     // initialization cannot overwrite a user's tap with stale values.
     exportLocationPath.value =
@@ -149,10 +143,7 @@ class SettingsScreenController extends GetxController {
             storedDownloadPath.isNotEmpty
         ? storedDownloadPath
         : await _createInAppSongDownDir();
-    downloadLocationPath.value =
-        (isDesktop && downloadPath.contains("emulated"))
-            ? await _createInAppSongDownDir()
-            : downloadPath;
+    downloadLocationPath.value = downloadPath;
 
     if (GetPlatform.isAndroid) {
       isIgnoringBatteryOptimizations.value =
@@ -417,7 +408,7 @@ class SettingsScreenController extends GetxController {
       'cacheHomeScreenData': true,
       'playerUi': 0,
       'backgroundPlayEnabled': true,
-      'keepScreenAwake': GetPlatform.isDesktop,
+      'keepScreenAwake': false,
       'exportLocationPath': '/storage/emulated/0/Music',
       'downloadingFormat': 'm4a',
       'discoverContentType': 'QP',
@@ -425,7 +416,7 @@ class SettingsScreenController extends GetxController {
       'stopPlyabackOnSwipeAway': true,
       'autoDownloadFavoriteSongEnabled': false,
       'streamingQuality': 1,
-      'isBottomNavBarEnabled': !GetPlatform.isDesktop,
+      'isBottomNavBarEnabled': true,
       'themePrimaryColor': 4278199603,
       'newVersionVisibility': updateCheckFlag,
       if (pipedAccount != null) 'piped': pipedAccount,
@@ -451,11 +442,6 @@ class SettingsScreenController extends GetxController {
     await Hive.close();
   }
 
-  Future<String> get dbDir async {
-    if (GetPlatform.isDesktop) {
-      return "$supportDirPath/db";
-    } else {
-      return (await getApplicationDocumentsDirectory()).path;
-    }
-  }
+  Future<String> get dbDir async =>
+      (await getApplicationDocumentsDirectory()).path;
 }
