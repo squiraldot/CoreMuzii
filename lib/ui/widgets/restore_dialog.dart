@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import '../../../services/constant.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:terminate_restart/terminate_restart.dart';
 
 import '/ui/screens/Settings/settings_screen_controller.dart';
@@ -187,7 +186,6 @@ class RestoreDialogController extends GetxController {
 
       final settings = Get.find<SettingsScreenController>();
       final supportDirPath = settings.supportDirPath;
-      final dbDirPath = await settings.dbDir;
       final settingsData = jsonDecode(utf8.decode(entries['data/settings.json']!));
       final favoritesData = jsonDecode(utf8.decode(entries['data/favorites.json']!));
       final downloadsData = jsonDecode(utf8.decode(entries['data/downloads.json']!));
