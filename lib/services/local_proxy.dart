@@ -31,36 +31,38 @@ class LocalProxy {
             return;
           }
 
+          final client = HttpClient();
           try {
-            final client = HttpClient();
             final clientReq = await client.getUrl(Uri.parse(task.url));
             if (task.headers != null) {
               task.headers!.forEach((key, value) {
                 clientReq.headers.set(key, value);
               });
             }
-            
+
             // Allow seeking by passing Range header if present
             if (request.headers.value('range') != null) {
               clientReq.headers.set('range', request.headers.value('range')!);
             }
 
             final clientRes = await clientReq.close();
-            
+
             printINFO("LocalProxy: YouTube returned status ${clientRes.statusCode} for ${task.url.substring(0, 50)}...");
-            
+
             request.response.statusCode = clientRes.statusCode;
             clientRes.headers.forEach((name, values) {
               for (final value in values) {
                 request.response.headers.add(name, value);
               }
             });
-            
+
             await clientRes.pipe(request.response);
           } catch (e) {
             printINFO("LocalProxy Error: $e");
             request.response.statusCode = HttpStatus.internalServerError;
             request.response.close();
+          } finally {
+            client.close();
           }
         } else {
           request.response.statusCode = HttpStatus.notFound;
