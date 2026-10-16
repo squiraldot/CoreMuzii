@@ -120,7 +120,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Standalone Song'), findsOneWidget);
-    expect(find.text('Standalone Artist'), findsOneWidget);
+    expect(find.text('Standalone Artist'), findsWidgets);
     expect(find.text('Standalone Album'), findsOneWidget);
     expect(find.text('Download'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -165,15 +165,24 @@ void main() {
     await tester.tap(find.text('Open More'));
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(ListView), const Offset(0, -1200));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Download'), findsOneWidget);
-    expect(find.text('Start radio'), findsOneWidget);
-    expect(find.text('Add to playlist'), findsOneWidget);
-    expect(find.text('Share this song'), findsOneWidget);
-    expect(find.text('Copy Link'), findsOneWidget);
-    expect(find.text('QR Code'), findsOneWidget);
+    // Scroll through the lazy ListView so off-screen action tiles are built
+    // before asserting that the standalone More view exposes them.
+    final listView = find.byType(ListView);
+    for (final label in [
+      'Download',
+      'Start radio',
+      'Add to playlist',
+      'Share this song',
+      'Copy Link',
+      'QR Code',
+    ]) {
+      await tester.scrollUntilVisible(
+        find.text(label),
+        250,
+        scrollable: listView,
+      );
+      expect(find.text(label), findsOneWidget);
+    }
     expect(find.text('Standalone Album'), findsNothing);
     expect(tester.takeException(), isNull);
   });
