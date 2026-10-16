@@ -108,7 +108,6 @@ class UpNextQueue extends StatelessWidget {
                     leading: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (GetPlatform.isDesktop)
                           IconButton(
                               onPressed: () {
                                 if (playerController.currentSongIndex.value ==
@@ -156,16 +155,15 @@ class UpNextQueue extends StatelessWidget {
                           : Theme.of(homeScaffoldContext).textTheme.titleSmall,
                     ),
                     trailing: ReorderableDragStartListener(
-                      enabled: !GetPlatform.isDesktop,
+                      enabled: true,
                       index: index,
                       child: Container(
                         padding: EdgeInsets.only(
-                            right: (GetPlatform.isDesktop) ? 20 : 5, left: 20),
+                            right: 5, left: 20),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            if (!GetPlatform.isDesktop)
-                              const Icon(
+                            const Icon(
                                 Icons.drag_handle,
                               ),
                             playerController.currentSongIndex.value == index
