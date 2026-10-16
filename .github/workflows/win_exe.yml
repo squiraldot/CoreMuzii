@@ -1,9 +1,13 @@
 name: Build Windows exe 
 on: workflow_dispatch
+
+# Windows packaging is intentionally disabled; keep this workflow source for future use.
+
   
 jobs:
 
   build-windows-exe:
+    if: false # Android-only project; retain Windows workflow without running it.
     runs-on: windows-latest
     
     steps:
