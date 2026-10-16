@@ -1,11 +1,7 @@
-import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '/native_bindings/andrid_utils.dart' show SDKInt;
 class PermissionService {
   static Future<bool> getExtStoragePermission() async {
-    if (GetPlatform.isDesktop) {
-      return Future.value(true);
-    }
     if ((SDKInt.Companion.getSDKInt()) < 30) {
       var status = await Permission.storage.status;
       if (status.isDenied) {
