@@ -1,5 +1,5 @@
 # MDLovFi Music V1.13.3 🎵
-We are pushing a critical update to resolve the widespread "403 Forbidden" streaming errors, massively improve lyrics fetching, and refine the desktop user experience!
+We are pushing a critical update to resolve widespread "403 Forbidden" streaming errors, improve lyrics fetching, and refine the Android app experience!
 
 ### 🐛 Bug Fixes & Stability
 * **YouTube Streaming Restored:** Replaced deprecated InnerTube streaming clients with highly reliable `TV_EMBEDDED` and `WEB_EMBEDDED` configurations to seamlessly bypass the latest bot detection protocols.
@@ -11,7 +11,6 @@ We are pushing a critical update to resolve the widespread "403 Forbidden" strea
 ### ✨ UI & Experience Enhancements
 * **Advanced Lyrics Fetching:** Built a smart fallback that utilizes the `lrclib.net` search API to reliably find lyrics even when exact ID matches fail.
 * **Beautiful Lyrics UI:** The currently active lyric line is now styled dynamically with bold text for much better readability.
-* **Perfect Desktop Sidebar:** Re-engineered the animated desktop sidebar to calculate its height dynamically, entirely eliminating the ugly scrollbar bug on smaller screens.
 * **Codebase Cleanup:** Completely stripped out bloated legacy third-party UI dependencies for a faster, lighter app.
 
 *Thank you to all our contributors for keeping the music playing! ❤️*
