@@ -96,9 +96,9 @@ class SettingsScreenController extends GetxController {
             ? "zh-CN"
             : appLang;
     final storedBottomNavBarEnabled = setBox.get("isBottomNavBarEnabled");
-    isBottomNavBarEnabled.value = storedBottomNavBarEnabled is bool
-        ? storedBottomNavBarEnabled
-        : true;
+    isBottomNavBarEnabled.value = resolveBottomNavBarPreference(
+      storedValue: storedBottomNavBarEnabled,
+    );
     final shouldPersistBottomNavDefault = storedBottomNavBarEnabled == null;
     noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 11;
     isTransitionAnimationDisabled.value =
