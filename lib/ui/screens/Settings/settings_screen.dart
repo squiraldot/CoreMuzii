@@ -29,7 +29,6 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settingsController = Get.find<SettingsScreenController>();
     final topPadding = context.isLandscape ? 50.0 : 90.0;
-    final isDesktop = GetPlatform.isDesktop;
     return Padding(
       padding: isBottomNavActive
           ? EdgeInsets.only(left: 20, top: topPadding, right: 15)
@@ -121,8 +120,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (!isDesktop)
-                    Offstage(
+                  Offstage(
                       offstage: true,
                       child: ListTile(
                         contentPadding: const EdgeInsets.only(left: 5, right: 10),
@@ -327,26 +325,7 @@ class SettingsScreen extends StatelessWidget {
                 title: "music&Playback".tr,
                 icon: Icons.music_note,
                 children: [
-                  if (GetPlatform.isAndroid)
-  
-
-
-                  if (isDesktop)
-                    ListTile(
-                        contentPadding:
-                            const EdgeInsets.only(left: 5, right: 10),
-                        title: Text("backgroundPlay".tr),
-                        subtitle: Text("backgroundPlayDes".tr,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        trailing: Obx(
-                          () => CustSwitch(
-                              value: settingsController
-                                  .backgroundPlayEnabled.value,
-                              onChanged:
-                                  settingsController.toggleBackgroundPlay),
-                        )),
-                  if (!isDesktop)
-                    ListTile(
+                  ListTile(
                       contentPadding:
                           const EdgeInsets.only(left: 5, right: 10, top: 0),
                       title: Text("equalizer".tr),
