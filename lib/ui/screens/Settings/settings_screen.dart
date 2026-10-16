@@ -138,8 +138,7 @@ class SettingsScreen extends StatelessWidget {
                         )),
                       ),
                     ),
-                  if (!isDesktop)
-                    Offstage(
+                  Offstage(
                       offstage: true,
                       child: ListTile(
                         contentPadding: const EdgeInsets.only(left: 5, right: 10),
