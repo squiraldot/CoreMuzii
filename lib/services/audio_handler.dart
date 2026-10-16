@@ -332,7 +332,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     final streamHeaders =
         (mediaItem.extras!['streamHeaders'] as Map?)?.cast<String, String>();
 
-    // Android uses native request headers; bypass the desktop-only proxy path.
+    // Android uses native request headers for the stream URL.
     final url = originalUrl;
 
     if (originalUrl.contains('/cache') ||
