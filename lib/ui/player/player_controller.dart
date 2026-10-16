@@ -119,10 +119,6 @@ class PlayerController extends GetxController
     isQueueLoopModeEnabled.value =
         appPrefs.get("queueLoopModeEnabled") ?? false;
 
-    if (GetPlatform.isDesktop) {
-      setVolume(appPrefs.get("volume") ?? 100);
-    }
-
     if ((appPrefs.get("playerUi") ?? 0) == 1) {
       initGesturePlayerStateAnimationController();
     }
@@ -272,18 +268,10 @@ class PlayerController extends GetxController
       }
 
       if (event.logicalKey == LogicalKeyboardKey.keyP) {
-        if (GetPlatform.isDesktop) {
-          if (homeScaffoldkey.currentState?.isEndDrawerOpen ?? false) {
-            homeScaffoldkey.currentState?.closeEndDrawer();
-          } else {
-            homeScaffoldkey.currentState?.openEndDrawer();
-          }
+        if (queuePanelController.isPanelOpen) {
+          queuePanelController.close();
         } else {
-          if (queuePanelController.isPanelOpen) {
-            queuePanelController.close();
-          } else {
-            queuePanelController.open();
-          }
+          queuePanelController.open();
         }
         return true;
       }
