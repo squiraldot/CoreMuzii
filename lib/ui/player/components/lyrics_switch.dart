@@ -41,12 +41,6 @@ class LyricsSwitch extends StatelessWidget {
                     color: Colors.white,
                     tooltip: "Reload Lyrics",
                   ),
-                  IconButton(
-                    onPressed: () => playerController.translateLyrics(),
-                    icon: const Icon(Icons.file_upload),
-                    color: Colors.white,
-                    tooltip: "Pick Local Lyrics",
-                  ),
                 ],
               ),
             )
