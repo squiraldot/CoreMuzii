@@ -102,7 +102,7 @@ class QuickPicksWidget extends StatelessWidget {
             SizedBox(
               height: 256,
               child: Scrollbar(
-                thickness: GetPlatform.isDesktop ? null : 0,
+                thickness: 0,
                 controller: scrollController,
                 child: GridView.builder(
                   controller: scrollController,
