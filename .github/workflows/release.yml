@@ -54,67 +54,20 @@ jobs:
       
       - uses: actions/download-artifact@v4
       
-      - name: Organize and Rename Artifacts
+      - name: Organize Android APK artifacts
+        shell: bash
         run: |
-          mkdir release-assets
-          # Determine version from tag (e.g. refs/tags/v1.13.0 -> 1.13.0)
+          set -euo pipefail
+          mkdir -p release-assets
           VERSION=${GITHUB_REF_NAME#v}
-          if [[ "$GITHUB_REF_NAME" != v* ]]; then
-            VERSION="latest"
-          fi
-          
-          # Copy all built files
-          find . -name "*.apk" -exec cp {} release-assets/ \;
-          find . -name "*.tar.gz" -exec cp {} release-assets/ \;
-          find . -name "*.zip" -exec cp {} release-assets/ \;
-          find . -name "*.deb" -exec cp {} release-assets/ \;
-          find . -name "*.rpm" -exec cp {} release-assets/ \;
-          find . -iname "*.appimage" -exec cp {} release-assets/ \;
-          find . -name "*.exe" -exec cp {} release-assets/ \;
-          
+          if [[ "$GITHUB_REF_NAME" != v* ]]; then VERSION="latest"; fi
+          find . -path './release-assets' -prune -o -name "*.apk" -type f -exec cp {} release-assets/ \;
           cd release-assets
-          
-          # Rename Android APKs to match standard naming (stripping -release)
-          if [ -f "app-armeabi-v7a-release.apk" ]; then
-            mv app-armeabi-v7a-release.apk mdlovfimusic-${VERSION}-armeabi-v7a.apk
-          fi
-          if [ -f "app-arm64-v8a-release.apk" ]; then
-            mv app-arm64-v8a-release.apk mdlovfimusic-${VERSION}-arm64-v8a.apk
-          fi
-          if [ -f "app-release.apk" ]; then
-            mv app-release.apk mdlovfimusic-${VERSION}.apk
-          fi
-          
-          if [ -f "mdlovfimusic-linux.tar.gz" ]; then
-            mv "mdlovfimusic-linux.tar.gz" "mdlovfimusic-${VERSION}-linux.tar.gz"
-          fi
-          
-          if [ -f "mdlovfimusic-windows.zip" ]; then
-            mv "mdlovfimusic-windows.zip" "mdlovfimusic-${VERSION}-windows.zip"
-          fi
-          
-          DEB_FILE=$(ls *.deb 2>/dev/null | head -n 1)
-          if [ -n "$DEB_FILE" ]; then
-            mv "$DEB_FILE" "mdlovfimusic-${VERSION}-linux.deb"
-          fi
-          
-          RPM_FILE=$(ls *.rpm 2>/dev/null | head -n 1)
-          if [ -n "$RPM_FILE" ]; then
-            mv "$RPM_FILE" "mdlovfimusic-${VERSION}-linux.rpm"
-          fi
-          
-          APPIMAGE_FILE=$(ls *.AppImage *.appimage 2>/dev/null | head -n 1)
-          if [ -n "$APPIMAGE_FILE" ]; then
-            mv "$APPIMAGE_FILE" "mdlovfimusic-${VERSION}-linux.AppImage"
-          fi
-          
-          EXE_FILE=$(ls *.exe 2>/dev/null | head -n 1)
-          if [ -n "$EXE_FILE" ]; then
-            mv "$EXE_FILE" "mdlovfimusic-${VERSION}-windows.exe"
-          fi
-          
-          # Generate SHA256 sums
-          sha256sum * > mdlovfimusic-v${VERSION}.sha256sum
+          if [ -f "app-armeabi-v7a-release.apk" ]; then mv app-armeabi-v7a-release.apk "mdlovfimusic-${VERSION}-armeabi-v7a.apk"; fi
+          if [ -f "app-arm64-v8a-release.apk" ]; then mv app-arm64-v8a-release.apk "mdlovfimusic-${VERSION}-arm64-v8a.apk"; fi
+          if [ -f "app-release.apk" ]; then mv app-release.apk "mdlovfimusic-${VERSION}.apk"; fi
+          test -n "$(find . -maxdepth 1 -name '*.apk' -print -quit)"
+          sha256sum *.apk > "mdlovfimusic-v${VERSION}.sha256sum"
           
       - name: Publish Release
         uses: softprops/action-gh-release@v1
