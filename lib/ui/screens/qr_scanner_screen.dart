@@ -34,16 +34,12 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         await _initCameraController(_selectedCamera!);
       } else {
         setState(() {
-          _errorMessage = GetPlatform.isLinux 
-              ? "Live camera support for Linux will be added in the future."
-              : "No cameras found on this device.";
+          _errorMessage = "No cameras found on this device.";
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = GetPlatform.isLinux 
-            ? "Live camera support for Linux will be added in the future.\n\n(Error: ${e.toString().split(' ').take(3).join(' ')}...)"
-            : "Failed to load cameras.\n$e";
+        _errorMessage = "Failed to load cameras.\n$e";
       });
     }
   }
@@ -80,9 +76,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = GetPlatform.isLinux 
-            ? "Live camera support for Linux will be added in the future.\n\n(Error: ${e.toString().split(' ').take(3).join(' ')}...)"
-            : "Failed to initialize camera.\n$e";
+        _errorMessage = "Failed to initialize camera.\n$e";
       });
     }
   }
