@@ -65,7 +65,6 @@ dependencies:
       url: https://github.com/anandnet/animated_side_bar.git
       branch: main
       ref: b53567a42b4ba3793a3cf00d478bdba0ecce33d7
-  smtc_windows: ^0.1.2
   terminate_restart:
     git:
       url: https://github.com/anandnet/terminate_restart.git
