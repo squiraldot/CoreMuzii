@@ -190,7 +190,7 @@ class PlayerController extends GetxController
 
       if (event.logicalKey == LogicalKeyboardKey.keyL) {
         if (!playerPanelController.isPanelOpen) {
-          if (isDesktopLyricsDialogOpen) {
+          if (isLyricsDialogOpen) {
             Get.back();
             return true;
           }
@@ -201,10 +201,10 @@ class PlayerController extends GetxController
             showLyrics();
           }
           Get.dialog(const LyricsDialog()).whenComplete(() {
-            isDesktopLyricsDialogOpen = false;
+            isLyricsDialogOpen = false;
             showLyricsflag.value = false;
           });
-          isDesktopLyricsDialogOpen = true;
+          isLyricsDialogOpen = true;
         } else {
           showLyrics();
         }
@@ -442,7 +442,7 @@ class PlayerController extends GetxController
         }
         lyrics.value = {"synced": "", "plainLyrics": ""};
         showLyricsflag.value = false;
-        if (isDesktopLyricsDialogOpen) {
+        if (isLyricsDialogOpen) {
           Navigator.pop(Get.context!);
         }
 
