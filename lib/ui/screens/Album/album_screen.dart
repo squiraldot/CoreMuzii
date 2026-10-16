@@ -186,7 +186,7 @@ class AlbumScreen extends StatelessWidget {
                                 return Padding(
                                   padding: EdgeInsets.only(
                                       left:
-                                          GetPlatform.isDesktop ? 15.0 : 10.0),
+                                          10.0),
                                   child: SizedBox(
                                       height: 40,
                                       child: Row(
