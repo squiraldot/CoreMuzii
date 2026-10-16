@@ -361,7 +361,7 @@ Future<void> compressFilesInBackground(
   // Convert file paths to file data
   final List<List<int>> filesData = filePathsToFileData(filePaths);
   final List<String> fileNames = filePaths
-      .map((path) => path.split(GetPlatform.isWindows ? '\\' : '/').last)
+      .map((path) => path.split(Platform.pathSeparator).last)
       .toList();
 
   printINFO(fileNames);
