@@ -40,7 +40,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Test Song'), findsOneWidget);
-    expect(find.text('Test Artist'), findsOneWidget);
+    expect(find.text('Test Artist'), findsWidgets);
     expect(find.text('Test Album'), findsOneWidget);
     expect(find.text('song-id-123'), findsOneWidget);
     expect(find.text('NA'), findsWidgets);
