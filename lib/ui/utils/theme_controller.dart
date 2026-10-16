@@ -1,6 +1,7 @@
 import '/services/constant.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
@@ -80,7 +81,6 @@ class ThemeController extends GetxController {
         titleColorSwatch: _createMaterialColor(textColor.value));
     currentSongId = songId;
     Hive.box(appPrefsBoxName).put("themePrimaryColor", (primaryColor.value!).toARGB32());
-    setWindowsTitleBarColor(themedata.value!.scaffoldBackgroundColor);
   }
 
   ThemeData _createThemeData(MaterialColor? primarySwatch, ThemeType themeType,
