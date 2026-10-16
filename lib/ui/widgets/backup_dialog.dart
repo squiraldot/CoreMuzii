@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
@@ -218,12 +218,6 @@ class BackupDialogController extends GetxController {
     entries['data/playlists.json'] = utf8.encode(jsonEncode(localPlaylists));
     await playlistsBox.close();
 
-    if (isDownloadedfilesSeclected.value) {
-      final downloads = jsonDecode(utf8.decode(entries['data/downloads.json']!)) as List;
-      if (downloads.isEmpty) {
-        // Keep an empty downloads manifest when there are no downloaded songs.
-      }
-    }
     entries['manifest.json'] = utf8.encode(jsonEncode({
       'format': 'muziinap',
       'version': 1,
@@ -267,7 +261,7 @@ class BackupDialogController extends GetxController {
           fileName: fileName,
           type: FileType.custom,
           allowedExtensions: ['muziinap'],
-          bytes: archiveBytes,
+          bytes: Uint8List.fromList(archiveBytes),
         );
         if (savedPath == null || savedPath.isEmpty) {
           errorMessage.value = 'Backup cancelled; no file was saved.';
