@@ -167,7 +167,10 @@ void main() {
 
     // Scroll through the lazy ListView so off-screen action tiles are built
     // before asserting that the standalone More view exposes them.
-    final listView = find.byType(ListView);
+    final scrollable = find.descendant(
+      of: find.byType(ListView),
+      matching: find.byType(Scrollable),
+    );
     for (final label in [
       'Download',
       'Start radio',
@@ -179,7 +182,7 @@ void main() {
       await tester.scrollUntilVisible(
         find.text(label),
         250,
-        scrollable: listView,
+        scrollable: scrollable,
       );
       expect(find.text(label), findsOneWidget);
     }
