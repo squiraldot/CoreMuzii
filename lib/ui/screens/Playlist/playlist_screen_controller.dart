@@ -587,41 +587,18 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     }
   }
 
-  // Helper method to get the appropriate export directory for each platform
+  // Android export destination for playlist/album exports.
   Future<Directory> _getExportDirectory() async {
-    Directory directory;
     const appFolderName = "MDLovFiMusic";
-
     try {
-      if (Platform.isAndroid) {
-        // Android: use Downloads folder
-        directory = Directory('/storage/emulated/0/Download/$appFolderName');
-      } else if (Platform.isIOS) {
-        // iOS: use Documents directory
-        final docDir = await path_provider.getApplicationDocumentsDirectory();
-        directory = Directory('${docDir.path}/$appFolderName');
-      } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-        // Desktop platforms: use Downloads folder in user's home directory
-        final homeDir = Platform.environment['HOME'] ??
-            Platform.environment['USERPROFILE'] ??
-            '.';
-        directory = Directory('$homeDir/Downloads/$appFolderName');
-      } else {
-        // Fallback: use temporary directory
-        final tempDir = await path_provider.getTemporaryDirectory();
-        directory = Directory('${tempDir.path}/$appFolderName');
-      }
-
-      // Create directory if it doesn't exist
+      final directory = Directory('/storage/emulated/0/Download/$appFolderName');
       if (!await directory.exists()) {
         await directory.create(recursive: true);
       }
-
       return directory;
     } catch (e) {
-      // Fallback to app's documents directory if any error occurs
       final appDocDir = await path_provider.getApplicationDocumentsDirectory();
-      directory = Directory('${appDocDir.path}/$appFolderName');
+      final directory = Directory('${appDocDir.path}/$appFolderName');
       if (!await directory.exists()) {
         await directory.create(recursive: true);
       }
@@ -629,18 +606,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     }
   }
 
-  // Helper method to get a user-friendly location message
-  String _getLocationMessage(String path) {
-    if (Platform.isAndroid) {
-      return "Downloads/MDLovFiMusic";
-    } else if (Platform.isIOS) {
-      return "Files App > MDLovFiMusic";
-    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      return "Downloads/MDLovFiMusic";
-    } else {
-      return path.split('/').last;
-    }
-  }
+  String _getLocationMessage(String path) => "Downloads/MDLovFiMusic";
 
   // Helper method to show progress dialog
   void _showProgressDialog(BuildContext context, String title) {
