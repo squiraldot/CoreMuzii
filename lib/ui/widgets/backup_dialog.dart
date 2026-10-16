@@ -66,55 +66,12 @@ class BackupDialog extends StatelessWidget {
                                             : "letsStrart".tr,
                                 textAlign: TextAlign.center,
                               )),
-                          if (GetPlatform.isAndroid)
-                            Obx(() => (backupDialogController
-                                    .isDownloadedfilesSeclected.isTrue)
-                                ? Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text(
-                                      "androidBackupWarning".tr,
-                                      textAlign: TextAlign.center,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall!
-                                          .copyWith(
-                                              fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                : const SizedBox.shrink())
                         ],
                       )
                     ],
                   )),
                 ),
               ),
-              if (!GetPlatform.isDesktop)
-                Obx(() => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Checkbox(
-                              value: backupDialogController
-                                  .isDownloadedfilesSeclected.value,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5)),
-                              onChanged:
-                                  backupDialogController.scanning.isTrue ||
-                                          backupDialogController
-                                              .backupRunning.isTrue ||
-                                          backupDialogController
-                                              .isbackupCompleted.isTrue
-                                      ? null
-                                      : (bool? value) {
-                                          backupDialogController
-                                              .isDownloadedfilesSeclected
-                                              .value = value!;
-                                        },
-                            ),
-                            Text("includeDownloadedFiles".tr),
-                          ]),
-                    )),
               SizedBox(
                 width: double.maxFinite,
                 child: Align(
@@ -169,7 +126,7 @@ class BackupDialogController extends GetxController {
   final scanning = false.obs;
   final isbackupCompleted = false.obs;
   final backupRunning = false.obs;
-  final isDownloadedfilesSeclected = false.obs;
+  final isDownloadedfilesSeclected = true.obs;
   final errorMessage = ''.obs;
   List<String> filesToExport = [];
   final supportDirPath = Get.find<SettingsScreenController>().supportDirPath;
@@ -219,8 +176,7 @@ class BackupDialogController extends GetxController {
       if (raw is! Map) continue;
       final song = Map<String, dynamic>.from(raw);
       final originalPath = song['url'];
-      if (isDownloadedfilesSeclected.value &&
-          originalPath is String &&
+      if (originalPath is String &&
           originalPath.isNotEmpty) {
         final songFile = File(originalPath);
         if (await songFile.exists()) {
