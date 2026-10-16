@@ -451,23 +451,6 @@ class Body extends StatelessWidget {
                       }),
               ),
             ),
-            if (GetPlatform.isDesktop)
-              Align(
-                alignment: Alignment.topCenter,
-                child: LayoutBuilder(builder: (context, constraints) {
-                  return SizedBox(
-                    width: constraints.maxWidth > 800
-                        ? 800
-                        : constraints.maxWidth - 40,
-                    child: Padding(
-                        padding: const EdgeInsets.only(top: 15.0),
-                        child: FocusScope(
-                          node: Get.find<PlayerController>().searchFocus,
-                          child: const DesktopSearchBar(),
-                        )),
-                  );
-                }),
-              ),
           ],
       );
     } else if (homeScreenController.tabIndex.value == 1) {
