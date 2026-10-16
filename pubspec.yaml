@@ -52,6 +52,11 @@ dependencies:
   palette_generator: ^0.3.3+4
   path: ^1.8.3
   path_provider: ^2.1.1
+  terminate_restart:
+    git:
+      url: https://github.com/anandnet/terminate_restart.git
+      branch: main
+      ref: eb505e07e11d0fe1f5c03993e707c6678428c353
   permission_handler: ^11.0.1
   share_plus: ^10.1.4
   package_info_plus: ^8.0.0
