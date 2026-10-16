@@ -3,7 +3,6 @@ import '/services/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '/ui/screens/Search/search_screen_controller.dart';
 import '/ui/widgets/animated_screen_transition.dart';
 import '../Library/library_combined.dart';
 import '../../widgets/side_nav_bar.dart';
@@ -36,8 +35,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
         floatingActionButton: Obx(
-          () => ((homeScreenController.tabIndex.value == 0 &&
-                          !GetPlatform.isDesktop) ||
+          () => ((homeScreenController.tabIndex.value == 0) ||
                       homeScreenController.tabIndex.value == 2) &&
                   settingsScreenController.isBottomNavBarEnabled.isFalse
               ? Obx(
@@ -322,22 +320,15 @@ class Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final homeScreenController = Get.find<HomeScreenController>();
     final settingsScreenController = Get.find<SettingsScreenController>();
-    final topPadding = GetPlatform.isDesktop
-        ? 12.0
-        : MediaQuery.paddingOf(context).top + (context.isLandscape ? 4.0 : 8.0);
+    final topPadding =
+        MediaQuery.paddingOf(context).top + (context.isLandscape ? 4.0 : 8.0);
 
     if (homeScreenController.tabIndex.value == 0) {
       return Stack(
           children: [
             GestureDetector(
               onTap: () {
-                // for Desktop search bar
-                if (GetPlatform.isDesktop) {
-                  final sscontroller = Get.find<SearchScreenController>();
-                  if (sscontroller.focusNode.hasFocus) {
-                    sscontroller.focusNode.unfocus();
-                  }
-                }
+
               },
               child: Obx(
                 () => homeScreenController.networkError.isTrue
