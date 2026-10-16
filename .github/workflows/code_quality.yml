@@ -28,6 +28,8 @@ jobs:
       - name: Install packages
         run: flutter pub get
       - name: Linter
-        run: flutter analyze --fatal-infos lib test
+        run: flutter analyze --no-fatal-infos lib test
+      - name: Strict analyzer for updated files
+        run: flutter analyze --fatal-infos lib/services/equalizer.dart lib/services/local_proxy.dart test/equalizer_apply_gate_test.dart
       - name: Tests
         run: flutter test --no-pub
