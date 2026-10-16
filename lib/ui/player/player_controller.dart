@@ -1119,8 +1119,6 @@ class PlayerController extends GetxController
     scrollController.dispose();
     gesturePlayerStateAnimationController?.dispose();
     sleepTimer?.cancel();
-    if (GetPlatform.isWindows) {
-    }
     // ensure wakelock disabled when player controller disposed
     try {
       _setWakelock(false);
