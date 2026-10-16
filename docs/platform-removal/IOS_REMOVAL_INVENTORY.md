@@ -7,7 +7,7 @@ These paths were the iOS Flutter runner, Xcode/CocoaPods project, iOS launch/app
 
 The iOS runner entry point `ios/Runner/AppDelegate.swift` only registers Flutter plugins and delegates to FlutterAppDelegate. `ios/Podfile` configures CocoaPods and iOS plugin builds. `ios/Runner/Info.plist` contains iOS bundle, orientation, launch, transport and background-audio settings. Xcode project/workspace, Flutter xcconfigs, storyboards, asset catalogs, bridging header, entitlements, and RunnerTests are iOS build/test inputs.
 
-Shared Dart/plugin packages are deliberately NOT listed here: package dependencies may have Android implementations and must not be removed just because they also support iOS. In particular, `app_links` is used by shared Dart code and `just_audio_media_kit` is used in desktop-specific shared code; neither is an iOS-only source file.
+Shared Dart/plugin packages are deliberately NOT listed here: package dependencies may have Android implementations and must not be removed just because they also support iOS. In particular, `app_links` is used by shared Dart code and is not an iOS-only dependency.
 
 ## Exact paths audited for removal
 
