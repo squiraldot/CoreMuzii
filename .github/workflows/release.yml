@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-android:
@@ -96,6 +96,8 @@ jobs:
     name: Create GitHub Release
     needs: [package-android]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - uses: actions/checkout@v4
