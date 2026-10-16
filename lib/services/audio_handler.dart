@@ -23,7 +23,6 @@ import '/services/music_service.dart';
 import '/models/hm_streaming_data.dart';
 import '/models/equalizer.dart';
 import '/ui/player/player_controller.dart';
-import '/services/local_proxy.dart';
 import '../ui/screens/Home/home_screen_controller.dart';
 import '/services/background_task.dart';
 import '/services/permission_service.dart';
