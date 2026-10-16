@@ -108,7 +108,6 @@ class SearchScreenController extends GetxController with ProcessLink {
 
   @override
   void dispose() {
-    focusNode.dispose();
     textInputController.dispose();
     queryBox.close();
     super.dispose();
