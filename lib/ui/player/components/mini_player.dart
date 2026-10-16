@@ -312,13 +312,13 @@ class MiniPlayer extends StatelessWidget {
                                           Get.dialog(const LyricsDialog())
                                               .whenComplete(() {
                                             playerController
-                                                    .isDesktopLyricsDialogOpen =
+                                                    .isLyricsDialogOpen =
                                                 false;
                                             playerController
                                                 .showLyricsflag.value = false;
                                           });
                                           playerController
-                                              .isDesktopLyricsDialogOpen = true;
+                                              .isLyricsDialogOpen = true;
                                         },
                                         icon: Icon(Icons.lyrics_outlined,
                                             color: Theme.of(context)
