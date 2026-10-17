@@ -5,7 +5,7 @@ This document records current project architecture and development guidance for 
 ## Project Context
 
 - **Repository:** `squiraldot/CoreMuzii`
-- **App:** MuziiNap / MuziiNap
+- **App:** MuziiNap
 - **Package:** `mdlovfimusic`
 - **Application ID:** `com.merrmist.mdlovfimusic`
 - **Platform:** Android-only Flutter application
