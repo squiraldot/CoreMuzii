@@ -15,6 +15,12 @@ jobs:
   build-android:
     name: Build Android APKs
     runs-on: ubuntu-latest
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/music-release.jks
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -25,6 +31,20 @@ jobs:
         with:
           channel: 'stable'
           flutter-version: '3.47.5'
+
+      - name: Restore and validate Android release keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "Missing ANDROID_KEYSTORE_BASE64 secret"; exit 1; }
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "Missing ANDROID_KEYSTORE_PASSWORD secret"; exit 1; }
+          test -n "$ANDROID_KEY_ALIAS" || { echo "Missing ANDROID_KEY_ALIAS secret"; exit 1; }
+          test -n "$ANDROID_KEY_PASSWORD" || { echo "Missing ANDROID_KEY_PASSWORD secret"; exit 1; }
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          chmod 600 "$ANDROID_KEYSTORE_PATH"
+          test -s "$ANDROID_KEYSTORE_PATH"
+          keytool -list -keystore "$ANDROID_KEYSTORE_PATH" -alias "$ANDROID_KEY_ALIAS" -storepass "$ANDROID_KEYSTORE_PASSWORD" >/dev/null
+          echo "Release keystore restored and alias validated."
 
       - name: Generate Localization
         run: dart localization/generator.dart
@@ -41,14 +61,24 @@ jobs:
       - name: Build Architecture Specific APKs
         run: flutter build apk --target-platform android-arm,android-arm64,android-x64 --split-per-abi --release
 
-      - name: Verify generated APKs
+      - name: Verify generated APKs and release signatures
         shell: bash
         run: |
           set -euo pipefail
-          test -s build/app/outputs/flutter-apk/app-release.apk
-          test -s build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-          test -s build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-          test -s build/app/outputs/flutter-apk/app-x86_64-release.apk
+          APK_DIR="build/app/outputs/flutter-apk"
+          test -s "$APK_DIR/app-release.apk"
+          test -s "$APK_DIR/app-armeabi-v7a-release.apk"
+          test -s "$APK_DIR/app-arm64-v8a-release.apk"
+          test -s "$APK_DIR/app-x86_64-release.apk"
+
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK_ROOT"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          for apk in "$APK_DIR"/*.apk; do
+            "$APKSIGNER" verify --verbose "$apk"
+          done
+          echo "All APKs exist and pass Android signature verification."
 
       - uses: actions/upload-artifact@v4
         with:
@@ -73,7 +103,7 @@ jobs:
           mkdir -p release-assets
           VERSION=${GITHUB_REF_NAME#v}
           if [[ "${GITHUB_REF_NAME}" != v* ]]; then VERSION="latest"; fi
-          find downloaded-apks -type f -name "*.apk" -exec cp {} release-assets/ \;
+          find downloaded-apks -type f -name "*.apk" -exec cp {} release-assets/ \\;
           cd release-assets
           if [ -f "app-armeabi-v7a-release.apk" ]; then mv app-armeabi-v7a-release.apk "mdlovfimusic-${VERSION}-armeabi-v7a.apk"; fi
           if [ -f "app-arm64-v8a-release.apk" ]; then mv app-arm64-v8a-release.apk "mdlovfimusic-${VERSION}-arm64-v8a.apk"; fi
