@@ -204,7 +204,7 @@ class AdvancedDspPanel extends StatelessWidget {
           ],
         ),
         _section(
-          title: 'MDLovFi SoundFX',
+          title: 'MuziiNap SoundFX',
           enabled: enabled && config.enabled,
           value: config.soundFxEnabled,
           onEnabled: (value) =>
