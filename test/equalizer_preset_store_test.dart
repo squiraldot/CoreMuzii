@@ -11,7 +11,7 @@ void main() {
   late EqualizerPresetStore store;
 
   setUpAll(() async {
-    tempDirectory = await Directory.systemTemp.createTemp('mdlovfi-eq-test-');
+    tempDirectory = await Directory.systemTemp.createTemp('muziinap-eq-test-');
     Hive.init(tempDirectory.path);
   });
 
@@ -68,6 +68,7 @@ void main() {
     final duplicate = await store.duplicate(builtIn);
 
     expect(duplicate.isBuiltIn, isFalse);
+    expect(duplicate.author, 'User');
     expect(duplicate.id, isNot(builtIn.id));
     expect(duplicate.config, equals(builtIn.config));
   });
