@@ -52,10 +52,7 @@ Future<void> main() async {
   if (updateCheckFlag) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final context = Get.context;
-      if (context == null ||
-          Hive.box(appPrefsBoxName).get('newVersionVisibility') == false) {
-        return;
-      }
+      if (context == null) return;
       UpdateChecker.check().then((result) {
         final release = result.update;
         final currentContext = Get.context;
