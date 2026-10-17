@@ -18,6 +18,7 @@ import '../../../models/album.dart' show Album;
 import '../../../models/media_Item_builder.dart';
 import '../../../models/playlist.dart';
 import '../../../utils/playlist_helpers.dart';
+import '../../../utils/export_file_helper.dart';
 import '../../../services/music_service.dart';
 import '../../../services/piped_service.dart';
 import '../Home/home_screen_controller.dart';
@@ -370,18 +371,8 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       final sanitizedName =
           playlist.value.title.replaceAll(RegExp(r'[^\w\s]+'), '_');
 
-      // Find available filename with incremental suffix if needed
-      String filename = "$sanitizedName.json";
-      String filePath = "${exportDir.path}/$filename";
-      File file = File(filePath);
-
-      int counter = 1;
-      while (await file.exists()) {
-        filename = "${sanitizedName}_$counter.json";
-        filePath = "${exportDir.path}/$filename";
-        file = File(filePath);
-        counter++;
-      }
+      // Avoid overwriting an existing export.
+      final file = await findAvailableExportFile(exportDir, sanitizedName, 'json');
 
       exportProgress.value = 0.7;
 
@@ -461,18 +452,8 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       final sanitizedName =
           playlist.value.title.replaceAll(RegExp(r'[^\w\s]+'), '_');
 
-      // Find available filename with incremental suffix if needed
-      String filename = "$sanitizedName.csv";
-      String filePath = "${exportDir.path}/$filename";
-      File file = File(filePath);
-
-      int counter = 1;
-      while (await file.exists()) {
-        filename = "${sanitizedName}_$counter.csv";
-        filePath = "${exportDir.path}/$filename";
-        file = File(filePath);
-        counter++;
-      }
+      // Avoid overwriting an existing export.
+      final file = await findAvailableExportFile(exportDir, sanitizedName, 'csv');
 
       exportProgress.value = 0.7;
 
