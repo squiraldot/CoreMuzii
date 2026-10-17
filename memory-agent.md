@@ -25,7 +25,7 @@ This document records current project architecture and development guidance for 
 ## Current Build and CI
 
 - `.github/workflows/code_quality.yml`: analyzer and Flutter test suite.
-- `.github/workflows/mdlovfi-apk.yml`: Android APK build.
+- `.github/workflows/muziinap-apk.yml`: Android APK build.
 - `.github/workflows/release.yml`: Android release APK packaging and verification.
 - Android build outputs belong under generated build directories and must not be committed.
 

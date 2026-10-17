@@ -109,7 +109,7 @@ flutter test
 ## CI/CD
 
 - Code quality checks run through `.github/workflows/code_quality.yml`.
-- Android APK builds run through `.github/workflows/mdlovfi-apk.yml`.
+- Android APK builds run through `.github/workflows/muziinap-apk.yml`.
 - Android release APK packaging and checksum verification run through `.github/workflows/release.yml`.
 - Release publishing is tag-triggered; do not create a release tag or publish a release without explicit authorization.
 
