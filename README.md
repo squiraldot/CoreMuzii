@@ -1,13 +1,13 @@
 <div align="center">
 
-# 🚀 **This repository is the continued version of MDLovFi Music.**
-This app is a fork of the original [MDLovFi Music app by anandnet](https://github.com/anandnet/MDLovFi-Music), with additional features and improvements actively added and maintained by **Merrmist**.
+# 🚀 **This repository is the continued version of MuziiNap.**
+This app is a fork of the original [MuziiNap app by anandnet](https://github.com/anandnet/MDLovFi-Music), with additional features and improvements actively added and maintained by **Merrmist**.
 
 </div>
 
 <img src="https://github.com/Merrmist/MDLovFi-Music/raw/main/images/cover.png" width="1200" >
 
-# MDLovFi Music
+# MuziiNap
 
 An **Android-only** music streaming app built with Flutter. The app streams music from YouTube/YouTube Music without requiring login or showing advertisements.
 
@@ -75,7 +75,7 @@ Download the Android APK from the [GitHub Releases page](https://github.com/squi
 
 # License
 ```
-MDLovFi Music is a free software licensed under GPL v3.0 with following condition.
+MuziiNap is a free software licensed under GPL v3.0 with following condition.
 
 - Copied/Modified version of this software can not be used for 'non-free' and profit purposes.
 - You can not publish copied/modified version of this app on closed source app repository
@@ -87,7 +87,7 @@ MDLovFi Music is a free software licensed under GPL v3.0 with following conditio
 This project has been created while learning & learning is the main intention.
 This project is not sponsored or affiliated with, funded, authorized, endorsed by any content provider.
 Any Song, content, trademark used in this app are intellectual property of their respective owners.
-MDLovFi music is not responsible for any infringement of copyright or other intellectual property rights that may result
+MuziiNap music is not responsible for any infringement of copyright or other intellectual property rights that may result
 from the use of the songs and other content available through this app.
 
 This Software is released "as-is", without any warranty, responsibility or liability.

@@ -81,7 +81,7 @@ class MyApp extends StatelessWidget {
     Get.put(AppLinksController());
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     return GetMaterialApp(
-        title: 'MDLovFi Music',
+        title: 'MuziiNap',
         home: const Home(),
         debugShowCheckedModeBanner: false,
         translations: Languages(),

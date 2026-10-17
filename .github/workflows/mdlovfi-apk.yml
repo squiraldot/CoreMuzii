@@ -1,4 +1,4 @@
-name: MDLovFi Android APK
+name: MuziiNap Android APK
 
 on:
   push:
@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   build-apk:
-    name: Build MDLovFi release APK
+    name: Build MuziiNap release APK
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
@@ -101,10 +101,10 @@ jobs:
           echo "APK passed Android signature verification."
           ls -lh "$APK"
 
-      - name: Upload MDLovFi APK
+      - name: Upload MuziiNap APK
         uses: actions/upload-artifact@v7
         with:
-          name: mdlovfi-release-apk
+          name: muziinap-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 14

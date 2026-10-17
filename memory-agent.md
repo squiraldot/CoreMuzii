@@ -1,11 +1,11 @@
 # Project Memory / Agent Database
 
-This document records current project architecture and development guidance for CoreMuzii.
+This document records current project architecture and development guidance for MuziiNap.
 
 ## Project Context
 
 - **Repository:** `squiraldot/CoreMuzii`
-- **App:** CoreMuzii / MDLovFi Music
+- **App:** MuziiNap / MuziiNap
 - **Package:** `mdlovfimusic`
 - **Application ID:** `com.merrmist.mdlovfimusic`
 - **Platform:** Android-only Flutter application

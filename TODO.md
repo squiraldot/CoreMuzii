@@ -55,7 +55,7 @@
 ## Verification notes
 
 - Previous cleanup baseline: [Code Quality](https://github.com/squiraldot/CoreMuzii/actions/runs/39014590929) — success, 61 tests passed.
-- Previous Android APK build/signing: [MDLovFi APK workflow](https://github.com/squiraldot/CoreMuzii/actions/runs/39014590927) — success.
+- Previous Android APK build/signing: [MuziiNap APK workflow](https://github.com/squiraldot/CoreMuzii/actions/runs/39014590927) — success.
 - Previous release APK packaging/checksums: [Android Release workflow](https://github.com/squiraldot/CoreMuzii/actions/runs/39014590930) — success. The GitHub Release publication job was skipped as expected for a branch-push run without a version tag.
 - Device smoke test: user confirmed installation, launch, and app functionality on their Android phone.
 - Latest TODO-audit CI on commit `b8597b0`: [Code Quality](https://github.com/squiraldot/CoreMuzii/actions/runs/39020656681) and [Android APK](https://github.com/squiraldot/CoreMuzii/actions/runs/39020656680) both succeeded.

@@ -1,8 +1,8 @@
-# Copilot Instructions for MDLovFi Music
+# Copilot Instructions for MuziiNap
 
 ## Project Overview
 
-MDLovFi Music is an **Android-only** music streaming application built with Flutter. It streams music from YouTube/YouTube Music without requiring app login or showing advertisements. Keep changes compatible with supported Android phones, tablets, and foldables.
+MuziiNap is an **Android-only** music streaming application built with Flutter. It streams music from YouTube/YouTube Music without requiring app login or showing advertisements. Keep changes compatible with supported Android phones, tablets, and foldables.
 
 ## Technology Stack
 

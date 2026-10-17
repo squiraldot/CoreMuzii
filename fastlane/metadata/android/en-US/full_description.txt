@@ -21,4 +21,4 @@ Features:
 - No Login required
 - Piped playlist integration
 
-Project Website & Source Code: https://github.com/North-Abyss/Harmony-Music
+MuziiNap Source Code: https://github.com/squiraldot/CoreMuzii
