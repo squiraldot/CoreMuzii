@@ -103,7 +103,7 @@ jobs:
           mkdir -p release-assets
           VERSION=${GITHUB_REF_NAME#v}
           if [[ "${GITHUB_REF_NAME}" != v* ]]; then VERSION="latest"; fi
-          find downloaded-apks -type f -name "*.apk" -exec cp {} release-assets/ \\;
+          find downloaded-apks -type f -name "*.apk" -exec cp {} release-assets/ \;
           cd release-assets
           if [ -f "app-armeabi-v7a-release.apk" ]; then mv app-armeabi-v7a-release.apk "mdlovfimusic-${VERSION}-armeabi-v7a.apk"; fi
           if [ -f "app-arm64-v8a-release.apk" ]; then mv app-arm64-v8a-release.apk "mdlovfimusic-${VERSION}-arm64-v8a.apk"; fi
