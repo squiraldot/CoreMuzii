@@ -32,6 +32,30 @@ class VersionCheckResult {
 class UpdateChecker {
   UpdateChecker._();
 
+  static AppRelease? selectLatestStableRelease(List<dynamic> releases) {
+    AppRelease? highest;
+    for (final item in releases) {
+      if (item is! Map<String, dynamic> ||
+          item['draft'] == true ||
+          item['prerelease'] == true) {
+        continue;
+      }
+      final tag = item['tag_name'];
+      if (tag is! String) continue;
+      final candidate = SemanticVersion.tryParse(tag);
+      if (candidate == null || candidate.isPrerelease) continue;
+      if (highest == null ||
+          candidate.compareTo(SemanticVersion.tryParse(highest.version)!) > 0) {
+        final body = item['body'];
+        highest = AppRelease(
+          version: candidate.toString(),
+          notes: body is String ? body.trim() : '',
+        );
+      }
+    }
+    return highest;
+  }
+
   static Future<VersionCheckResult>? _inFlight;
   
   static Future<VersionCheckResult> check({http.Client? client}) {
@@ -64,31 +88,12 @@ class UpdateChecker {
       final decoded = jsonDecode(response.body);
       if (decoded is! List) throw const FormatException('Invalid releases JSON.');
 
-      AppRelease? highest;
-      for (final item in decoded) {
-        if (item is! Map<String, dynamic> ||
-            item['draft'] == true ||
-            item['prerelease'] == true) {
-          continue;
-        }
-        final tag = item['tag_name'];
-        if (tag is! String) continue;
-        final candidate = _SemanticVersion.tryParse(tag);
-        if (candidate == null || candidate.isPrerelease) continue;
-        if (highest == null ||
-            candidate.compareTo(_SemanticVersion.tryParse(highest.version)!) > 0) {
-          final body = item['body'];
-          highest = AppRelease(
-            version: candidate.toString(),
-            notes: body is String ? body.trim() : '',
-          );
-        }
-      }
+      final highest = selectLatestStableRelease(decoded);
 
-      final installedVersion = _SemanticVersion.tryParse(installed);
+      final installedVersion = SemanticVersion.tryParse(installed);
       final latestVersion = highest == null
           ? null
-          : _SemanticVersion.tryParse(highest.version);
+          : SemanticVersion.tryParse(highest.version);
       return VersionCheckResult(
         installedVersion: installed,
         update: installedVersion != null &&
@@ -175,8 +180,8 @@ class UpdateChecker {
   }
 }
 
-class _SemanticVersion implements Comparable<_SemanticVersion> {
-  const _SemanticVersion(this.major, this.minor, this.patch, this.prerelease);
+class SemanticVersion implements Comparable<SemanticVersion> {
+  const SemanticVersion(this.major, this.minor, this.patch, this.prerelease);
 
   final int major;
   final int minor;
@@ -185,7 +190,7 @@ class _SemanticVersion implements Comparable<_SemanticVersion> {
 
   bool get isPrerelease => prerelease.isNotEmpty;
 
-  static _SemanticVersion? tryParse(String input) {
+  static SemanticVersion? tryParse(String input) {
     final normalized = input.trim().replaceFirst(RegExp(r'^[vV]'), '');
     final match = RegExp(
       r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)'
@@ -199,7 +204,7 @@ class _SemanticVersion implements Comparable<_SemanticVersion> {
             part.startsWith('0')))) {
       return null;
     }
-    return _SemanticVersion(
+    return SemanticVersion(
       int.parse(match[1]!),
       int.parse(match[2]!),
       int.parse(match[3]!),
@@ -208,7 +213,7 @@ class _SemanticVersion implements Comparable<_SemanticVersion> {
   }
 
   @override
-  int compareTo(_SemanticVersion other) {
+  int compareTo(SemanticVersion other) {
     final core = major.compareTo(other.major);
     if (core != 0) return core;
     final minorResult = minor.compareTo(other.minor);
