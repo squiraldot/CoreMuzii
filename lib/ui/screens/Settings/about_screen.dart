@@ -135,11 +135,22 @@ class AboutScreen extends StatelessWidget {
             const SizedBox(height: 24),
             _sectionTitle(theme, 'App'),
             const SizedBox(height: 6),
-            _AboutLinkTile(
-              icon: Icons.system_update_alt_rounded,
-              title: 'In-app Update',
-              subtitle: 'Check for the latest version and update the app.',
-              onTap: () => _checkForUpdate(context),
+            Obx(
+              () => _AboutLinkTile(
+                icon: Icons.system_update_alt_rounded,
+                title: 'In-app Update',
+                subtitle: _isCheckingUpdate.value
+                    ? 'Checking for updates…'
+                    : 'Check for the latest version and update the app.',
+                onTap: _isCheckingUpdate.value ? () {} : () => _checkForUpdate(context),
+                trailing: _isCheckingUpdate.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : null,
+              ),
             ),
             const SizedBox(height: 18),
             const Divider(color: _divider),
@@ -215,12 +226,14 @@ class _AboutLinkTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.trailing,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -238,7 +251,7 @@ class _AboutLinkTile extends StatelessWidget {
         subtitle,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFF9B9B9B)),
       ),
-      trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF9B9B9B)),
+      trailing: trailing ?? const Icon(Icons.chevron_right_rounded, color: Color(0xFF9B9B9B)),
       onTap: onTap,
     );
   }
