@@ -1,11 +1,10 @@
 <div align="center">
 
-# 🚀 **This repository is the continued version of MuziiNap.**
-This app is a fork of the original [MuziiNap app by anandnet](https://github.com/anandnet/MDLovFi-Music), with additional features and improvements actively added and maintained by **Merrmist**.
+# 🚀 **MuziiNap — Android Music App**
+This app began as a fork of the original open-source music app by [anandnet](https://github.com/anandnet/MDLovFi-Music), with additional features and improvements actively maintained by **Merrmist**.
 
 </div>
 
-<img src="https://github.com/Merrmist/MDLovFi-Music/raw/main/images/cover.png" width="1200" >
 
 # MuziiNap
 
@@ -87,7 +86,7 @@ MuziiNap is a free software licensed under GPL v3.0 with following condition.
 This project has been created while learning & learning is the main intention.
 This project is not sponsored or affiliated with, funded, authorized, endorsed by any content provider.
 Any Song, content, trademark used in this app are intellectual property of their respective owners.
-MuziiNap music is not responsible for any infringement of copyright or other intellectual property rights that may result
+MuziiNap is not responsible for any infringement of copyright or other intellectual property rights that may result
 from the use of the songs and other content available through this app.
 
 This Software is released "as-is", without any warranty, responsibility or liability.
