@@ -48,44 +48,6 @@ class SettingsScreen extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 200, top: 20),
             children: [
-              Obx(
-                () => settingsController.isNewVersionAvailable.value
-                    ? Padding(
-                        padding: const EdgeInsets.only(
-                            top: 8.0, right: 10, bottom: 8.0),
-                        child: Material(
-                          type: MaterialType.transparency,
-                          child: ListTile(
-                            onTap: () {
-                              launchUrl(
-                                Uri.parse(
-                                  'https://github.com/Merrmist/MDLovFi-Music/releases/latest',
-                                ),
-                                mode: LaunchMode.externalApplication,
-                              );
-                            },
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            tileColor: Theme.of(context).colorScheme.secondary,
-                            contentPadding:
-                                const EdgeInsets.only(left: 8, right: 10),
-                            leading:
-                                const CircleAvatar(child: Icon(Icons.download)),
-                            title: Text("newVersionAvailable".tr),
-                            visualDensity: const VisualDensity(horizontal: -2),
-                            subtitle: Text(
-                              "goToDownloadPage".tr,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium!
-                                  .copyWith(
-                                      color: Colors.white70, fontSize: 13),
-                            ),
-                          ),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-              ),
               Offstage(
                 offstage: true,
                 child: CustomExpansionTile(
