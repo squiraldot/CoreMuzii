@@ -32,7 +32,17 @@ class VersionCheckResult {
 class UpdateChecker {
   UpdateChecker._();
 
-  static Future<VersionCheckResult> check({http.Client? client}) async {
+  static Future<VersionCheckResult>? _inFlight;
+  
+  static Future<VersionCheckResult> check({http.Client? client}) {
+    final existing = _inFlight;
+    if (existing != null) return existing;
+    final future = _performCheck(client: client);
+    _inFlight = future;
+    return future.whenComplete(() => _inFlight = null);
+  }
+
+  static Future<VersionCheckResult> _performCheck({http.Client? client}) async {
     final packageInfo = await PackageInfo.fromPlatform();
     final installed = packageInfo.version;
     final ownsClient = client == null;
