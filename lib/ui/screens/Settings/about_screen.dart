@@ -127,7 +127,7 @@ class AboutScreen extends StatelessWidget {
             _sectionTitle(theme, 'About MuziiNap'),
             const SizedBox(height: 10),
             Text(
-              'MuziiNap is a music streaming app built on the MDLovFi Music project. '
+              'MuziiNap is an Android music streaming app. '
               'It brings music discovery, playback, playlists, a personal library, '
               'YouTube integration and audio customization together in one place.',
               style: theme.textTheme.bodyMedium?.copyWith(color: _muted, height: 1.5),

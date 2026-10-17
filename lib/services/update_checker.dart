@@ -78,7 +78,7 @@ class UpdateChecker {
             headers: const {
               'Accept': 'application/vnd.github+json',
               'X-GitHub-Api-Version': '2022-11-28',
-              'User-Agent': 'CoreMuzii-Version-Checker',
+              'User-Agent': 'MuziiNap-Version-Checker',
             },
           )
           .timeout(const Duration(seconds: 7));

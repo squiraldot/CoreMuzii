@@ -32,7 +32,7 @@ class Equalizer {
     }
 
     /**
-     * Applies the complete MDLovFi DSP chain to one Android audio session.
+     * Applies the complete MuziiNap DSP chain to one Android audio session.
      *
      * API 28+ provides the native chain:
      * input gain -> PreEQ -> MBC -> PostEQ -> Limiter.

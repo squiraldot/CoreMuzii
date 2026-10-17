@@ -85,7 +85,7 @@ class CreditsScreen extends StatelessWidget {
               title: 'Licenses',
               onTap: () => showLicensePage(
                 context: context,
-                applicationName: 'MDLovFi Music',
+                applicationName: 'MuziiNap',
               ),
             ),
             const Divider(height: 1, color: _divider),
