@@ -573,7 +573,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
   // Android export destination for playlist/album exports.
   Future<Directory> _getExportDirectory() async {
-    const appFolderName = "MDLovFiMusic";
+    const appFolderName = "MuziiNap";
     try {
       final directory = Directory('/storage/emulated/0/Download/$appFolderName');
       if (!await directory.exists()) {
@@ -591,7 +591,7 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
   }
 
   String _getLocationMessage(String path) => path.contains("/Download/")
-      ? "Downloads/MDLovFiMusic"
+      ? "Downloads/MuziiNap"
       : path.split(Platform.pathSeparator).last;
 
   // Helper method to show progress dialog
