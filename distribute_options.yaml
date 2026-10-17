@@ -1,20 +1,8 @@
 output: dist/
 releases:
-  - name: dev
+  - name: android
     jobs:
-      - name: release-dev-linux-deb
+      - name: release-android-apk
         package:
-          platform: linux
-          target: deb
-      - name: release-dev-linux-rpm
-        package:
-          platform: linux
-          target: rpm
-      - name: release-dev-linux-appimage
-        package:
-          platform: linux
-          target: appimage
-      - name: release-dev-windows-exe
-        package:
-          platform: windows
-          target: exe
+          platform: android
+          target: apk
