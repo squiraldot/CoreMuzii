@@ -68,7 +68,7 @@ graph TD
 ```
 
 # Download
-Download the Android APK from the [GitHub Releases page](https://github.com/Merrmist/MDLovFi-Music/releases/latest). Use the same distribution source for future updates so the app's signing identity remains consistent.
+Download the Android APK from the [GitHub Releases page](https://github.com/squiraldot/CoreMuzii/releases/latest). Use the same distribution source for future updates so the app's signing identity remains consistent.
 
 # Troubleshoot
 * If notification controls do not work or playback stops due to system optimization, enable the ignore-battery-optimization option in settings where available.
@@ -112,6 +112,3 @@ Synced lyrics provided by <a href='https://lrclib.net'>LRCLIB</a><br/>
 * youtube_explode_dart - third-party package for song URLs
 * hive / hive_flutter - local database and caching
 * flutter_zxing and camera - QR/barcode scanning
-
-## GitHub Write Access Test
-This line was added to verify that the connected GitHub integration can write to the CoreMuzii repository.
