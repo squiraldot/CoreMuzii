@@ -6,8 +6,8 @@ This document records current project architecture and development guidance for 
 
 - **Repository:** `squiraldot/CoreMuzii`
 - **App:** MuziiNap
-- **Package:** `mdlovfimusic`
-- **Application ID:** `com.merrmist.mdlovfimusic`
+- **Flutter package identifier:** `mdlovfimusic` (legacy technical identifier; retain to avoid breaking imports)
+- **Android application ID:** `com.merrmist.mdlovfimusic` (legacy install/signing identity; retain for update compatibility)
 - **Platform:** Android-only Flutter application
 - **Language:** Dart / Flutter
 - **Dart SDK constraint:** `>=3.1.5 <4.0.0`
