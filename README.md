@@ -1,7 +1,7 @@
 <div align="center">
 
 # 🚀 **MuziiNap — Android Music App**
-This app began as a fork of the original open-source music app by [anandnet](https://github.com/anandnet/MDLovFi-Music), with additional features and improvements actively maintained by **Merrmist**.
+MuziiNap is an Android music app built on an open-source music-app foundation, with additional features and improvements maintained for the MuziiNap project.
 
 </div>
 
