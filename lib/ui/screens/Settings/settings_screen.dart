@@ -3,7 +3,6 @@ import '../../../services/constant.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:mdlovfimusic/utils/lang_mapping.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../widgets/common_dialog_widget.dart';
 import '../../widgets/cust_switch.dart';
