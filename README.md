@@ -6,7 +6,7 @@ This app began as a fork of the original open-source music app by [anandnet](htt
 </div>
 
 
-# MuziiNap
+## About MuziiNap
 
 An **Android-only** music streaming app built with Flutter. The app streams music from YouTube/YouTube Music without requiring login or showing advertisements.
 

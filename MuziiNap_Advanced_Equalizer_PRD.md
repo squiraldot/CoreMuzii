@@ -1,4 +1,4 @@
-# MDLovFi Advanced Equalizer — PRD
+# MuziiNap Advanced Equalizer — PRD
 
 **Repository:** `squiraldot/CoreMuzii`  
 **Feature:** Advanced in-app Equalizer, Presets, Import/Export, AutoEQ and Telegram ecosystem  
@@ -9,7 +9,7 @@
 
 ## 1. Product Vision
 
-Build a professional, self-contained audio EQ inside MDLovFi instead of relying on the Android/system Equalizer panel.
+Build a professional, self-contained audio EQ inside MuziiNap instead of relying on the Android/system Equalizer panel.
 
 The final system should provide:
 
@@ -139,7 +139,7 @@ Research references that may be studied for architecture:
 - AutoEQ
 - Equalizer314
 
-Do not copy GPL implementation code into MDLovFi without an explicit licensing review. Prefer independent implementation based on documented algorithms/APIs.
+Do not copy GPL implementation code into MuziiNap without an explicit licensing review. Prefer independent implementation based on documented algorithms/APIs.
 
 ---
 
@@ -205,7 +205,7 @@ The UI must never own the storage schema.
 | Phase 2 | ✅ Done | Built-in + custom presets, Hive persistence, preset management |
 | Phase 3 | ✅ Done | Portable `.mdleq` import/export, validation, preview |
 | Phase 4 | ✅ Done | Parametric EQ with 7 filter types, up to 12 bands, lifecycle/playback fixes |
-| Phase 5 | ⏳ Next | Advanced DSP + MDLovFi SoundFX / DSFX-style engine |
+| Phase 5 | ⏳ Next | Advanced DSP + MuziiNap SoundFX / DSFX-style engine |
 | Phase 6 | ⏳ Planned | Realtime spectrum analyzer + EQ curve visualization |
 | Phase 7 | ⏳ Planned | AutoEQ / headphone & IEM profiles |
 | Phase 8 | ⏳ Planned | Telegram preset sharing + optional community ecosystem |
@@ -308,11 +308,11 @@ Known refinement to address when touching the UI later:
 
 ---
 
-# Phase 5 — Advanced DSP + MDLovFi SoundFX
+# Phase 5 — Advanced DSP + MuziiNap SoundFX
 
 ### Status: ⏳ Next
 
-This phase is the main remaining DSP-engine phase. It should be implemented incrementally and safely. **Do not claim to reproduce any proprietary third-party DSFX implementation.** Build an independent MDLovFi DSP engine inspired by publicly described sound-enhancement controls.
+This phase is the main remaining DSP-engine phase. It should be implemented incrementally and safely. **Do not claim to reproduce any proprietary third-party DSFX implementation.** Build an independent MuziiNap DSP engine inspired by publicly described sound-enhancement controls.
 
 ## Phase 5A — Core Advanced DSP
 
@@ -388,7 +388,7 @@ Optional. Do not ship weak or artificial-sounding processing just to increase fe
 
 ---
 
-## Phase 5B — MDLovFi SoundFX / DSFX-style Engine
+## Phase 5B — MuziiNap SoundFX / DSFX-style Engine
 
 Build a dedicated sound-enhancement layer on top of the stable EQ/DSP pipeline.
 
@@ -418,7 +418,7 @@ Headphone / IEM profile
 
 ### Important distinction
 
-The original/proprietary implementation referred to publicly as **DSFX** is not being copied. MDLovFi will implement its own independent DSP chain and should brand it as **MDLovFi SoundFX** (or **MDLovFi DSFX-style**) unless a licensing/specification review establishes otherwise.
+The original/proprietary implementation referred to publicly as **DSFX** is not being copied. MuziiNap will implement its own independent DSP chain and should brand it as **MuziiNap SoundFX** (or **MuziiNap DSFX-style**) unless a licensing/specification review establishes otherwise.
 
 ---
 
@@ -558,7 +558,7 @@ Telegram / any compatible app
 
 Requirements:
 
-- share exported `.mdleq` directly from MDLovFi
+- share exported `.mdleq` directly from MuziiNap
 - preserve filename and metadata
 - handle share cancellation/failure safely
 
@@ -677,7 +677,7 @@ Do not assume one permanent player instance.
 Suggested structure:
 
 ```text
-MDLovFi Equalizer
+MuziiNap Equalizer
 
 [ ON / OFF ]
 
@@ -710,7 +710,7 @@ Presets
 [Save] [Import] [Export] [Share]
 ```
 
-Design should follow MDLovFi's existing UI language.
+Design should follow MuziiNap's existing UI language.
 
 Do not make drag gestures the only way to edit bands; provide sliders/numeric controls for accessibility and precision.
 
@@ -946,7 +946,7 @@ Exact commits may differ after repository audit.
 # 16. Final Product Architecture
 
 ```text
-                    MDLovFi EQ
+                    MuziiNap EQ
                         │
           ┌─────────────┴─────────────┐
           │                           │
