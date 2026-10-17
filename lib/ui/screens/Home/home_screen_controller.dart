@@ -24,7 +24,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   final quickPicks = QuickPicks([]).obs;
   final middleContent = [].obs;
   final fixedContent = [].obs;
-  final showVersionDialog = true.obs;
   //isHomeScreenOnTop var only useful if bottom nav enabled
   final isHomeSreenOnTop = true.obs;
   final List<ScrollController> contentScrollControllers = [];
@@ -625,10 +624,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     // Pull-to-refresh and the Home icon long-press still refresh explicitly.
   }
 
-  void onChangeVersionVisibility(bool val) {
-    Hive.box(appPrefsBoxName).put("newVersionVisibility", !val);
-    showVersionDialog.value = !val;
-  }
 
   ///This is used to minimized bottom navigation bar by setting [isHomeSreenOnTop.value] to `true` and set mini player height.
   ///
