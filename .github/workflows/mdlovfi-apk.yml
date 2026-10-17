@@ -75,6 +75,9 @@ jobs:
       - name: Generate localization
         run: dart localization/generator.dart
 
+      - name: Enable startup update check for GitHub APK
+        run: echo "const updateCheckFlag = true;" > lib/utils/update_check_flag_file.dart
+
       - name: Get dependencies
         run: flutter pub get
 
