@@ -165,8 +165,8 @@ class EqualizerBuiltInPresets {
     return EqualizerPreset(
       id: 'builtin-$id',
       name: name,
-      author: 'MDLovFi',
-      description: 'Curated MDLovFi ${name.toLowerCase()} profile.',
+      author: 'MuziiNap',
+      description: 'Curated MuziiNap ${name.toLowerCase()} profile.',
       createdAt: createdAt,
       updatedAt: createdAt,
       isBuiltIn: true,
