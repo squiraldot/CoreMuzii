@@ -76,7 +76,7 @@ class UpdateChecker {
         final candidate = _SemanticVersion.tryParse(tag);
         if (candidate == null || candidate.isPrerelease) continue;
         if (highest == null ||
-            candidate.compareTo(_SemanticVersion.parse(highest.version)) > 0) {
+            candidate.compareTo(_SemanticVersion.tryParse(highest.version)!) > 0) {
           final body = item['body'];
           highest = AppRelease(
             version: candidate.toString(),
