@@ -6557,7 +6557,7 @@ Map<String, Map<String, String>> get keys => {
     "videos": "Teledyski",
     "viewAll": "Pokaż wszystko",
     "results": "Wyniki",
-    "about": "O MDLovFi Music",
+    "about": "O MuziiNap",
     "songRemovedfromQueue": "Usunięto z kolejki!",
     "radioNotAvailable": "Radio niedostępne dla tego wykonawcy!",
     "songRemovedfromQueueCurrSong": "Nie można usunąć aktualnie odtwarzanego utworu",
