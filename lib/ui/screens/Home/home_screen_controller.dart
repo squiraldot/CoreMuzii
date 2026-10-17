@@ -6,7 +6,6 @@ import 'package:hive/hive.dart';
 
 import '/models/media_Item_builder.dart';
 import '/ui/player/player_controller.dart';
-import '../../../utils/update_check_flag_file.dart';
 import '../../../utils/helper.dart';
 import '/models/album.dart';
 import '/models/playlist.dart';
@@ -16,7 +15,6 @@ import '../../../utils/youtube_auth.dart';
 import '/models/home_mood.dart';
 import '/services/music_service.dart';
 import '../Settings/settings_screen_controller.dart';
-import '/ui/widgets/new_version_dialog.dart';
 
 class HomeScreenController extends GetxController with WidgetsBindingObserver {
   final MusicServices _musicServices = Get.find<MusicServices>();
@@ -47,7 +45,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _homeContextSignature = _currentHomeContextSignature();
     loadContent();
-    if (updateCheckFlag) _checkNewVersion();
   }
 
   @override
@@ -626,21 +623,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     tabIndex.value = index;
     // Do not refetch Home just because the user switches tabs.
     // Pull-to-refresh and the Home icon long-press still refresh explicitly.
-  }
-
-  void _checkNewVersion() {
-    showVersionDialog.value =
-        Hive.box(appPrefsBoxName).get("newVersionVisibility") ?? true;
-    if (showVersionDialog.isTrue) {
-      newVersionCheck(Get.find<SettingsScreenController>().currentVersion)
-          .then((value) {
-        if (value) {
-          showDialog(
-              context: Get.context!,
-              builder: (context) => const NewVersionDialog());
-        }
-      });
-    }
   }
 
   void onChangeVersionVisibility(bool val) {
