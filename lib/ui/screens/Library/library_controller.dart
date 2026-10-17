@@ -59,9 +59,16 @@ class LibrarySongsController extends GetxController {
     }
 
     final box = Hive.box("SongsCache");
-    for (var element in box.keys) {
+    final supportDir = (await getApplicationSupportDirectory()).path;
+    for (final element in box.keys.toList()) {
       if (!songsList.contains(element)) {
-        box.delete(element);
+        await box.delete(element);
+
+        // Remove the thumbnail belonging to a cache file that the OS cleared.
+        final thumbnailFile = File("$supportDir/thumbnails/$element.png");
+        if (await thumbnailFile.exists()) {
+          await thumbnailFile.delete();
+        }
       }
     }
 
