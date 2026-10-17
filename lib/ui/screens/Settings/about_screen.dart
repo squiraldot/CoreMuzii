@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'credits_screen.dart';
+import '../../../services/update_checker.dart';
 import 'settings_screen_controller.dart';
 
 /// About MuziiNap: app details, community links, project links and legal info.
@@ -11,6 +12,7 @@ class AboutScreen extends StatelessWidget {
 
   static const Color _muted = Color(0xFF9B9B9B);
   static const Color _divider = Color(0xFF292929);
+  static final RxBool _isCheckingUpdate = false.obs;
 
   Future<void> _openLink(BuildContext context, String url) async {
     final uri = Uri.tryParse(url);
@@ -25,6 +27,30 @@ class AboutScreen extends StatelessWidget {
       }
     } catch (_) {
       if (context.mounted) _showMessage(context, 'Could not open this link.');
+    }
+  }
+
+  Future<void> _checkForUpdate(BuildContext context) async {
+    if (_isCheckingUpdate.value) return;
+    _isCheckingUpdate.value = true;
+    try {
+      final result = await UpdateChecker.check();
+      if (!context.mounted) return;
+      if (result.update != null) {
+        await UpdateChecker.showUpdateDialog(
+          context,
+          installedVersion: result.installedVersion,
+          release: result.update!,
+        );
+      } else {
+        _showMessage(context, "You're on the latest version (v${result.installedVersion}).");
+      }
+    } catch (_) {
+      if (context.mounted) {
+        _showMessage(context, 'Could not check for updates. Please try again.');
+      }
+    } finally {
+      _isCheckingUpdate.value = false;
     }
   }
 
@@ -113,7 +139,7 @@ class AboutScreen extends StatelessWidget {
               icon: Icons.system_update_alt_rounded,
               title: 'In-app Update',
               subtitle: 'Check for the latest version and update the app.',
-              onTap: () => _showMessage(context, 'In-app updates are coming soon.'),
+              onTap: () => _checkForUpdate(context),
             ),
             const SizedBox(height: 18),
             const Divider(color: _divider),
