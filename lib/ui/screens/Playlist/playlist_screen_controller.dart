@@ -17,6 +17,7 @@ import '../../../mixins/additional_opeartion_mixin.dart';
 import '../../../models/album.dart' show Album;
 import '../../../models/media_Item_builder.dart';
 import '../../../models/playlist.dart';
+import '../../../utils/playlist_helpers.dart';
 import '../../../services/music_service.dart';
 import '../../../services/piped_service.dart';
 import '../Home/home_screen_controller.dart';
@@ -249,10 +250,12 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
     final box_ = await Hive.openBox(id);
     for (MediaItem element in songs) {
-      final index = box_.values
-          .toList()
-          .indexWhere((ele) => ele['videoId'] == element.id);
-      await box_.deleteAt(index);
+      final index = findStoredSongIndexById(box_.values, element.id);
+      // The playlist may have changed while a bulk operation was in progress.
+      // Never pass -1 to Hive.deleteAt when the selected song is already gone.
+      if (index >= 0) {
+        await box_.deleteAt(index);
+      }
 
       if (isoffline) {
         await Get.find<LibrarySongsController>()
