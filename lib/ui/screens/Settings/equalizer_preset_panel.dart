@@ -95,7 +95,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
         SnackBar(content: Text('Imported “${preset.name}” from a shared file.')),
       );
     } on FormatException catch (error) {
-      if (mounted) _showFileError('Invalid MDLovFi preset', error);
+      if (mounted) _showFileError('Invalid MuziiNap preset', error);
     } catch (error) {
       if (mounted) _showFileError('Could not open shared preset', error);
     }
@@ -294,7 +294,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
           id: 'current-eq',
           name: 'My Equalizer',
           author: 'User',
-          description: 'Current MDLovFi equalizer settings.',
+          description: 'Current MuziiNap equalizer settings.',
           createdAt: DateTime.now().toUtc(),
           updatedAt: DateTime.now().toUtc(),
           isBuiltIn: false,
@@ -306,7 +306,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
       final encoded = EqualizerPresetFileCodec.encode(selected);
       final fileName = _fileName(selected.name);
       final path = await FilePicker.platform.saveFile(
-        dialogTitle: 'Export MDLovFi preset',
+        dialogTitle: 'Export MuziiNap preset',
         fileName: fileName,
         bytes: Uint8List.fromList(utf8.encode(encoded)),
       );
@@ -330,7 +330,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
           id: 'current-eq',
           name: 'My Equalizer',
           author: 'User',
-          description: 'Current MDLovFi equalizer settings.',
+          description: 'Current MuziiNap equalizer settings.',
           createdAt: DateTime.now().toUtc(),
           updatedAt: DateTime.now().toUtc(),
           isBuiltIn: false,
@@ -350,7 +350,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
       await Share.shareXFiles(
         [file],
         subject: selected.name,
-        text: 'MDLovFi Equalizer preset: ' + selected.name,
+        text: 'MuziiNap Equalizer preset: ' + selected.name,
       );
     } catch (error) {
       if (mounted) _showFileError('Could not share preset', error);
@@ -404,7 +404,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
         ),
       );
     } on FormatException catch (error) {
-      if (mounted) _showFileError('Invalid MDLovFi preset', error);
+      if (mounted) _showFileError('Invalid MuziiNap preset', error);
     } catch (error) {
       if (mounted) _showFileError('Could not import preset', error);
     } finally {
@@ -505,7 +505,7 @@ class _EqualizerPresetPanelState extends State<EqualizerPresetPanel> {
         .trim()
         .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
         .replaceAll(RegExp(r'\s+'), '_');
-    final base = sanitized.isEmpty ? 'mdlovfi-preset' : sanitized;
+    final base = sanitized.isEmpty ? 'muziinap-preset' : sanitized;
     return base.endsWith('.${EqualizerPresetFileCodec.extension}')
         ? base
         : '$base.${EqualizerPresetFileCodec.extension}';
