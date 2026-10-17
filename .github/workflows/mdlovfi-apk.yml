@@ -18,6 +18,12 @@ jobs:
     name: Build MDLovFi release APK
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      ANDROID_KEYSTORE_PATH: ${{ github.workspace }}/.music-release.jks
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -46,6 +52,20 @@ jobs:
           grep -F 'android:name=".MainActivity"' android/app/src/main/AndroidManifest.xml
           grep -F 'applicationId "com.merrmist.mdlovfimusic"' android/app/build.gradle
 
+      - name: Restore and validate Android release keystore
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "Missing ANDROID_KEYSTORE_BASE64 secret"; exit 1; }
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "Missing ANDROID_KEYSTORE_PASSWORD secret"; exit 1; }
+          test -n "$ANDROID_KEY_ALIAS" || { echo "Missing ANDROID_KEY_ALIAS secret"; exit 1; }
+          test -n "$ANDROID_KEY_PASSWORD" || { echo "Missing ANDROID_KEY_PASSWORD secret"; exit 1; }
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          chmod 600 "$ANDROID_KEYSTORE_PATH"
+          test -s "$ANDROID_KEYSTORE_PATH"
+          keytool -list -keystore "$ANDROID_KEYSTORE_PATH" -alias "$ANDROID_KEY_ALIAS" -storepass "$ANDROID_KEYSTORE_PASSWORD" >/dev/null
+          echo "Release keystore restored and alias validated."
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -64,12 +84,19 @@ jobs:
       - name: Build release APK
         run: flutter build apk --release
 
-      - name: Verify APK
+      - name: Verify APK and release signature
         shell: bash
         run: |
-          test -s build/app/outputs/flutter-apk/app-release.apk
-          echo "APK: build/app/outputs/flutter-apk/app-release.apk"
-          ls -lh build/app/outputs/flutter-apk/app-release.apk
+          set -euo pipefail
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          test -s "$APK"
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK_ROOT"
+          APKSIGNER="$(find "$SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose "$APK"
+          echo "APK passed Android signature verification."
+          ls -lh "$APK"
 
       - name: Upload MDLovFi APK
         uses: actions/upload-artifact@v7
