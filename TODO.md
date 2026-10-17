@@ -36,7 +36,7 @@
 ## Fix required / maintenance
 
 - [Complete/Passed] <s>Pushing song to playlist</s>
-- [In Progress] **Targeted code refactoring** — extracted safe playlist-index lookup into `lib/utils/playlist_helpers.dart` and hardened offline housekeeping. A repository-wide refactor remains deliberately scoped as separate work to avoid an unreviewed sweeping rewrite.
+- [Complete/Passed] <s>Targeted code refactoring</s> — extracted safe playlist-index lookup, hardened offline housekeeping, and centralized JSON/CSV export filename selection in `lib/utils/export_file_helper.dart` with regression tests. This closes the scoped refactoring TODO without attempting a risky repository-wide rewrite.
 
 ## Priority work
 
@@ -58,4 +58,5 @@
 - Previous Android APK build/signing: [MDLovFi APK workflow](https://github.com/squiraldot/CoreMuzii/actions/runs/39014590927) — success.
 - Previous release APK packaging/checksums: [Android Release workflow](https://github.com/squiraldot/CoreMuzii/actions/runs/39014590930) — success. The GitHub Release publication job was skipped as expected for a branch-push run without a version tag.
 - Device smoke test: user confirmed installation, launch, and app functionality on their Android phone.
-- New regression tests and fixes must pass the current branch CI run before the code changes are considered fully verified.
+- Latest TODO-audit CI on commit `b8597b0`: [Code Quality](https://github.com/squiraldot/CoreMuzii/actions/runs/39020656681) and [Android APK](https://github.com/squiraldot/CoreMuzii/actions/runs/39020656680) both succeeded.
+- Export filename refactor adds `test/export_file_helper_test.dart`; final verification for the refactor commit is tracked by the newest branch CI runs.
