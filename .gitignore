@@ -70,4 +70,6 @@ settings.json
 android/app/.cxx/Debug/*
 
 /android/app/.cxx
-
+# Android Gradle build output and local diagnostics
+/android/build/
+/android/build_error.txt
