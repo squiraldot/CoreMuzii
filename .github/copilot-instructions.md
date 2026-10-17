@@ -2,20 +2,18 @@
 
 ## Project Overview
 
-MDLovFi Music is a cross-platform music streaming application built with Flutter, supporting Android, Windows, and Linux. The app streams music from YouTube/YouTube Music without requiring login or showing advertisements.
+MDLovFi Music is an **Android-only** music streaming application built with Flutter. It streams music from YouTube/YouTube Music without requiring app login or showing advertisements. Keep changes compatible with supported Android phones, tablets, and foldables.
 
 ## Technology Stack
 
-- **Framework**: Flutter 3.24.2+ (Dart SDK >=3.1.5 <4.0.0)
-- **State Management**: GetX (get: ^4.7.1)
-- **Audio Playback**:
-  - Android: just_audio (^0.9.46)
-  - Linux/Windows: media_kit via just_audio_media_kit
-  - Background audio: audio_service (^0.18.17)
-- **Local Storage**: Hive (^2.2.3) with hive_flutter
-- **YouTube API**: youtube_explode_dart (custom fork)
-- **HTTP Client**: dio (^5.7.0)
+- **Framework**: Flutter (Dart SDK >=3.1.5 <4.0.0; use the Flutter version pinned by the relevant GitHub Actions workflow)
+- **State Management**: GetX (`get: ^4.7.1`)
+- **Audio Playback**: `just_audio` with `audio_service` for Android background playback and media controls
+- **Local Storage**: Hive (`hive`, `hive_flutter`)
+- **YouTube API**: `youtube_explode_dart` custom fork
+- **HTTP Client**: dio
 - **UI Components**: animations, cached_network_image, flutter_slidable, shimmer
+- **Native Android integration**: JNI/JNIGen bindings, Android equalizer, camera/QR scanning
 
 ## Project Structure
 
@@ -24,31 +22,31 @@ lib/
 ├── base_class/      # Base classes and abstractions
 ├── mixins/          # Reusable mixins
 ├── models/          # Data models
-├── native_bindings/ # Platform-specific native code bindings
-├── services/        # Business logic services (audio, music, downloader, piped)
+├── native_bindings/ # Android native code bindings
+├── services/        # Audio, music, downloader, equalizer, and network services
 ├── ui/              # User interface
 │   ├── player/      # Music player UI and controllers
-│   ├── screens/     # App screens (Home, Library, Settings, Search)
-│   ├── utils/       # UI utilities (theme controller)
+│   ├── screens/     # Home, Library, Settings, Search, and other screens
+│   ├── utils/       # UI utilities
 │   └── widgets/     # Reusable widgets
 └── utils/           # General utilities and helpers
 ```
 
 ## Key Controllers (GetX)
 
-- `PlayerController` - Manages music playback
+- `PlayerController` - Manages music playback and queue
 - `HomeScreenController` - Home screen state
-- `LibraryController` - Library/collection management
+- `LibraryController` - Library and collection management
 - `SettingsScreenController` - App settings
 - `SearchScreenController` - Search functionality
 - `ThemeController` - Dynamic theming
 
 ## Architecture Patterns
 
-- **State Management**: GetX pattern with controllers
-- **Dependency Injection**: GetX dependency injection (`Get.put`, `Get.find`)
-- **Services**: Centralized service classes for audio, music fetching, and downloads
-- **Mixins**: Used for code reuse across controllers
+- **State Management**: GetX controllers and reactive state
+- **Dependency Injection**: GetX (`Get.put`, `Get.find`)
+- **Services**: Centralized audio, music fetching, download, equalizer, and backup/restore logic
+- **Native integration**: Keep Android-specific JNI bindings and manifest configuration aligned with Dart services
 
 ## Development Workflow
 
@@ -62,102 +60,69 @@ flutter pub get
 flutter analyze
 ```
 
-### Building
+### Build
 ```bash
-# Android
-flutter build apk
-
-# Windows
-flutter build windows
-
-# Linux
-flutter build linux
+flutter build apk --release
 ```
 
-### Testing
+### Tests
 ```bash
 flutter test
 ```
 
 ## Coding Guidelines
 
-1. **Follow Dart/Flutter best practices**:
-   - Use `flutter_lints` package rules (already configured)
-   - Follow the official Dart style guide
-   - Maintain consistent code formatting
+1. Follow Dart/Flutter best practices and the configured `flutter_lints` rules.
+2. Keep state management in existing GetX controllers and put reusable widgets in `lib/ui/widgets/`.
+3. Preserve existing playback, background audio, downloads, search, playlists, albums/artists, settings, QR scanning, equalizer, lyrics, backup/restore, and playback restoration.
+4. Keep responsive layouts that improve Android tablet/foldable support. Do not remove width-based layout logic just because it resembles a desktop layout.
+5. Hardware keyboard support can be useful on Android; inspect how it is used before removing shortcuts or focus navigation.
+6. Use `GetPlatform.isAndroid` only where a genuine Android-specific behavior is required. Do not add desktop platform branches or reintroduce desktop-only packages.
+7. Keep Android permissions, Gradle configuration, JNI/JNIGen setup, and native bindings in sync with their Dart callers.
+8. Preserve Git-based dependency pins in `pubspec.yaml` unless a change is specifically needed and verified.
+9. Icons are located in `assets/icons/`; localization files are in `localization/` and use GetX's `Languages()` translations.
 
-2. **State Management**:
-   - Use GetX controllers for state management
-   - Use `Get.put()` for controller initialization
-   - Use `Get.find()` to access existing controllers
-   - Controllers should be placed in their respective screen directories
+## Important Project Constraints
 
-3. **File Organization**:
-   - Keep related files together (screen + controller)
-   - Place reusable widgets in `ui/widgets/`
-   - Place business logic in `services/`
-   - Keep models in `models/`
-
-4. **Platform Considerations**:
-   - Use `GetPlatform.isAndroid`, `GetPlatform.isDesktop`, etc. for platform-specific code
-   - Android uses just_audio, Desktop uses media_kit
-   - Consider mobile vs desktop UI patterns
-
-5. **Assets and Resources**:
-   - Icons are located in `assets/icons/`
-   - Localization files are in `localization/`
-   - Use the GetX translation system (`Languages()`)
-
-6. **Dependencies**:
-   - Several packages use custom forks (youtube_explode_dart, just_audio_media_kit, etc.)
-   - Be cautious when suggesting package updates
-   - Check pubspec.yaml for git-based dependencies
-
-## Important Considerations
-
-1. **No Login Required**: The app operates without user authentication
-2. **Ad-Free**: No advertisement integration
-3. **GPL v3.0 License**: Code must remain open source
-4. **Third Party Content**: Be mindful of copyright and content usage
-5. **Cross-Platform**: Changes should consider all target platforms (Android, Windows, Linux)
-6. **Offline Support**: App caches songs and supports offline playback
-7. **Background Playback**: Audio service integration for background music
+- Do not modify the YouTube Account/login section unless a blocking issue makes it necessary; explain the reason before touching it.
+- Do not modify `test/song_info_dialog_test.dart` unless explicitly authorized.
+- Work only on the existing `feature/advanced-equalizer` branch for the current cleanup. Never switch to or modify `main`, and do not create a new branch.
+- Do not claim tests or workflows passed without checking their actual results.
+- Keep the app Android-only. Do not add Windows, Linux, macOS, iOS, or web build targets/workflows.
+- Never remove shared functionality or a dependency solely because it also supports another platform.
 
 ## Common Tasks
 
-### Adding a New Screen
-1. Create screen file in `lib/ui/screens/[ScreenName]/`
-2. Create corresponding controller extending `GetxController`
-3. Register controller with GetX
-4. Add navigation route if needed
-
-### Adding a New Feature
-1. Consider platform support (mobile vs desktop)
-2. Update relevant services if needed
-3. Create/update models as needed
-4. Update UI components
-5. Test on target platforms
+### Adding a Screen
+1. Create the screen in `lib/ui/screens/[ScreenName]/`.
+2. Add or update its GetX controller when appropriate.
+3. Register dependencies consistently with existing patterns.
+4. Add navigation and localization where needed.
 
 ### Modifying Audio Playback
-- Audio logic is in `services/audio_handler.dart`
-- Player UI in `ui/player/`
-- Platform-specific implementations via just_audio or media_kit
+- Audio logic: `lib/services/audio_handler.dart`
+- Player UI and controller: `lib/ui/player/`
+- Equalizer services and native Android bindings: `lib/services/equalizer.dart` and `lib/native_bindings/`
+- Keep `lib/services/local_proxy.dart` if required by playback.
+- Keep `terminate_restart` initialization because Android playback/session restoration depends on it.
 
 ## CI/CD
 
-- Linting and build checks run on PRs via `.github/workflows/code_quality.yml`
-- APK builds are automated
-- Windows executable builds have separate workflow
+- Code quality checks run through `.github/workflows/code_quality.yml`.
+- Android APK builds run through `.github/workflows/mdlovfi-apk.yml`.
+- Android release APK packaging and checksum verification run through `.github/workflows/release.yml`.
+- Release publishing is tag-triggered; do not create a release tag or publish a release without explicit authorization.
 
 ## Testing
 
-- Widget tests are in `test/` directory
-- Follow existing test patterns when adding new tests
-- Use Flutter's widget testing framework
+- Tests are in `test/`.
+- Run focused tests for changed logic, then the available full test suite.
+- Do not weaken or alter protected tests to make CI green.
+- Physical-device testing must be reported separately from emulator/CI checks.
 
 ## Additional Resources
 
 - [Flutter Documentation](https://docs.flutter.dev/)
 - [GetX Documentation](https://pub.dev/packages/get)
 - [Hive Documentation](https://docs.hivedb.dev/)
-- Project README.md for feature list and credits
+- See `README.md` for the current Android feature list and project credits.
