@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:mdlovfimusic/ui/screens/Settings/settings_screen_controller.dart';
 import 'package:mdlovfimusic/ui/widgets/loader.dart';
 
-import '../../services/permission_service.dart';
 import 'common_dialog_widget.dart';
 
 class ExportFileDialog extends StatelessWidget {
@@ -32,9 +31,12 @@ class ExportFileDialog extends StatelessWidget {
               SizedBox(
                 height: 150,
                 child: Center(
-                  child: Obx(() => exportFileDialogController.exportProgress
-                              .toInt() ==
-                          exportFileDialogController.filesToExport.length
+                  child: Obx(() => exportFileDialogController.errorMessage.isNotEmpty
+                      ? Text(exportFileDialogController.errorMessage.value,
+                          textAlign: TextAlign.center)
+                      : exportFileDialogController.exportProgress.toInt() >= 0 &&
+                              exportFileDialogController.exportProgress.toInt() ==
+                                  exportFileDialogController.filesToExport.length
                       ? Text("exportMsg".tr)
                       : exportFileDialogController.exportRunning.isTrue
                           ? Column(
@@ -77,8 +79,9 @@ class ExportFileDialog extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10)),
                     child: InkWell(
                       onTap: () {
-                        if (exportFileDialogController.exportProgress.toInt() ==
-                            exportFileDialogController.filesToExport.length) {
+                        if (exportFileDialogController.exportProgress.toInt() >= 0 &&
+                            exportFileDialogController.exportProgress.toInt() ==
+                                exportFileDialogController.filesToExport.length) {
                           Navigator.of(context).pop();
                         } else {
                           exportFileDialogController.export();
@@ -116,6 +119,7 @@ class ExportFileDialogController extends GetxController {
   final ready = false.obs;
   final exportRunning = false.obs;
   final exportProgress = (-1).obs;
+  final errorMessage = ''.obs;
   List<String> filesToExport = [];
 
   @override
@@ -125,31 +129,65 @@ class ExportFileDialogController extends GetxController {
   }
 
   Future<void> scanFilesToExport() async {
-    final supportDirPath = Get.find<SettingsScreenController>().supportDirPath;
-    final filesEntityList =
-        Directory("$supportDirPath/Music").listSync(recursive: false);
-    final filesPath = filesEntityList.map((entity) => entity.path).toList();
-    filesToExport.addAll(filesPath);
-    scanning.value = false;
-    ready.value = true;
+    scanning.value = true;
+    errorMessage.value = '';
+    try {
+      final supportDirPath = Get.find<SettingsScreenController>().supportDirPath;
+      final musicDir = Directory('${supportDirPath}/Music');
+      filesToExport = await musicDir.exists()
+          ? (await musicDir.list(followLinks: false).toList())
+              .whereType<File>()
+              .map((file) => file.path)
+              .toList()
+          : <String>[];
+      ready.value = true;
+    } catch (e) {
+      errorMessage.value = 'Could not scan downloaded files: $e';
+      print(errorMessage.value);
+    } finally {
+      scanning.value = false;
+    }
   }
 
   Future<void> export() async {
-    if (!await PermissionService.getExtStoragePermission()) {
+    if (exportRunning.value) return;
+    errorMessage.value = '';
+    if (filesToExport.isEmpty) {
+      errorMessage.value = 'No downloaded files were found.';
       return;
     }
-
-    exportProgress.value = 0;
     exportRunning.value = true;
-    final exportDirPath =
-        Get.find<SettingsScreenController>().exportLocationPath.toString();
-    final length_ = filesToExport.length;
-    for (int i = 0; i < length_; i++) {
-      final filePath = filesToExport[i];
-      final newFilePath = "$exportDirPath/${filePath.split("/").last}";
-      await File(filePath).copy(newFilePath);
-      exportProgress.value = i + 1;
+    exportProgress.value = 0;
+    try {
+      final controller = Get.find<SettingsScreenController>();
+      final exportDir = Directory(controller.exportLocationPath.value);
+      await exportDir.create(recursive: true);
+      for (final filePath in filesToExport) {
+        final source = File(filePath);
+        if (!await source.exists()) {
+          exportProgress.value++;
+          continue;
+        }
+        final fileName = filePath.split(Platform.pathSeparator).last;
+        var destination = File('${exportDir.path}/$fileName');
+        if (await destination.exists()) {
+          final dot = fileName.lastIndexOf('.');
+          final base = dot > 0 ? fileName.substring(0, dot) : fileName;
+          final extension = dot > 0 ? fileName.substring(dot) : '';
+          var suffix = 1;
+          do {
+            destination = File('${exportDir.path}/$base ($suffix)$extension');
+            suffix++;
+          } while (await destination.exists());
+        }
+        await source.copy(destination.path);
+        exportProgress.value++;
+      }
+    } catch (e) {
+      errorMessage.value = 'Export failed: $e';
+      print(errorMessage.value);
+    } finally {
+      exportRunning.value = false;
     }
-    exportRunning.value = false;
   }
 }

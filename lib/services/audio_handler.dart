@@ -1,4 +1,5 @@
 import '/services/constant.dart';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
@@ -9,7 +10,6 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:audio_service/audio_service.dart';
 // ignore: depend_on_referenced_packages
@@ -21,8 +21,8 @@ import '/services/equalizer.dart';
 import '/services/stream_service.dart';
 import '/services/music_service.dart';
 import '/models/hm_streaming_data.dart';
+import '/models/equalizer.dart';
 import '/ui/player/player_controller.dart';
-import '/services/local_proxy.dart';
 import '../ui/screens/Home/home_screen_controller.dart';
 import '/services/background_task.dart';
 import '/services/permission_service.dart';
@@ -32,8 +32,6 @@ import '/services/utils.dart';
 import '../ui/screens/Settings/settings_screen_controller.dart';
 import '../utils/home_history.dart';
 import '../ui/screens/Library/library_controller.dart';
-// ignore: unused_import, implementation_imports, depend_on_referenced_packages
-import "package:media_kit/src/player/platform_player.dart" show MPVLogLevel;
 
 Future<AudioHandler> initAudioService() async {
   return await AudioService.init(
@@ -41,7 +39,7 @@ Future<AudioHandler> initAudioService() async {
     config: const AudioServiceConfig(
       androidNotificationIcon: 'mipmap/ic_launcher_monochrome',
       androidNotificationChannelId: 'com.mycompany.myapp.audio',
-      androidNotificationChannelName: 'MDLovFi Music Notification',
+      androidNotificationChannelName: 'MuziiNap Notification',
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,
     ),
@@ -62,9 +60,14 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   bool queueLoopModeEnabled = false;
   bool shuffleModeEnabled = false;
   bool loudnessNormalizationEnabled = false;
+  // Serialize audio-setting mutations so startup restoration and rapid user
+  // toggles cannot complete out of order and overwrite each other.
+  Future<void> _audioSettingsQueue = Future<void>.value();
   // var networkErrorPause = false;
   bool isSongLoading = true;
   int _playSessionId = 0;
+  int? _activeEqualizerSessionId;
+  EqualizerConfig _equalizerConfig = EqualizerConfig.graphic10Band();
 
   // list of shuffled queue songs ids
   List<String> shuffledQueue = [];
@@ -72,37 +75,64 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
 
   MyAudioHandler() {
-    if (GetPlatform.isWindows || GetPlatform.isLinux) {
-      JustAudioMediaKit.title = 'MDLovFi music';
-      JustAudioMediaKit.protocolWhitelist = const ['http', 'https', 'file'];
-      JustAudioMediaKit.ensureInitialized(linux: true, windows: true);
-    }
     _mediaLibrary = MediaLibrary();
     _player = AudioPlayer(
       useProxyForRequestHeaders: false,
       audioLoadConfiguration: const AudioLoadConfiguration(
             androidLoadControl: AndroidLoadControl(
-      minBufferDuration: Duration(seconds: 50),
-      maxBufferDuration: Duration(seconds: 120),
-      bufferForPlaybackDuration: Duration(milliseconds: 50),
-      bufferForPlaybackAfterRebufferDuration: Duration(seconds: 2),
+      minBufferDuration: Duration(seconds: 10),
+      maxBufferDuration: Duration(seconds: 30),
+      bufferForPlaybackDuration: Duration(milliseconds: 250),
+      bufferForPlaybackAfterRebufferDuration: Duration(seconds: 1),
     )));
     _createCacheDir();
     _notifyAudioHandlerAboutPlaybackEvents();
     _listenToPlaybackForNextSong();
     _listenForSequenceStateChanges();
     final appPrefsBox = Hive.box(appPrefsBoxName);
-    _player
-        .setSkipSilenceEnabled(appPrefsBox.get("skipSilenceEnabled") ?? false);
+    _applyInitialSkipSilenceSetting(
+      appPrefsBox.get("skipSilenceEnabled") ?? false,
+    );
     loopModeEnabled = appPrefsBox.get("isLoopModeEnabled") ?? false;
     shuffleModeEnabled = appPrefsBox.get("isShuffleModeEnabled") ?? false;
     queueLoopModeEnabled =
         Hive.box(appPrefsBoxName).get("queueLoopModeEnabled") ?? false;
     loudnessNormalizationEnabled =
         appPrefsBox.get("loudnessNormalizationEnabled") ?? false;
+    final savedEqualizer = appPrefsBox.get("equalizerConfig");
+    if (savedEqualizer is String) {
+      try {
+        _equalizerConfig = EqualizerConfig.fromJson(
+          Map<String, Object?>.from(jsonDecode(savedEqualizer) as Map),
+        );
+      } catch (_) {
+        _equalizerConfig = EqualizerConfig.graphic10Band();
+      }
+    }
     _listenForDurationChanges();
     if (GetPlatform.isAndroid) {
       _listenSessionIdStream();
+    }
+  }
+
+  Future<void> _serializeAudioSetting(Future<void> Function() operation) {
+    final result = _audioSettingsQueue.then((_) => operation());
+    // Keep the queue alive after a platform failure while preserving the
+    // original error for the caller that requested this setting change.
+    _audioSettingsQueue = result.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {
+        printERROR("Audio setting update failed: $error");
+      },
+    );
+    return result;
+  }
+
+  Future<void> _applyInitialSkipSilenceSetting(bool enabled) async {
+    try {
+      await _serializeAudioSetting(() => _player.setSkipSilenceEnabled(enabled));
+    } catch (e) {
+      printERROR("Failed to restore skip-silence setting: $e");
     }
   }
 
@@ -115,8 +145,32 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
   void _listenSessionIdStream() {
     _player.androidAudioSessionIdStream.listen((int? id) {
-      if (id != null) {
-        EqualizerService.initAudioEffect(id);
+      if (id == null || id <= 0) return;
+
+      final previousSessionId = _activeEqualizerSessionId;
+      if (previousSessionId != null && previousSessionId != id) {
+        EqualizerService.endAudioEffect(previousSessionId);
+      }
+
+      _activeEqualizerSessionId = id;
+      // Keep session changes lightweight. DynamicsProcessing is initialized only
+      // after playback starts so it cannot block startup or first-track loading.
+      EqualizerService.initAudioEffect(id);
+    });
+  }
+
+  void _applyEqualizerAfterPlaybackStarts() {
+    if (!GetPlatform.isAndroid) return;
+    final sessionId = _activeEqualizerSessionId;
+    if (sessionId == null || sessionId <= 0) return;
+
+    // Give just_audio/ExoPlayer one event-loop turn to start native playback
+    // before the synchronous JNI effect construction.
+    Future<void>.delayed(Duration.zero, () {
+      try {
+        EqualizerService.applyConfig(sessionId, _equalizerConfig);
+      } catch (e) {
+        printINFO("Unable to apply equalizer without delaying playback: $e");
       }
     });
   }
@@ -129,6 +183,10 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
           MediaControl.skipToPrevious,
           if (playing) MediaControl.pause else MediaControl.play,
           MediaControl.skipToNext,
+          // Android's expanded media notification exposes this stop/dismiss
+          // action. It clears the active media item so the notification can
+          // be removed instead of leaving a paused card behind.
+          MediaControl.stop,
         ],
         systemActions: const {
           MediaAction.seek,
@@ -185,18 +243,14 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         //     _player.play();
         //   }
         // });
-        customAction("playByIndex", {'index': currentIndex, 'newUrl': true});
+        await customAction("playByIndex", {'index': currentIndex, 'newUrl': true});
         await _player.seek(curPos, index: 0);
       }
     });
   }
 
   void _listenToPlaybackForNextSong() {
-    final playerDurationOffset = GetPlatform.isWindows
-        ? 200
-        : GetPlatform.isLinux
-            ? 700
-            : 0;
+    const playerDurationOffset = 0;
     _player.positionStream.listen((value) async {
       if (_player.duration != null && _player.duration?.inSeconds != 0) {
         if (value.inMilliseconds >=
@@ -211,7 +265,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     if (loopModeEnabled) {
       await _player.seek(Duration.zero);
       if (!_player.playing) {
-        _player.play();
+        await _player.play();
       }
       return;
     }
@@ -278,27 +332,12 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     final streamHeaders =
         (mediaItem.extras!['streamHeaders'] as Map?)?.cast<String, String>();
 
-    final isDesktop =
-        GetPlatform.isWindows || GetPlatform.isLinux || GetPlatform.isMacOS;
+    // Android uses native request headers for the stream URL.
+    final url = originalUrl;
 
-    // Android/iOS support request headers natively when
-    // useProxyForRequestHeaders=false. Avoiding our own proxy here removes
-    // the first-play race where the proxy server had not finished binding.
-    // Desktop media backends still use our proxy so YouTube headers survive.
-    final url = (!originalUrl.startsWith('http'))
-        ? originalUrl
-        : isDesktop
-            ? await LocalProxy.addUrlAsync(
-                originalUrl,
-                headers: streamHeaders,
-              )
-            : originalUrl;
-
-    // LockCachingAudioSource is broken on just_audio_media_kit (it ignores cache and drops headers).
-    // So we disable it on Desktop.
-    if (!isDesktop && (originalUrl.contains('/cache') ||
+    if (originalUrl.contains('/cache') ||
         (Get.find<SettingsScreenController>().cacheSongs.isTrue &&
-            url.contains("http")))) {
+            url.contains("http"))) {
       printINFO("Playing Using LockCaching");
       isPlayingUsingLockCachingSource = true;
       // ignore: experimental_member_use
@@ -320,7 +359,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
     return AudioSource.uri(
       uri,
-      headers: isDesktop ? null : streamHeaders,
+      headers: streamHeaders,
       tag: mediaItem,
     );
   }
@@ -350,10 +389,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
   @override
   Future<void> play() async {
-    if (currentSongUrl == null ||
-        (GetPlatform.isDesktop &&
-            (_player.duration == null ||
-                _player.duration?.inMilliseconds == 0))) {
+    if (currentSongUrl == null) {
       await customAction("playByIndex", {'index': currentIndex});
       return;
     }
@@ -473,6 +509,10 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     switch (name) {
 
       case 'dispose':
+        if (_activeEqualizerSessionId != null) {
+          EqualizerService.endAudioEffect(_activeEqualizerSessionId!);
+          _activeEqualizerSessionId = null;
+        }
         await _player.dispose();
         super.stop();
         break;
@@ -517,11 +557,10 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
         isSongLoading = false;
         if (loudnessNormalizationEnabled && GetPlatform.isAndroid) {
-          _normalizeVolume(streamInfo.audio!.loudnessDb);
+          await _normalizeVolume(streamInfo.audio!.loudnessDb);
         }
 
         if (restoreSession) {
-          if (!GetPlatform.isDesktop) {
             final position = extras['position'];
             await _player.load();
             await _player.seek(
@@ -534,9 +573,11 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
                 milliseconds: position,
               ),
             );
-          }
+            _applyEqualizerAfterPlaybackStarts();
         } else {
-          await _player.play();
+          final playFuture = _player.play();
+          _applyEqualizerAfterPlaybackStarts();
+          await playFuture;
 
           final appPrefs = Hive.box(appPrefsBoxName);
           final isYouTubeAuthenticated =
@@ -632,44 +673,58 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
         // Normalize audio
         if (loudnessNormalizationEnabled && GetPlatform.isAndroid) {
-          _normalizeVolume(streamInfo.audio!.loudnessDb);
+          await _normalizeVolume(streamInfo.audio!.loudnessDb);
         }
 
-        await _player.play();
+        final playFuture = _player.play();
+        _applyEqualizerAfterPlaybackStarts();
+        await playFuture;
         break;
 
       case 'toggleSkipSilence':
         final enable = (extras!['enable'] as bool);
-        await _player.setSkipSilenceEnabled(enable);
+        await _serializeAudioSetting(
+          () => _player.setSkipSilenceEnabled(enable),
+        );
         break;
 
       case 'toggleLoudnessNormalization':
-        loudnessNormalizationEnabled = (extras!['enable'] as bool);
-        if (!loudnessNormalizationEnabled) {
-          _player.setVolume(1.0);
-          return;
-        }
+        final enable = (extras!['enable'] as bool);
+        await _serializeAudioSetting(() async {
+          loudnessNormalizationEnabled = enable;
+          if (!enable) {
+            await _player.setVolume(1.0);
+            return;
+          }
 
-        if (loudnessNormalizationEnabled) {
           try {
-            final currentSongId = (queue.value[currentIndex]).id;
-            if (Hive.box("SongsUrlCache").containsKey(currentSongId)) {
-              final songJson = Hive.box("SongsUrlCache").get(currentSongId);
-              _normalizeVolume((songJson)["highQualityAudio"]["loudnessDb"]);
-              return;
-            }
-
-            if (Hive.box("SongDownloads").containsKey(currentSongId)) {
-              final streamInfo =
-                  (Hive.box("SongDownloads").get(currentSongId))["streamInfo"];
-
-              _normalizeVolume(
-                  streamInfo == null ? 0 : streamInfo[1]["loudnessDb"]);
+            if (queue.value.isNotEmpty &&
+                currentIndex != null &&
+                currentIndex >= 0 &&
+                currentIndex < queue.value.length) {
+              final currentSongId = queue.value[currentIndex].id;
+              if (Hive.box("SongsUrlCache").containsKey(currentSongId)) {
+                final songJson = Hive.box("SongsUrlCache").get(currentSongId);
+                final loudnessDb =
+                    songJson["highQualityAudio"]?["loudnessDb"];
+                if (loudnessDb is num) {
+                  await _normalizeVolume(loudnessDb.toDouble());
+                }
+              } else if (Hive.box("SongDownloads").containsKey(currentSongId)) {
+                final streamInfo =
+                    Hive.box("SongDownloads").get(currentSongId)["streamInfo"];
+                final loudnessDb = streamInfo is List && streamInfo.length > 1
+                    ? streamInfo[1]["loudnessDb"]
+                    : null;
+                if (loudnessDb is num) {
+                  await _normalizeVolume(loudnessDb.toDouble());
+                }
+              }
             }
           } catch (e) {
             printERROR(e);
           }
-        }
+        });
         break;
 
       case 'shuffleQueue':
@@ -712,8 +767,57 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         }
         break;
 
+      case 'applyEqualizerConfig':
+        final configJson = extras?['config'];
+        if (configJson is Map) {
+          final config = EqualizerConfig.fromJson(
+            Map<String, Object?>.from(configJson),
+          );
+          final sessionId = _activeEqualizerSessionId;
+          if (sessionId != null) {
+            EqualizerService.applyConfig(sessionId, config);
+          }
+        }
+        break;
+
       case 'openEqualizer':
-        EqualizerService.openEqualizer(_player.androidAudioSessionId!);
+        final sessionId = _player.androidAudioSessionId;
+        if (sessionId != null) {
+          EqualizerService.openEqualizer(sessionId);
+        }
+        break;
+
+      case 'setEqualizerConfig':
+        final rawConfig = extras?['config'];
+        if (rawConfig is Map) {
+          try {
+            _equalizerConfig = EqualizerConfig.fromJson(
+              Map<String, Object?>.from(rawConfig),
+            );
+            await Hive.box(appPrefsBoxName).put(
+              "equalizerConfig",
+              jsonEncode(_equalizerConfig.toJson()),
+            );
+            final sessionId = _player.androidAudioSessionId;
+            if (sessionId != null) {
+              EqualizerService.applyConfig(sessionId, _equalizerConfig);
+            }
+          } catch (e) {
+            printERROR("Invalid equalizer config: $e");
+          }
+        }
+        break;
+
+      case 'resetEqualizer':
+        _equalizerConfig = EqualizerConfig.graphic10Band();
+        await Hive.box(appPrefsBoxName).put(
+          "equalizerConfig",
+          jsonEncode(_equalizerConfig.toJson()),
+        );
+        final sessionId = _player.androidAudioSessionId;
+        if (sessionId != null) {
+          EqualizerService.applyConfig(sessionId, _equalizerConfig);
+        }
         break;
 
       case 'saveSession':
@@ -721,7 +825,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         break;
 
       case 'setVolume':
-        _player.setVolume(extras!['value'] / 100);
+        final rawValue = extras!['value'];
+        final value = (rawValue as num).toDouble().clamp(0.0, 100.0);
+        await _player.setVolume(value / 100.0);
         break;
 
       case 'shuffleCmd':
@@ -765,16 +871,14 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     currentShuffleIndex = 0;
   }
 
-  void _normalizeVolume(double currentLoudnessDb) {
-    double loudnessDifference = -5 - currentLoudnessDb;
+  Future<void> _normalizeVolume(double currentLoudnessDb) async {
+    final loudnessDifference = -5 - currentLoudnessDb;
 
-    // Converted loudness difference to a volume multiplier
-    // We use a factor to convert dB difference to a linear scale
-    // 10^(difference / 20) converts dB difference to a linear volume factor
+    // Convert the dB difference to a linear volume multiplier.
     final volumeAdjustment = pow(10.0, loudnessDifference / 20.0);
     printINFO(
         "loudness:$currentLoudnessDb Normalized volume: $volumeAdjustment");
-    _player.setVolume(volumeAdjustment.toDouble().clamp(0, 1.0));
+    await _player.setVolume(volumeAdjustment.toDouble().clamp(0, 1.0));
   }
 
   Future<void> saveSessionData() async {
@@ -836,7 +940,19 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   @override
   Future<void> stop() async {
     await _player.stop();
-    return super.stop();
+    currentSongUrl = null;
+    isSongLoading = false;
+    mediaItem.add(null);
+    queue.add(<MediaItem>[]);
+    playbackState.add(playbackState.value.copyWith(
+      controls: const [],
+      playing: false,
+      processingState: AudioProcessingState.idle,
+      updatePosition: Duration.zero,
+      bufferedPosition: Duration.zero,
+      queueIndex: null,
+    ));
+    await super.stop();
   }
 
 // Work around used [useNewInstanceOfExplode = false] to Fix Connection closed before full header was received issue

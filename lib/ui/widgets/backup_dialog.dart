@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
@@ -8,11 +9,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
+import '../../../services/constant.dart';
 
 import '/ui/screens/Settings/settings_screen_controller.dart';
 import '/ui/widgets/loader.dart';
 import '/utils/helper.dart';
-import '../../services/permission_service.dart';
 import 'common_dialog_widget.dart';
 
 class BackupDialog extends StatelessWidget {
@@ -53,8 +54,10 @@ class BackupDialog extends StatelessWidget {
                       Column(
                         children: [
                           Obx(() => Text(
-                                backupDialogController.scanning.isTrue
-                                    ? "scanning".tr
+                                backupDialogController.errorMessage.isNotEmpty
+                                    ? backupDialogController.errorMessage.value
+                                    : backupDialogController.scanning.isTrue
+                                        ? "scanning".tr
                                     : backupDialogController
                                             .backupRunning.isTrue
                                         ? "backupInProgress".tr
@@ -64,55 +67,12 @@ class BackupDialog extends StatelessWidget {
                                             : "letsStrart".tr,
                                 textAlign: TextAlign.center,
                               )),
-                          if (GetPlatform.isAndroid)
-                            Obx(() => (backupDialogController
-                                    .isDownloadedfilesSeclected.isTrue)
-                                ? Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text(
-                                      "androidBackupWarning".tr,
-                                      textAlign: TextAlign.center,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall!
-                                          .copyWith(
-                                              fontWeight: FontWeight.bold),
-                                    ),
-                                  )
-                                : const SizedBox.shrink())
                         ],
                       )
                     ],
                   )),
                 ),
               ),
-              if (!GetPlatform.isDesktop)
-                Obx(() => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Checkbox(
-                              value: backupDialogController
-                                  .isDownloadedfilesSeclected.value,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(5)),
-                              onChanged:
-                                  backupDialogController.scanning.isTrue ||
-                                          backupDialogController
-                                              .backupRunning.isTrue ||
-                                          backupDialogController
-                                              .isbackupCompleted.isTrue
-                                      ? null
-                                      : (bool? value) {
-                                          backupDialogController
-                                              .isDownloadedfilesSeclected
-                                              .value = value!;
-                                        },
-                            ),
-                            Text("includeDownloadedFiles".tr),
-                          ]),
-                    )),
               SizedBox(
                 width: double.maxFinite,
                 child: Align(
@@ -167,63 +127,173 @@ class BackupDialogController extends GetxController {
   final scanning = false.obs;
   final isbackupCompleted = false.obs;
   final backupRunning = false.obs;
-  final isDownloadedfilesSeclected = false.obs;
+  final isDownloadedfilesSeclected = true.obs;
+  final errorMessage = ''.obs;
   List<String> filesToExport = [];
   final supportDirPath = Get.find<SettingsScreenController>().supportDirPath;
 
-  Future<void> scanFilesToBackup() async {
-    final dbDir = await Get.find<SettingsScreenController>().dbDir;
-    filesToExport.addAll(await processDirectoryInIsolate(dbDir));
-    if (isDownloadedfilesSeclected.value) {
-      List<String> downlodedSongFilePaths = Hive.box("SongDownloads")
-          .values
-          .map<String>((data) => data['url'])
-          .toList();
-      filesToExport.addAll(downlodedSongFilePaths);
+  bool _isSensitivePreference(String key) {
+    final normalized = key.toLowerCase();
+    return normalized.startsWith('yt_') ||
+        normalized.contains('youtube') ||
+        normalized.contains('cookie') ||
+        normalized.contains('auth') ||
+        normalized.contains('session') ||
+        normalized.contains('identitytoken') ||
+        normalized.contains('datasync') ||
+        normalized.contains('visitor') ||
+        normalized == 'piped';
+  }
+
+  Map<String, dynamic> _jsonSafeMap(Box box) {
+    final result = <String, dynamic>{};
+    for (final key in box.keys) {
+      if (key is! String || _isSensitivePreference(key)) continue;
+      final value = box.get(key);
       try {
-        filesToExport.addAll(await processDirectoryInIsolate(
-            "$supportDirPath/thumbnails",
-            extensionFilter: ".png"));
-      } catch (e) {
-        printERROR(e);
+        jsonEncode(value);
+        result[key] = value;
+      } catch (_) {
+        // Skip values that cannot be represented in the backup JSON format.
       }
     }
+    return result;
+  }
+
+  Future<Map<String, List<int>>> _collectBackupEntries() async {
+    final entries = <String, List<int>>{};
+    final prefs = Hive.box(appPrefsBoxName);
+    entries['data/settings.json'] =
+        utf8.encode(jsonEncode(_jsonSafeMap(prefs)));
+
+    final favoritesBox = await Hive.openBox('LIBFAV');
+    entries['data/favorites.json'] =
+        utf8.encode(jsonEncode(favoritesBox.values.toList()));
+    await favoritesBox.close();
+
+    final downloadsBox = await Hive.openBox('SongDownloads');
+    final downloads = <Map<String, dynamic>>[];
+    for (final raw in downloadsBox.values) {
+      if (raw is! Map) continue;
+      final song = Map<String, dynamic>.from(raw);
+      final originalPath = song['url'];
+      if (originalPath is String &&
+          originalPath.isNotEmpty) {
+        final songFile = File(originalPath);
+        if (await songFile.exists()) {
+          final name = originalPath.split(Platform.pathSeparator).last;
+          final archivePath = 'files/Music/$name';
+          entries[archivePath] = await songFile.readAsBytes();
+          song['url'] = archivePath;
+          final streamInfo = song['streamInfo'];
+          if (streamInfo is List && streamInfo.length > 1 && streamInfo[1] is Map) {
+            streamInfo[1]['url'] = archivePath;
+          }
+        }
+      }
+      downloads.add(song);
+    }
+    entries['data/downloads.json'] = utf8.encode(jsonEncode(downloads));
+    await downloadsBox.close();
+
+    final playlistsBox = await Hive.openBox('LibraryPlaylists');
+    final localPlaylists = <Map<String, dynamic>>[];
+    for (final raw in playlistsBox.values) {
+      if (raw is! Map) continue;
+      final playlist = Map<String, dynamic>.from(raw);
+      final id = playlist['playlistId']?.toString() ?? '';
+      if (!id.startsWith('LIB') ||
+          id == 'LIBFAV' ||
+          id == 'LIBRP' ||
+          id == 'LIB' ||
+          playlist['isCloudPlaylist'] == true ||
+          playlist['isPipedPlaylist'] == true) {
+        continue;
+      }
+      localPlaylists.add(playlist);
+      final playlistBox = await Hive.openBox(id);
+      entries['data/playlist_songs/$id.json'] =
+          utf8.encode(jsonEncode(playlistBox.values.toList()));
+      await playlistBox.close();
+    }
+    entries['data/playlists.json'] = utf8.encode(jsonEncode(localPlaylists));
+    await playlistsBox.close();
+
+    entries['manifest.json'] = utf8.encode(jsonEncode({
+      'format': 'muziinap',
+      'version': 1,
+      'createdAt': DateTime.now().toIso8601String(),
+      'contents': [
+        'settings',
+        'favorites',
+        'downloads',
+        'playlists',
+      ],
+    }));
+    return entries;
   }
 
   Future<void> backup() async {
-    if (!await PermissionService.getExtStoragePermission()) {
-      return;
-    }
+    if (scanning.value || backupRunning.value) return;
+    errorMessage.value = '';
+    Directory? temporaryDirectory;
+    try {
+      scanning.value = true;
+      final entries = await _collectBackupEntries();
+      backupRunning.value = true;
+      final now = DateTime.now();
+      final date = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final fileName = 'muziinap-backup-$date.muziinap';
+      final archive = Archive();
+      for (final entry in entries.entries) {
+        archive.addFile(ArchiveFile(entry.key, entry.value.length, entry.value));
+      }
+      final archiveBytes = ZipEncoder().encode(archive);
+      if (archiveBytes == null || archiveBytes.isEmpty) {
+        throw Exception('Backup archive could not be created.');
+      }
 
-    if (!await PermissionService.getExtStoragePermission()) {
-      return;
-    }
-
-    final String? pickedFolderPath = await FilePicker.platform
-        .getDirectoryPath(dialogTitle: "Select backup file folder");
-    if (pickedFolderPath == '/' || pickedFolderPath == null) {
-      return;
-    }
-
-    scanning.value = true;
-    await Future.delayed(const Duration(seconds: 4));
-    await scanFilesToBackup();
-    scanning.value = false;
-
-    backupRunning.value = true;
-    final exportDirPath = pickedFolderPath.toString();
-
-    final now = DateTime.now();
-    final formattedDate = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}-${now.hour.toString().padLeft(2, '0')}-${now.minute.toString().padLeft(2, '0')}-${now.second.toString().padLeft(2, '0')}';
-
-    compressFilesInBackground(filesToExport,
-            '$exportDirPath/hm-backup-$formattedDate.hmb')
-        .then((_) {
-      backupRunning.value = false;
+      if (GetPlatform.isAndroid) {
+        temporaryDirectory = await Directory.systemTemp.createTemp('muziinap-backup-');
+        final temporaryArchive = File('${temporaryDirectory.path}/$fileName');
+        await temporaryArchive.writeAsBytes(archiveBytes, flush: true);
+        final savedPath = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save backup file',
+          fileName: fileName,
+          type: FileType.custom,
+          allowedExtensions: ['muziinap'],
+          bytes: Uint8List.fromList(archiveBytes),
+        );
+        if (savedPath == null || savedPath.isEmpty) {
+          errorMessage.value = 'Backup cancelled; no file was saved.';
+          return;
+        }
+      } else {
+        final pickedFolderPath = await FilePicker.platform.getDirectoryPath(
+          dialogTitle: 'Select backup file folder',
+        );
+        if (pickedFolderPath == null || pickedFolderPath.isEmpty) return;
+        final output = File('$pickedFolderPath/$fileName');
+        await output.writeAsBytes(archiveBytes, flush: true);
+        if (!await output.exists() || await output.length() == 0) {
+          throw Exception('Backup file was not created.');
+        }
+      }
       isbackupCompleted.value = true;
-    }).catchError((e) {
-      printERROR('Error during compression: $e');
-    });
+    } catch (e) {
+      errorMessage.value = 'Backup failed: $e';
+      printERROR(errorMessage.value);
+    } finally {
+      scanning.value = false;
+      backupRunning.value = false;
+      if (temporaryDirectory != null && await temporaryDirectory.exists()) {
+        try {
+          await temporaryDirectory.delete(recursive: true);
+        } catch (e) {
+          printERROR('Could not clean temporary backup files: $e');
+        }
+      }
+    }
   }
 }
 
@@ -291,7 +361,7 @@ Future<void> compressFilesInBackground(
   // Convert file paths to file data
   final List<List<int>> filesData = filePathsToFileData(filePaths);
   final List<String> fileNames = filePaths
-      .map((path) => path.split(GetPlatform.isWindows ? '\\' : '/').last)
+      .map((path) => path.split(Platform.pathSeparator).last)
       .toList();
 
   printINFO(fileNames);

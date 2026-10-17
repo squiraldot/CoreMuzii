@@ -6,33 +6,18 @@ This file tracks ongoing issues, feature requests, and bug reports for faster cl
 
 ## 🐛 Bugs
 
-### 1. Build fails on Chrome (web target)
-- **Priority**: Medium
-- **Status**: Open (Known Limitation)
-- **Description**: `flutter run -d chrome` fails due to multiple packages using `dart:ffi` which is unavailable on the web platform.
-- **Affected packages**: `audiotags`, `jni`, `smtc_windows`, `media_kit_libs_linux`
-- **Notes**: Web support would require conditional imports or web-compatible alternatives for these packages.
+### 1. Flutter analyzer cleanup
+- **Priority:** Low
+- **Status:** Open
+- **Description:** Review current analyzer output for deprecated Flutter APIs and unused imports.
+- **Known areas to verify before editing:** settings radio controls, playlist dialogs, keyboard shortcuts menu, modification list, and up-next queue.
+- **Rule:** Confirm current diagnostics before changing code; old SDK warnings in this historical list may already be resolved.
 
-### 2. Build fails on Linux (missing packages)
-- **Priority**: High
-- **Status**: Open
-- **Description**: `flutter run -d linux` fails with CMake Errors regarding missing packages such as `gtk+-3.0` and `ayatana-appindicator3-0.1`.
-- **Notes**: Requires installing `libgtk-3-dev` and `libayatana-appindicator3-dev` on the host system before building the Linux application.
+## 🧹 Maintenance Notes
 
-### 3. Deprecated API Usage & Unused Imports
-- **Priority**: Low
-- **Status**: Open
-- **Description**: Several Flutter APIs have been deprecated in recent SDK versions, and some files have unused imports.
-- **Affected areas**:
-  - `test.dart`: Unused import `flutter_distributor`.
-  - `settings_screen.dart`: `groupValue` and `onChanged` are deprecated; migrate to `RadioGroup`.
-  - `add_to_playlist.dart`: `groupValue` and `onChanged` are deprecated; migrate to `RadioGroup`.
-  - `create_playlist_dialog.dart`: `groupValue` and `onChanged` are deprecated; migrate to `RadioGroup`.
-  - `keyboard_shortcuts_menu.dart`: `dialogBackgroundColor` is deprecated; migrate to `DialogThemeData.backgroundColor`.
-  - `modification_list.dart`: `onReorder` is deprecated; migrate to `onReorderItem`.
-  - `up_next_queue.dart`: `onReorder` is deprecated; migrate to `onReorderItem`.
-
----
+- This app is Android-only. Previous Chrome/web and Linux desktop build issues are no longer active app targets and have been removed from the active bug list.
+- Do not use the old `test.dart` / `flutter_distributor` issue note as evidence of a current failure; that file is not present in the current repository tree.
+- The active CI workflows are under `.github/workflows/`; use their results to confirm analyzer, tests, and Android APK build status.
 
 ## 🚀 Features
 

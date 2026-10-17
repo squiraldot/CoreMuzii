@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -185,7 +186,7 @@ class AlbumScreen extends StatelessWidget {
                                 return Padding(
                                   padding: EdgeInsets.only(
                                       left:
-                                          GetPlatform.isDesktop ? 15.0 : 10.0),
+                                          10.0),
                                   child: SizedBox(
                                       height: 40,
                                       child: Row(
@@ -569,7 +570,20 @@ class AlbumScreen extends StatelessWidget {
       isScrollControlled: true,
       context: context,
       barrierColor: Colors.transparent.withAlpha(100),
-      builder: (context) => SongInfoBottomSheet(song),
+      builder: (sheetContext) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(sheetContext).colorScheme.surface.withValues(alpha: 0.82),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            ),
+            child: SongInfoBottomSheet(song),
+          ),
+        ),
+      ),
     ).whenComplete(() => Get.delete<SongInfoController>());
   }
 }

@@ -3,8 +3,6 @@ import '/services/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../Search/components/desktop_search_bar.dart';
-import '/ui/screens/Search/search_screen_controller.dart';
 import '/ui/widgets/animated_screen_transition.dart';
 import '../Library/library_combined.dart';
 import '../../widgets/side_nav_bar.dart';
@@ -37,8 +35,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
         floatingActionButton: Obx(
-          () => ((homeScreenController.tabIndex.value == 0 &&
-                          !GetPlatform.isDesktop) ||
+          () => ((homeScreenController.tabIndex.value == 0) ||
                       homeScreenController.tabIndex.value == 2) &&
                   settingsScreenController.isBottomNavBarEnabled.isFalse
               ? Obx(
@@ -159,19 +156,6 @@ class _HomeHeader extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-          IconButton(
-            tooltip: 'History',
-            visualDensity: VisualDensity.compact,
-            onPressed: () {
-              Get.snackbar(
-                'History',
-                'Your listening history is shown in Listen again.',
-                snackPosition: SnackPosition.BOTTOM,
-                duration: const Duration(seconds: 2),
-              );
-            },
-            icon: const Icon(Icons.history_rounded),
           ),
           IconButton(
             tooltip: 'Settings',
@@ -336,22 +320,15 @@ class Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final homeScreenController = Get.find<HomeScreenController>();
     final settingsScreenController = Get.find<SettingsScreenController>();
-    final topPadding = GetPlatform.isDesktop
-        ? 12.0
-        : MediaQuery.paddingOf(context).top + (context.isLandscape ? 4.0 : 8.0);
+    final topPadding =
+        MediaQuery.paddingOf(context).top + (context.isLandscape ? 4.0 : 8.0);
 
     if (homeScreenController.tabIndex.value == 0) {
       return Stack(
           children: [
             GestureDetector(
               onTap: () {
-                // for Desktop search bar
-                if (GetPlatform.isDesktop) {
-                  final sscontroller = Get.find<SearchScreenController>();
-                  if (sscontroller.focusNode.hasFocus) {
-                    sscontroller.focusNode.unfocus();
-                  }
-                }
+
               },
               child: Obx(
                 () => homeScreenController.networkError.isTrue
@@ -465,23 +442,6 @@ class Body extends StatelessWidget {
                       }),
               ),
             ),
-            if (GetPlatform.isDesktop)
-              Align(
-                alignment: Alignment.topCenter,
-                child: LayoutBuilder(builder: (context, constraints) {
-                  return SizedBox(
-                    width: constraints.maxWidth > 800
-                        ? 800
-                        : constraints.maxWidth - 40,
-                    child: Padding(
-                        padding: const EdgeInsets.only(top: 15.0),
-                        child: FocusScope(
-                          node: Get.find<PlayerController>().searchFocus,
-                          child: const DesktopSearchBar(),
-                        )),
-                  );
-                }),
-              ),
           ],
       );
     } else if (homeScreenController.tabIndex.value == 1) {

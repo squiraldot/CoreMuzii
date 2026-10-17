@@ -5,6 +5,7 @@ import 'package:hive/hive.dart';
 
 import '/models/playlist.dart';
 import '/services/music_service.dart';
+import 'common_dialog_widget.dart';
 
 class YoutubePlaylistPicker extends StatefulWidget {
   const YoutubePlaylistPicker({super.key, required this.song});
@@ -90,12 +91,20 @@ class _YoutubePlaylistPickerState extends State<YoutubePlaylistPicker> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Add to YouTube playlist'),
-      content: SizedBox(
-        width: 420,
-        height: 420,
-        child: _loading
+    return CommonDialog(
+      maxWidth: 480,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Add to YouTube playlist',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: 420,
+              height: 420,
+              child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
                 ? Center(
@@ -139,15 +148,19 @@ class _YoutubePlaylistPickerState extends State<YoutubePlaylistPicker> {
                       );
                     },
                   ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _addingPlaylistId == null
-              ? () => Navigator.of(context).pop()
-              : null,
-          child: const Text('Cancel'),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _addingPlaylistId == null
+                    ? () => Navigator.of(context).pop()
+                    : null,
+                child: const Text('Cancel'),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

@@ -38,8 +38,7 @@ class ArtistScreenController extends GetxController
   void onInit() {
     final args = Get.arguments;
     _init(args[0], args[1]);
-    if (GetPlatform.isDesktop ||
-        Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue) {
+    if (Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue) {
       tabController = TabController(vsync: this, length: 5);
       tabController?.animation?.addListener(() {
         int indexChange = tabController!.offset.round();

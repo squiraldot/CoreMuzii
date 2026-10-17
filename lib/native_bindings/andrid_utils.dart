@@ -118,6 +118,42 @@ class Equalizer extends jni$_.JObject {
         .boolean;
   }
 
+  static final _id_applyEqualizerConfig = _class.instanceMethodId(
+    r'applyEqualizerConfig',
+    r'(ILjava/lang/String;)Z',
+  );
+
+  static final _applyEqualizerConfig = jni$_.ProtectedJniExtensions.lookup<
+          jni$_.NativeFunction<
+              jni$_.JniResult Function(
+                  jni$_.Pointer<jni$_.Void>,
+                  jni$_.JMethodIDPtr,
+                  jni$_.VarArgs<
+                      (
+                        jni$_.Int32,
+                        jni$_.Pointer<jni$_.Void>
+                      )>)>>('globalEnv_CallBooleanMethod')
+      .asFunction<
+          jni$_.JniResult Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+              int,
+              jni$_.Pointer<jni$_.Void>)>();
+
+  /// from: `public final boolean applyEqualizerConfig(int i, java.lang.String configJson)`
+  bool applyEqualizerConfig(
+    int i,
+    jni$_.JString configJson,
+  ) {
+    final _$configJson = configJson.reference;
+    return _applyEqualizerConfig(
+            reference.pointer,
+            _id_applyEqualizerConfig as jni$_.JMethodIDPtr,
+            i,
+            _$configJson.pointer)
+        .boolean;
+  }
+
   static final _id_initAudioEffect = _class.instanceMethodId(
     r'initAudioEffect',
     r'(ILandroid/content/Context;)V',

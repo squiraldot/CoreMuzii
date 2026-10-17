@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:audio_service/audio_service.dart' show MediaItem;
 import 'package:flutter/material.dart';
+import 'package:mdlovfimusic/ui/widgets/common_dialog_widget.dart';
 import 'package:get/get.dart';
 import 'package:mdlovfimusic/models/thumbnail.dart';
 import 'package:mdlovfimusic/services/permission_service.dart';
@@ -16,6 +17,8 @@ import '../../../mixins/additional_opeartion_mixin.dart';
 import '../../../models/album.dart' show Album;
 import '../../../models/media_Item_builder.dart';
 import '../../../models/playlist.dart';
+import '../../../utils/playlist_helpers.dart';
+import '../../../utils/export_file_helper.dart';
 import '../../../services/music_service.dart';
 import '../../../services/piped_service.dart';
 import '../Home/home_screen_controller.dart';
@@ -81,10 +84,9 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
         playlistId == "LIBRP" ||
         playlistId == "LIBFAV");
 
-    // After YouTube login, Recently Played is the account's YouTube Music
-    // history, not the device's Hive history.
-    if (playlistId == "LIBRP" &&
-        Hive.box("AppPrefs").get('yt_logged_in', defaultValue: false) == true) {
+    // LIBRP belongs exclusively to the signed-in YouTube Music account.
+    // Never let it fall through to the legacy local Hive history branch.
+    if (playlistId == "LIBRP") {
       playlist.value = playlist_ ??
           Playlist(
             title: "recentlyPlayed".tr,
@@ -92,15 +94,25 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
             thumbnailUrl: Playlist.thumbPlaceholderUrl,
           );
       _animationController.forward();
+      songList.clear();
+
+      final isYouTubeLoggedIn =
+          Hive.box("AppPrefs").get("yt_logged_in", defaultValue: false) == true;
+      if (!isYouTubeLoggedIn) {
+        isContentFetched.value = true;
+        return;
+      }
+
       isContentFetched.value = false;
       try {
-        songList.value =
-            await _musicServices.getYouTubeHistory(limit: 100);
+        // Home Listen again uses this same account-history endpoint.
+        songList.value = await _musicServices.getYouTubeHistory(limit: 20);
       } catch (e) {
         printERROR("Error fetching YouTube listening history: $e");
         songList.clear();
+      } finally {
+        isContentFetched.value = true;
       }
-      isContentFetched.value = true;
       return;
     }
 
@@ -239,10 +251,12 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
 
     final box_ = await Hive.openBox(id);
     for (MediaItem element in songs) {
-      final index = box_.values
-          .toList()
-          .indexWhere((ele) => ele['videoId'] == element.id);
-      await box_.deleteAt(index);
+      final index = findStoredSongIndexById(box_.values, element.id);
+      // The playlist may have changed while a bulk operation was in progress.
+      // Never pass -1 to Hive.deleteAt when the selected song is already gone.
+      if (index >= 0) {
+        await box_.deleteAt(index);
+      }
 
       if (isoffline) {
         await Get.find<LibrarySongsController>()
@@ -357,18 +371,8 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       final sanitizedName =
           playlist.value.title.replaceAll(RegExp(r'[^\w\s]+'), '_');
 
-      // Find available filename with incremental suffix if needed
-      String filename = "$sanitizedName.json";
-      String filePath = "${exportDir.path}/$filename";
-      File file = File(filePath);
-
-      int counter = 1;
-      while (await file.exists()) {
-        filename = "${sanitizedName}_$counter.json";
-        filePath = "${exportDir.path}/$filename";
-        file = File(filePath);
-        counter++;
-      }
+      // Avoid overwriting an existing export.
+      final file = await findAvailableExportFile(exportDir, sanitizedName, 'json');
 
       exportProgress.value = 0.7;
 
@@ -448,18 +452,8 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
       final sanitizedName =
           playlist.value.title.replaceAll(RegExp(r'[^\w\s]+'), '_');
 
-      // Find available filename with incremental suffix if needed
-      String filename = "$sanitizedName.csv";
-      String filePath = "${exportDir.path}/$filename";
-      File file = File(filePath);
-
-      int counter = 1;
-      while (await file.exists()) {
-        filename = "${sanitizedName}_$counter.csv";
-        filePath = "${exportDir.path}/$filename";
-        file = File(filePath);
-        counter++;
-      }
+      // Avoid overwriting an existing export.
+      final file = await findAvailableExportFile(exportDir, sanitizedName, 'csv');
 
       exportProgress.value = 0.7;
 
@@ -577,41 +571,18 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     }
   }
 
-  // Helper method to get the appropriate export directory for each platform
+  // Android export destination for playlist/album exports.
   Future<Directory> _getExportDirectory() async {
-    Directory directory;
-    const appFolderName = "MDLovFiMusic";
-
+    const appFolderName = "MuziiNap";
     try {
-      if (Platform.isAndroid) {
-        // Android: use Downloads folder
-        directory = Directory('/storage/emulated/0/Download/$appFolderName');
-      } else if (Platform.isIOS) {
-        // iOS: use Documents directory
-        final docDir = await path_provider.getApplicationDocumentsDirectory();
-        directory = Directory('${docDir.path}/$appFolderName');
-      } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-        // Desktop platforms: use Downloads folder in user's home directory
-        final homeDir = Platform.environment['HOME'] ??
-            Platform.environment['USERPROFILE'] ??
-            '.';
-        directory = Directory('$homeDir/Downloads/$appFolderName');
-      } else {
-        // Fallback: use temporary directory
-        final tempDir = await path_provider.getTemporaryDirectory();
-        directory = Directory('${tempDir.path}/$appFolderName');
-      }
-
-      // Create directory if it doesn't exist
+      final directory = Directory('/storage/emulated/0/Download/$appFolderName');
       if (!await directory.exists()) {
         await directory.create(recursive: true);
       }
-
       return directory;
     } catch (e) {
-      // Fallback to app's documents directory if any error occurs
       final appDocDir = await path_provider.getApplicationDocumentsDirectory();
-      directory = Directory('${appDocDir.path}/$appFolderName');
+      final directory = Directory('${appDocDir.path}/$appFolderName');
       if (!await directory.exists()) {
         await directory.create(recursive: true);
       }
@@ -619,49 +590,42 @@ class PlaylistScreenController extends PlaylistAlbumScreenControllerBase
     }
   }
 
-  // Helper method to get a user-friendly location message
-  String _getLocationMessage(String path) {
-    if (Platform.isAndroid) {
-      return "Downloads/MDLovFiMusic";
-    } else if (Platform.isIOS) {
-      return "Files App > MDLovFiMusic";
-    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      return "Downloads/MDLovFiMusic";
-    } else {
-      return path.split('/').last;
-    }
-  }
+  String _getLocationMessage(String path) => path.contains("/Download/")
+      ? "Downloads/MuziiNap"
+      : path.split(Platform.pathSeparator).last;
 
   // Helper method to show progress dialog
   void _showProgressDialog(BuildContext context, String title) {
     Get.dialog(
-      AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+      CommonDialog(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 20),
+              Obx(() => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      LinearProgressIndicator(
+                        value: exportProgress.value,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "${(exportProgress.value * 100).toInt()}%",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  )),
+            ],
+          ),
         ),
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        content: Obx(() => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(
-                  value: exportProgress.value,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).colorScheme.secondary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "${(exportProgress.value * 100).toInt()}%",
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            )),
       ),
       barrierDismissible: false,
     );

@@ -6,7 +6,6 @@ import 'package:hive/hive.dart';
 
 import '/models/media_Item_builder.dart';
 import '/ui/player/player_controller.dart';
-import '../../../utils/update_check_flag_file.dart';
 import '../../../utils/helper.dart';
 import '/models/album.dart';
 import '/models/playlist.dart';
@@ -16,7 +15,6 @@ import '../../../utils/youtube_auth.dart';
 import '/models/home_mood.dart';
 import '/services/music_service.dart';
 import '../Settings/settings_screen_controller.dart';
-import '/ui/widgets/new_version_dialog.dart';
 
 class HomeScreenController extends GetxController with WidgetsBindingObserver {
   final MusicServices _musicServices = Get.find<MusicServices>();
@@ -26,7 +24,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   final quickPicks = QuickPicks([]).obs;
   final middleContent = [].obs;
   final fixedContent = [].obs;
-  final showVersionDialog = true.obs;
   //isHomeScreenOnTop var only useful if bottom nav enabled
   final isHomeSreenOnTop = true.obs;
   final List<ScrollController> contentScrollControllers = [];
@@ -47,7 +44,6 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _homeContextSignature = _currentHomeContextSignature();
     loadContent();
-    if (updateCheckFlag) _checkNewVersion();
   }
 
   @override
@@ -569,11 +565,8 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   void onSideBarTabSelected(int index) {
     reverseAnimationtransiton = index > tabIndex.value;
     tabIndex.value = index;
-    // Match SimpMusic's Home reload behavior: returning to Home requests a
-    // fresh FEmusic_home response instead of showing the previous shelf list.
-    if (index == 0) {
-      refreshHome();
-    }
+    // Returning to Home preserves the current feed. Manual refresh remains
+    // available through the Home refresh gesture and long-press Home action.
   }
 
   Future<void> onTrackPlayed(MediaItem item) async {
@@ -627,30 +620,10 @@ class HomeScreenController extends GetxController with WidgetsBindingObserver {
   void onBottonBarTabSelected(int index) {
     reverseAnimationtransiton = index > tabIndex.value;
     tabIndex.value = index;
-    if (index == 0) {
-      refreshHome();
-    }
+    // Do not refetch Home just because the user switches tabs.
+    // Pull-to-refresh and the Home icon long-press still refresh explicitly.
   }
 
-  void _checkNewVersion() {
-    showVersionDialog.value =
-        Hive.box(appPrefsBoxName).get("newVersionVisibility") ?? true;
-    if (showVersionDialog.isTrue) {
-      newVersionCheck(Get.find<SettingsScreenController>().currentVersion)
-          .then((value) {
-        if (value) {
-          showDialog(
-              context: Get.context!,
-              builder: (context) => const NewVersionDialog());
-        }
-      });
-    }
-  }
-
-  void onChangeVersionVisibility(bool val) {
-    Hive.box(appPrefsBoxName).put("newVersionVisibility", !val);
-    showVersionDialog.value = !val;
-  }
 
   ///This is used to minimized bottom navigation bar by setting [isHomeSreenOnTop.value] to `true` and set mini player height.
   ///

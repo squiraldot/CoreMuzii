@@ -30,7 +30,7 @@ class LyricsWidget extends StatelessWidget {
                               ? "lyricsNotAvailable".tr
                               : playerController.lyrics["plainLyrics"],
                           textAlign: TextAlign.center,
-                          style: playerController.isDesktopLyricsDialogOpen
+                          style: playerController.isLyricsDialogOpen
                               ? Theme.of(context).textTheme.titleMedium!
                               : Theme.of(context)
                                   .textTheme
@@ -54,7 +54,7 @@ class LyricsWidget extends StatelessWidget {
                     emptyBuilder: () => Center(
                       child: Text(
                         "syncedLyricsNotAvailable".tr,
-                        style: playerController.isDesktopLyricsDialogOpen
+                        style: playerController.isLyricsDialogOpen
                               ? Theme.of(context).textTheme.titleMedium!
                               : Theme.of(context)
                                   .textTheme

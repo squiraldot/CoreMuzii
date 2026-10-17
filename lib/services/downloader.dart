@@ -162,7 +162,7 @@ class Downloader extends GetxService {
     //       Get.context!, playerResponse.statusMSG,
     //       size: SanckBarSize.BIG,
     //       duration: const Duration(seconds: 2),
-    //       top: !GetPlatform.isDesktop));
+    //       top: true));
     //   complete.complete();
     //   return complete.future;
     // }
@@ -175,7 +175,7 @@ class Downloader extends GetxService {
               : playerResponse.statusMSG,
           size: SanckBarSize.BIG,
           duration: const Duration(seconds: 2),
-          top: !GetPlatform.isDesktop));
+          top: true));
       printINFO("Requested song is not downloadable. You may try again");
       complete.complete();
       return complete.future;
@@ -275,7 +275,7 @@ class Downloader extends GetxService {
             Get.context!, "downloadError3".tr,
             size: SanckBarSize.BIG,
             duration: const Duration(seconds: 2),
-            top: !GetPlatform.isDesktop));
+            top: true));
         printINFO(
             "Downloading failed due to network/stream error! Please try again");
         complete.complete();

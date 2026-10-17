@@ -1,112 +1,57 @@
 # Project Memory / Agent Database
 
-This document acts as the primary Agent Database and Context Memory for AI agents assisting with the **MDLovFi Music** project. It preserves architectural decisions, project structure, and overarching project goals. 
-
-> **CRITICAL INSTRUCTION FOR AGENTS:**
-> **PRIORITIZE `issues.md`**: `issues.md` is the **absolute source of truth** for ongoing tasks, feature priorities, and bugs. ALWAYS check `issues.md` before starting work to understand current priorities.
+This document records current project architecture and development guidance for MuziiNap.
 
 ## Project Context
-- **Name**: MDLovFi Music
-- **Dart Package Name**: `mdlovfimusic`
-- **App ID / Bundle Identifier**: `com.merrmist.mdlovfimusic`
-- **Version**: 1.13.0
-- **Forked From**: [merrmist/MDLovFi-Music](https://github.com/merrmist/MDLovFi-Music)
-- **Maintained By**: [Merrmist/MDLovFi-Music](https://github.com/Merrmist/MDLovFi-Music)
-- **Goal**: Develop and actively maintain the MDLovFi Music cross-platform music streaming app, adding new features and fixing legacy bugs.
-- **Framework**: Flutter (Dart SDK >=3.1.5 <4.0.0)
 
-## Output Guidelines
-- **Run on Chrome**: `flutter run -d chrome` (Note: Currently blocked by `dart:ffi` packages)
-- **Run on Linux**: `flutter run -d linux` (Note: Requires `libgtk-3-dev` and `libayatana-appindicator3-dev` installed on host system)
-- **Build Web Release**: `flutter build web --release`
-- **Build APK**: `flutter build apk --release`
-- **Sync with upstream**: `bash git-sync.sh` (Syncs with upstream and pushes tags/deployments)
+- **Repository:** `squiraldot/CoreMuzii`
+- **App:** MuziiNap
+- **Flutter package identifier:** `mdlovfimusic` (legacy technical identifier; retain to avoid breaking imports)
+- **Android application ID:** `com.merrmist.mdlovfimusic` (legacy install/signing identity; retain for update compatibility)
+- **Platform:** Android-only Flutter application
+- **Language:** Dart / Flutter
+- **Dart SDK constraint:** `>=3.1.5 <4.0.0`
+- **Main development branch for current work:** `feature/advanced-equalizer`
 
-## Release Guidelines
-- **Update version**: Update the version number in `pubspec.yaml` and any relevant version files before making a new release.
-- **Update Logs**: Update both `CHANGELOG.md` and `release-notes.md` with the new changes before triggering a release.
-- **Use Single script**: Run `bash git-sync.sh` or `./git-sync.sh`. This script will automatically sync with upstream, prompt for necessary checks, and create/push tags to trigger deployments.
+## Development Guidelines
+
+- Keep changes aligned with the Android-only app. Do not restore removed iOS, desktop, or web runner/build targets without an explicit project decision.
+- Preserve shared Flutter code and Android plugin implementations; a dependency is not removable merely because it also supports other platforms.
+- Before removing a file or dependency, check imports, asset declarations, workflows, native configuration, tests, and documentation references.
+- Run `flutter pub get`, `flutter analyze --no-fatal-infos lib test`, and `flutter test --no-pub` when the environment permits. The GitHub Actions workflows are the authoritative remote verification.
+- Format changed Dart files with `dart format`.
+- Keep release/version information consistent across `pubspec.yaml`, changelog and release notes when preparing a release.
+
+## Current Build and CI
+
+- `.github/workflows/code_quality.yml`: analyzer and Flutter test suite.
+- `.github/workflows/muziinap-apk.yml`: Android APK build.
+- `.github/workflows/release.yml`: Android release APK packaging and verification.
+- Android build outputs belong under generated build directories and must not be committed.
 
 ## Project Structure
 
-```text
-/
-├── .github/                 # CI/CD and GitHub configuration
-│   ├── workflows/           # GitHub Actions pipelines
-│   │   ├── code_quality.yml # PR checker (Linter, Tests, test APK)
-│   │   ├── win_exe.yml      # Legacy Windows packaging script (includes code signing)
-│   │   └── release.yml      # Primary Multi-platform Release pipeline
-│   └── copilot-instructions.md # OG repo's AI guidelines
-├── fastlane/                # App store metadata (F-Droid / Play Store)
-├── linux/packaging/         # Linux packaging configs (DEB, RPM, AppImage) & AppStream Metadata
-├── windows/packaging/       # Windows packaging configs (make_config.yaml)
-├── win_cert/                # Windows digital signature certificates (.crt, .pem)
-├── lib/
-│   ├── base_class/          # Base classes and abstractions
-│   ├── mixins/              # Reusable GetX mixins
-│   ├── models/              # Data models (MediaItem, Playlist)
-│   ├── native_bindings/     # Platform-specific native code bindings
-│   ├── services/            # Business logic (MusicServices, API, extraction)
-│   ├── ui/                  # User Interface
-│   │   ├── player/          # Music player UI & PlayerController
-│   │   ├── screens/         # Main app screens (Home, Search, QrScanner)
-│   │   ├── utils/           # UI utilities and ThemeController
-│   │   └── widgets/         # Reusable widgets and bottom sheets
-│   └── utils/               # General helpers, localization, and formatters
-├── action.yml               # Custom Docker-based GitHub action for APK builds
-├── distribute_options.yaml  # (Deprecated) Old config for flutter_distributor
-├── jnigen.yaml              # JNI bindings configuration for native Android C/C++ bridges
-└── git-sync.sh              # Custom Bash script for deployment & tagging
-```
+- `android/`: Android app, manifest, Gradle configuration, Kotlin integration and resources.
+- `lib/`: Flutter UI, services, models, native bindings and utilities.
+- `test/`: Flutter unit/widget tests.
+- `assets/icons/`: app fallback icons declared in `pubspec.yaml`.
+- `localization/`: localization sources and generator.
+- `fastlane/metadata/android/`: Android store metadata.
+- `.github/workflows/`: CI and Android packaging workflows.
+- `jnigen.yaml`: JNI binding generation configuration.
+- `git-sync.sh`: optional manual local Git/release helper; review its prompts carefully before use because it stages all changes and can replace a remote tag after confirmation.
 
-## App Store Metadata & Packaging
-- **Android**: Metadata for F-Droid and Play Store is stored in `fastlane/metadata/android/en-US/`. This includes descriptions, changelogs, and screenshots.
-- **Linux (AppStream)**: Rich metadata for Linux software centers (Screenshots, descriptions, categories) is defined in `linux/packaging/deb/usr/share/metainfo/mdlovfimusic.metainfo.xml`. This file is automatically injected into DEB, RPM, and AppImage builds by `flutter_distributor`.
-- **Windows**: Package metadata (Publisher URL, App ID, Display Name) is defined in `windows/packaging/exe/make_config.yaml` for `flutter_distributor`.
+## Android Architecture
 
-### Architecture Overview
+- **State management:** GetX.
+- **Persistence:** Hive.
+- **Playback/background controls:** `just_audio` and `audio_service`.
+- **Networking:** `dio`, HTTP APIs and YouTube-related services.
+- **Android native integration:** Kotlin and JNI bindings where configured.
+- **Localization:** generated from files in `localization/`.
 
-```mermaid
-graph TD
-    A[UI Layer / Screens] --> B[State Management / GetX Controllers]
-    B --> C[Core Services / MusicServices]
-    B --> H[Hardware Services]
-    C --> D[Audio Engine / media_kit & just_audio]
-    C --> E[Local Storage / Hive Database]
-    C --> F[Network APIs / YouTube Extractor]
-    H --> S[QR Scanning / flutter_zxing]
-    H --> Cam[Camera Access / camera]
-    H --> FP[Linux Fallback / file_picker]
-    
-    subgraph CI/CD
-      GH[GitHub Actions] --> APK[Android APKs]
-      GH --> LNX[Linux Tar.gz]
-      GH --> WIN[Windows Zip]
-    end
-    
-    subgraph UI Components
-      A1[Home Screen]
-      A2[Search Screen]
-      A3[Player Panel]
-      A4[Dialogs & BottomSheets]
-      A5[QR Scanner Screen]
-    end
-    
-    A1 & A2 & A3 & A4 & A5 --> A
-```
+## Release and Safety Notes
 
-## Architectural & Design Decisions
-- **State management**: GetX (`get` package) - Use GetX controllers for managing UI state.
-- **Keyboard Navigation**: Uses specific KeyDownEvent intercepts instead of global focus traversal loops to prevent trapping users. Tab cycles panels; `?` opens a styled shortcut menu.
-- **Local storage**: Hive (`hive` / `hive_flutter`) - Used for offline caching and favorites.
-- **Audio playback**: `just_audio` (Android) + `media_kit` (Linux/Windows) + `audio_service` (Background playback).
-- **Networking**: `dio` for HTTP requests, `youtube_explode_dart` for some YouTube data extraction (Note: Custom scraping is also heavily used in `MusicServices`).
-- **UI fonts**: Google Fonts (`google_fonts` package).
-- **Icons**: Standard Material Icons (previously `ionicons`, but migrated away due to Flutter 3.44+ compatibility).
-
-## Code Conventions
-- Follow Flutter/Dart style guidelines.
-- Use existing GetX controller patterns for new features.
-- Keep platform-specific code in respective directories.
-- Always run `dart format` on modified files.
-- UI elements should adapt to standard Material 3 design and utilize the user's Dynamic Theme preferences.
+- The release workflows use Flutter and Android build commands directly; there is no root Dockerfile-based custom GitHub Action in this repository.
+- Do not treat old cross-platform packaging instructions as current.
+- Keep store metadata and historical audit documents unless there is a specific reason to remove them.

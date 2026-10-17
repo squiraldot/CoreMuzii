@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mdlovfimusic/ui/player/player_controller.dart';
@@ -76,9 +77,22 @@ class UpNextQueue extends StatelessWidget {
                             .homeScaffoldkey.currentState!.context,
                         //constraints: BoxConstraints(maxHeight:Get.height),
                         barrierColor: Colors.transparent.withAlpha(100),
-                        builder: (context) => SongInfoBottomSheet(
-                          playerController.currentQueue[index],
-                          calledFromQueue: true,
+                        builder: (sheetContext) => ClipRRect(
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                          child: BackdropFilter(
+                            filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Theme.of(sheetContext).colorScheme.surface.withValues(alpha: 0.82),
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                              ),
+                              child: SongInfoBottomSheet(
+                                playerController.currentQueue[index],
+                                calledFromQueue: true,
+                              ),
+                            ),
+                          ),
                         ),
                       ).whenComplete(() => Get.delete<SongInfoController>());
                     },
@@ -94,7 +108,6 @@ class UpNextQueue extends StatelessWidget {
                     leading: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (GetPlatform.isDesktop)
                           IconButton(
                               onPressed: () {
                                 if (playerController.currentSongIndex.value ==
@@ -142,16 +155,15 @@ class UpNextQueue extends StatelessWidget {
                           : Theme.of(homeScaffoldContext).textTheme.titleSmall,
                     ),
                     trailing: ReorderableDragStartListener(
-                      enabled: !GetPlatform.isDesktop,
+                      enabled: true,
                       index: index,
                       child: Container(
                         padding: EdgeInsets.only(
-                            right: (GetPlatform.isDesktop) ? 20 : 5, left: 20),
+                            right: 5, left: 20),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            if (!GetPlatform.isDesktop)
-                              const Icon(
+                            const Icon(
                                 Icons.drag_handle,
                               ),
                             playerController.currentSongIndex.value == index

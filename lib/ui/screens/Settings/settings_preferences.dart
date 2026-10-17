@@ -1,7 +1,3 @@
-bool resolveBottomNavBarPreference({
-  required bool isDesktop,
-  required dynamic storedValue,
-}) {
-  if (isDesktop) return false;
+bool resolveBottomNavBarPreference({required dynamic storedValue}) {
   return storedValue is bool ? storedValue : true;
 }

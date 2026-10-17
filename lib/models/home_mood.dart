@@ -12,19 +12,59 @@ class HomeMood {
   final String? thumbnailUrl;
 
   static HomeMood? fromRenderer(Map<String, dynamic> renderer) {
-    final title = _text(renderer['buttonText'] ?? renderer['title'])?.trim();
-    final endpoint = renderer['clickCommand'] is Map
-        ? renderer['clickCommand']
-        : renderer['navigationEndpoint'];
-    final browse = endpoint is Map ? endpoint['browseEndpoint'] : null;
-    final browseId = browse is Map ? browse['browseId']?.toString() : null;
-    final params = browse is Map ? browse['params']?.toString() : null;
+    String? readText(dynamic value) {
+      if (value is String) return value;
+      if (value is Map) {
+        final simple = value['simpleText'];
+        if (simple is String) return simple;
+        final runs = value['runs'];
+        if (runs is List) {
+          return runs
+              .whereType<Map>()
+              .map((run) => run['text']?.toString() ?? '')
+              .join();
+        }
+      }
+      return null;
+    }
+
+    Map? findBrowseEndpoint(dynamic value) {
+      if (value is Map) {
+        final browse = value['browseEndpoint'];
+        if (browse is Map &&
+            browse['browseId']?.toString().trim().isNotEmpty == true) {
+          return browse;
+        }
+        for (final child in value.values) {
+          final found = findBrowseEndpoint(child);
+          if (found != null) return found;
+        }
+      } else if (value is List) {
+        for (final child in value) {
+          final found = findBrowseEndpoint(child);
+          if (found != null) return found;
+        }
+      }
+      return null;
+    }
+
+    final title = readText(
+      renderer['buttonText'] ?? renderer['title'] ?? renderer['accessibilityText'],
+    )?.trim();
+    final endpoint = findBrowseEndpoint(
+      renderer['clickCommand'] ?? renderer['navigationEndpoint'] ?? renderer,
+    );
+    final browseId = endpoint?['browseId']?.toString().trim();
+    final params = endpoint?['params']?.toString();
     final thumbnails = _thumbnailList(renderer);
     final thumbnailUrl = thumbnails is List && thumbnails.isNotEmpty
         ? (thumbnails.last is Map ? thumbnails.last['url']?.toString() : null)
         : null;
 
-    if (title == null || title.isEmpty || browseId == null || browseId.isEmpty) {
+    if (title == null ||
+        title.isEmpty ||
+        browseId == null ||
+        browseId.isEmpty) {
       return null;
     }
 
@@ -49,19 +89,4 @@ class HomeMood {
     return thumbnail is Map ? thumbnail['thumbnails'] : null;
   }
 
-  static String? _text(dynamic value) {
-    if (value is String) return value;
-    if (value is Map) {
-      final simple = value['simpleText'];
-      if (simple is String) return simple;
-      final runs = value['runs'];
-      if (runs is List) {
-        return runs
-            .whereType<Map>()
-            .map((run) => run['text']?.toString() ?? '')
-            .join();
-      }
-    }
-    return null;
-  }
 }

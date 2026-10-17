@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -31,9 +32,31 @@ class AlbumArtNLyrics extends StatelessWidget {
                     context:
                         playerController.homeScaffoldkey.currentState!.context,
                     barrierColor: Colors.transparent.withAlpha(100),
-                    builder: (context) => SongInfoBottomSheet(
-                      playerController.currentSong.value!,
-                      calledFromPlayer: true,
+                    builder: (context) => ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme.surface
+                                .withValues(alpha: 0.82),
+                            border: Border(
+                              top: BorderSide(
+                                color: Theme.of(context)
+                                    .colorScheme.primary
+                                    .withValues(alpha: 0.24),
+                              ),
+                            ),
+                          ),
+                          child: SongInfoBottomSheet(
+                            playerController.currentSong.value!,
+                            calledFromPlayer: true,
+                          ),
+                        ),
+                      ),
                     ),
                   ).whenComplete(() => Get.delete<SongInfoController>());
                 },
@@ -131,8 +154,32 @@ class AlbumArtNLyrics extends StatelessWidget {
                               context: playerController
                                   .homeScaffoldkey.currentState!.context,
                               barrierColor: Colors.transparent.withAlpha(100),
-                              builder: (context) =>
-                                  const SleepTimerBottomSheet(),
+                              builder: (context) => ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(24),
+                                ),
+                                child: BackdropFilter(
+                                  filter: ui.ImageFilter.blur(
+                                    sigmaX: 18,
+                                    sigmaY: 18,
+                                  ),
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme.surface
+                                          .withValues(alpha: 0.82),
+                                      border: Border(
+                                        top: BorderSide(
+                                          color: Theme.of(context)
+                                              .colorScheme.primary
+                                              .withValues(alpha: 0.24),
+                                        ),
+                                      ),
+                                    ),
+                                    child: const SleepTimerBottomSheet(),
+                                  ),
+                                ),
+                              ),
                             );
                           },
                           icon: const Icon(

@@ -28,10 +28,6 @@ class SearchItem extends StatelessWidget {
         Get.toNamed(ScreenNavigationSetup.searchResultScreen,
             id: ScreenNavigationSetup.id, arguments: queryString);
         searchScreenController.addToHistryQueryList(queryString);
-        // for Desktop searchbar
-        if (GetPlatform.isDesktop) {
-          searchScreenController.focusNode.unfocus();
-        }
       },
       leading: isHistoryString
           ? const Icon(Icons.history)

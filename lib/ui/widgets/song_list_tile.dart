@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:audio_service/audio_service.dart' show MediaItem;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -46,9 +47,31 @@ class SongListTile extends StatelessWidget with RemoveSongFromPlaylistMixin {
               isScrollControlled: true,
               context: playerController.homeScaffoldkey.currentState!.context,
               barrierColor: Colors.transparent.withAlpha(100),
-              builder: (context) => SongInfoBottomSheet(
-                song,
-                playlist: playlist,
+              builder: (context) => ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme.surface
+                          .withValues(alpha: 0.82),
+                      border: Border(
+                        top: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme.primary
+                              .withValues(alpha: 0.24),
+                        ),
+                      ),
+                    ),
+                    child: SongInfoBottomSheet(
+                      song,
+                      playlist: playlist,
+                    ),
+                  ),
+                ),
               ),
             ).whenComplete(() => Get.delete<SongInfoController>());
           }
@@ -121,10 +144,32 @@ class SongListTile extends StatelessWidget with RemoveSongFromPlaylistMixin {
                 context: playerController.homeScaffoldkey.currentState!.context,
                 //constraints: BoxConstraints(maxHeight:Get.height),
                 barrierColor: Colors.transparent.withAlpha(100),
-                builder: (context) => SongInfoBottomSheet(
-                  song,
-                  playlist: playlist,
+                builder: (context) => ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
                 ),
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme.surface
+                          .withValues(alpha: 0.82),
+                      border: Border(
+                        top: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme.primary
+                              .withValues(alpha: 0.24),
+                        ),
+                      ),
+                    ),
+                    child: SongInfoBottomSheet(
+                      song,
+                      playlist: playlist,
+                    ),
+                  ),
+                ),
+              ),
               ).whenComplete(() => Get.delete<SongInfoController>());
             },
             contentPadding: const EdgeInsets.only(top: 0, left: 5, right: 30),
@@ -181,8 +226,7 @@ class SongListTile extends StatelessWidget with RemoveSongFromPlaylistMixin {
                       ),
                     ],
                   ),
-                  if (GetPlatform.isDesktop)
-                    IconButton(
+                  IconButton(
                         splashRadius: 20,
                         onPressed: () {
                           showModalBottomSheet(
@@ -196,10 +240,32 @@ class SongListTile extends StatelessWidget with RemoveSongFromPlaylistMixin {
                                 .homeScaffoldkey.currentState!.context,
                             //constraints: BoxConstraints(maxHeight:Get.height),
                             barrierColor: Colors.transparent.withAlpha(100),
-                            builder: (context) => SongInfoBottomSheet(
-                              song,
-                              playlist: playlist,
-                            ),
+                            builder: (context) => ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme.surface
+                          .withValues(alpha: 0.82),
+                      border: Border(
+                        top: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme.primary
+                              .withValues(alpha: 0.24),
+                        ),
+                      ),
+                    ),
+                    child: SongInfoBottomSheet(
+                      song,
+                      playlist: playlist,
+                    ),
+                  ),
+                ),
+              ),
                           ).whenComplete(
                               () => Get.delete<SongInfoController>());
                         },

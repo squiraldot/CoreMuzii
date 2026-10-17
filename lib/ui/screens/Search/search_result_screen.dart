@@ -5,7 +5,7 @@ import '/ui/screens/Search/search_result_screen_v2.dart';
 import '/ui/screens/Settings/settings_screen_controller.dart';
 import '../../navigator.dart';
 import '../../widgets/animated_screen_transition.dart';
-import '../../widgets/loader.dart';
+import '../../widgets/shimmer_widgets/song_list_shimmer.dart';
 import '../../widgets/search_related_widgets.dart';
 import '../../widgets/separate_tab_item_widget.dart';
 import 'search_result_screen_controller.dart';
@@ -16,8 +16,7 @@ class SearchResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final searchResScrController = Get.put(SearchResultScreenController());
-    return GetPlatform.isDesktop ||
-            Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue
+    return Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue
         ? const SearchResultScreenBN()
         : Scaffold(
             body: Row(
@@ -136,9 +135,7 @@ class Body extends StatelessWidget {
         } else if (searchResScrController.isResultContentFetced.isTrue) {
           return const ResultWidget();
         } else {
-          return const Center(
-            child: LoadingIndicator(),
-          );
+          return const SongListShimmer(itemCount: 8, topPadding: 12);
         }
       });
     } else {

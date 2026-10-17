@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:get/get.dart';
 
 import '../navigator.dart';
@@ -38,6 +39,27 @@ class _ContentListItemState extends State<ContentListItem> {
         });
       },
       onTap: () {
+        // Recently Played is account-scoped. Keep the existing tile, but
+        // require YouTube Music sign-in before opening its playlist screen.
+        if (!isAlbum &&
+            widget.content.playlistId == 'LIBRP' &&
+            Hive.box('AppPrefs').get('yt_logged_in', defaultValue: false) !=
+                true) {
+          // Use the tile's ScaffoldMessenger so the message works with the
+          // app's nested Library navigator as well.
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Please log in to YouTube Music first to view Recently Played.',
+                ),
+                behavior: SnackBarBehavior.floating,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          return;
+        }
         if (isAlbum) {
           Get.toNamed(ScreenNavigationSetup.albumScreen,
               id: ScreenNavigationSetup.id, arguments:(widget.content, widget.content.browseId));

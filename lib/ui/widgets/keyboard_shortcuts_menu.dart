@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'common_dialog_widget.dart';
+
 class KeyboardShortcutsMenu extends StatelessWidget {
   const KeyboardShortcutsMenu({super.key});
 
@@ -97,27 +99,39 @@ void showKeyboardShortcutsDialog(BuildContext context) {
     return;
   }
   Get.dialog(
-    AlertDialog(
-      backgroundColor: Theme.of(context).dialogTheme.backgroundColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Row(
-        children: [
-          Icon(Icons.keyboard),
-          SizedBox(width: 10),
-          Text("Keyboard Shortcuts", style: TextStyle(fontWeight: FontWeight.bold)),
-        ],
-      ),
-      content: const SingleChildScrollView(
-        child: SizedBox(width: 450, child: KeyboardShortcutsMenu()),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () {
-            Get.back();
-          },
-          child: const Text("Close", style: TextStyle(fontWeight: FontWeight.bold)),
+    CommonDialog(
+      maxWidth: 520,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.keyboard),
+                SizedBox(width: 10),
+                Text("Keyboard Shortcuts",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Flexible(
+              child: SingleChildScrollView(
+                child: SizedBox(width: 450, child: KeyboardShortcutsMenu()),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: Get.back,
+                child: const Text("Close",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     ),
   );
 }

@@ -1,3 +1,5 @@
+import '/models/equalizer.dart';
+
 import '../../services/constant.dart';
 import 'dart:async';
 import 'dart:io';
@@ -18,7 +20,6 @@ import '../widgets/snackbar.dart';
 import '/services/synced_lyrics_service.dart';
 import '/ui/screens/Settings/settings_screen_controller.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import '../../services/windows_audio_service.dart';
 import '../../utils/helper.dart';
 import '../../utils/home_history.dart';
 import '/models/media_Item_builder.dart';
@@ -70,11 +71,11 @@ class PlayerController extends GetxController
   final showLyricsflag = false.obs;
   final isLyricsLoading = false.obs;
   final lyricsMode = 0.obs;
-  bool isDesktopLyricsDialogOpen = false;
+  bool isLyricsDialogOpen = false;
   // 0 for play, 1 for pause, 2 for blank
   final gesturePlayerVisibleState = 2.obs;
   final lyricUi =
-      MDLovFiLyricUI(highlight: true, defaultSize: 20, defaultExtSize: 12);
+      MuziiNapLyricUI(highlight: true, defaultSize: 20, defaultExtSize: 12);
   RxMap<String, dynamic> lyrics =
       <String, dynamic>{"synced": "", "plainLyrics": ""}.obs;
   ScrollController scrollController = ScrollController();
@@ -98,9 +99,6 @@ class PlayerController extends GetxController
 
   @override
   void onReady() {
-    if (GetPlatform.isWindows) {
-      Get.put(WindowsAudioService());
-    }
     _restorePrevSession();
     super.onReady();
   }
@@ -120,10 +118,6 @@ class PlayerController extends GetxController
     isShuffleModeEnabled.value = appPrefs.get("isShuffleModeEnabled") ?? false;
     isQueueLoopModeEnabled.value =
         appPrefs.get("queueLoopModeEnabled") ?? false;
-
-    if (GetPlatform.isDesktop) {
-      setVolume(appPrefs.get("volume") ?? 100);
-    }
 
     if ((appPrefs.get("playerUi") ?? 0) == 1) {
       initGesturePlayerStateAnimationController();
@@ -196,7 +190,7 @@ class PlayerController extends GetxController
 
       if (event.logicalKey == LogicalKeyboardKey.keyL) {
         if (!playerPanelController.isPanelOpen) {
-          if (isDesktopLyricsDialogOpen) {
+          if (isLyricsDialogOpen) {
             Get.back();
             return true;
           }
@@ -207,10 +201,10 @@ class PlayerController extends GetxController
             showLyrics();
           }
           Get.dialog(const LyricsDialog()).whenComplete(() {
-            isDesktopLyricsDialogOpen = false;
+            isLyricsDialogOpen = false;
             showLyricsflag.value = false;
           });
-          isDesktopLyricsDialogOpen = true;
+          isLyricsDialogOpen = true;
         } else {
           showLyrics();
         }
@@ -274,18 +268,10 @@ class PlayerController extends GetxController
       }
 
       if (event.logicalKey == LogicalKeyboardKey.keyP) {
-        if (GetPlatform.isDesktop) {
-          if (homeScaffoldkey.currentState?.isEndDrawerOpen ?? false) {
-            homeScaffoldkey.currentState?.closeEndDrawer();
-          } else {
-            homeScaffoldkey.currentState?.openEndDrawer();
-          }
+        if (queuePanelController.isPanelOpen) {
+          queuePanelController.close();
         } else {
-          if (queuePanelController.isPanelOpen) {
-            queuePanelController.close();
-          } else {
-            queuePanelController.open();
-          }
+          queuePanelController.open();
         }
         return true;
       }
@@ -372,21 +358,20 @@ class PlayerController extends GetxController
     });
   }
 
-  void _setWakelock(bool enable) {
-    if (_wakelockActive == enable) return; // no-op if already in desired state
+  Future<void> _setWakelock(bool enable) async {
+    if (_wakelockActive == enable) return;
 
     try {
       if (enable) {
         printINFO("Enabling wakelock");
-        WakelockPlus.enable();
-        _wakelockActive = true;
+        await WakelockPlus.enable();
       } else {
         printINFO("Disabling wakelock");
-        WakelockPlus.disable();
-        _wakelockActive = false;
+        await WakelockPlus.disable();
       }
+      _wakelockActive = enable;
     } catch (e) {
-      printERROR(e);
+      printERROR("Failed to update wakelock: $e");
     }
   }
 
@@ -457,7 +442,7 @@ class PlayerController extends GetxController
         }
         lyrics.value = {"synced": "", "plainLyrics": ""};
         showLyricsflag.value = false;
-        if (isDesktopLyricsDialogOpen) {
+        if (isLyricsDialogOpen) {
           Navigator.pop(Get.context!);
         }
 
@@ -789,12 +774,12 @@ class PlayerController extends GetxController
     _audioHandler.customAction("playByIndex", {"index": index});
   }
 
-  void toggleSkipSilence(bool enable) {
-    _audioHandler.customAction("toggleSkipSilence", {"enable": enable});
+  Future<void> toggleSkipSilence(bool enable) async {
+    await _audioHandler.customAction("toggleSkipSilence", {"enable": enable});
   }
 
-  void toggleLoudnessNormalization(bool enable) {
-    _audioHandler
+  Future<void> toggleLoudnessNormalization(bool enable) async {
+    await _audioHandler
         .customAction("toggleLoudnessNormalization", {"enable": enable});
   }
 
@@ -832,9 +817,10 @@ class PlayerController extends GetxController
   }
 
   Future<void> setVolume(int value) async {
-    _audioHandler.customAction("setVolume", {"value": value});
-    volume.value = value;
-    await Hive.box(appPrefsBoxName).put("volume", value);
+    final safeValue = value.clamp(0, 100).toInt();
+    await _audioHandler.customAction("setVolume", {"value": safeValue});
+    await Hive.box(appPrefsBoxName).put("volume", safeValue);
+    volume.value = safeValue;
   }
 
   void volumeUp() {
@@ -870,7 +856,8 @@ class PlayerController extends GetxController
         await Hive.box(appPrefsBoxName).put("volume", vol);
       }
     }
-    _audioHandler.customAction("setVolume", {"value": vol!});
+    await _audioHandler.customAction("setVolume", {"value": vol!});
+    await Hive.box(appPrefsBoxName).put("volume", vol);
     volume.value = vol;
   }
 
@@ -1086,6 +1073,24 @@ class PlayerController extends GetxController
     await _audioHandler.customAction("openEqualizer");
   }
 
+  Future<void> applyEqualizerConfig(EqualizerConfig config) async {
+    await _audioHandler.customAction(
+      "applyEqualizerConfig",
+      {'config': config.toJson()},
+    );
+  }
+
+  Future<void> setEqualizerConfig(EqualizerConfig config) async {
+    await _audioHandler.customAction(
+      "setEqualizerConfig",
+      {'config': config.toJson()},
+    );
+  }
+
+  Future<void> resetEqualizer() async {
+    await _audioHandler.customAction("resetEqualizer");
+  }
+
   /// Called from audio handler in case audio is not playable
   /// or returned streamInfo null due to network error
   void notifyPlayError(String message) {
@@ -1102,9 +1107,6 @@ class PlayerController extends GetxController
     scrollController.dispose();
     gesturePlayerStateAnimationController?.dispose();
     sleepTimer?.cancel();
-    if (GetPlatform.isWindows) {
-      Get.delete<WindowsAudioService>();
-    }
     // ensure wakelock disabled when player controller disposed
     try {
       _setWakelock(false);
@@ -1117,7 +1119,7 @@ class PlayerController extends GetxController
 
 enum PlayButtonState { paused, playing, loading }
 
-class MDLovFiLyricUI extends LyricUI {
+class MuziiNapLyricUI extends LyricUI {
   final double defaultSize;
   final double defaultExtSize;
   final double otherMainSize;
@@ -1129,7 +1131,7 @@ class MDLovFiLyricUI extends LyricUI {
   final bool highlight;
   final HighlightDirection highlightDirection;
 
-  MDLovFiLyricUI({
+  MuziiNapLyricUI({
     this.defaultSize = 20,
     this.defaultExtSize = 12,
     this.otherMainSize = 16,

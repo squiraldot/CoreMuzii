@@ -55,8 +55,7 @@ class ArtistScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: GetPlatform.isDesktop ||
-              Get.find<SettingsScreenController>().isBottomNavBarEnabled.value
+      body: Get.find<SettingsScreenController>().isBottomNavBarEnabled.value
           ? ArtistScreenBN(
               artistScreenController: artistScreenController, tag: tag)
           : Row(

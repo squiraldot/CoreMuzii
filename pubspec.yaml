@@ -1,5 +1,5 @@
 name: mdlovfimusic
-description: A cross platform app for music streaming.
+description: Android-only music streaming app.
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -11,11 +11,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # build by specifying --build-name and --build-number, respectively.
 # In Android, build-name is used as versionName while build-number used as versionCode.
 # Read more about Android versioning at https://developer.android.com/studio/publish/versioning
-# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
-# Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-version: 1.13.3+2
+version: 1.0.0+2
 
 environment:
   sdk: ">=3.1.5 <4.0.0"
@@ -31,7 +27,6 @@ dependencies:
   app_links: ^3.5.1
   archive: ^3.1.6
   audio_service: ^0.18.17
-  audio_service_mpris: ^0.1.5
   audio_video_progress_bar: ^2.0.3
   audiotags: ^1.4.1
   buttons_tabbar: ^1.3.13
@@ -50,11 +45,14 @@ dependencies:
   html: ^0.15.6
   jni: ^0.14.0
   just_audio: ^0.10.6
-  just_audio_media_kit: ^2.1.0
-  media_kit_libs_linux: ^1.2.0
   palette_generator: ^0.3.3+4
   path: ^1.8.3
   path_provider: ^2.1.1
+  terminate_restart:
+    git:
+      url: https://github.com/anandnet/terminate_restart.git
+      branch: main
+      ref: eb505e07e11d0fe1f5c03993e707c6678428c353
   permission_handler: ^11.0.1
   share_plus: ^10.1.4
   package_info_plus: ^8.0.0
@@ -65,17 +63,9 @@ dependencies:
       url: https://github.com/anandnet/animated_side_bar.git
       branch: main
       ref: b53567a42b4ba3793a3cf00d478bdba0ecce33d7
-  smtc_windows: ^0.1.2
-  terminate_restart:
-    git:
-      url: https://github.com/anandnet/terminate_restart.git
-      branch: main
-      ref: eb505e07e11d0fe1f5c03993e707c6678428c353
   toggle_switch: ^2.1.0
-  tray_manager: ^0.2.3
   url_launcher: ^6.2.1
   widget_marquee: ^0.0.8
-  window_manager: ^0.4.2
   youtube_explode_dart:
     git:
       url: https://github.com/its-ashutosh-pathak/youtube_explode_dart.git
@@ -83,8 +73,6 @@ dependencies:
   qr_flutter: ^4.1.0
   flutter_zxing: ^2.3.0
   camera: ^0.12.0+1
-  camera_linux: ^0.0.8
-  flutter_distributor: ^0.0.2
   http: ^1.6.0
   flutter_js: ^0.8.7
   webview_flutter: ^4.14.1

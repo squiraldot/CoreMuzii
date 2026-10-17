@@ -6,15 +6,12 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:palette_generator/palette_generator.dart';
-import '/utils/helper.dart';
 
 class ThemeController extends GetxController {
   final primaryColor = Colors.deepPurple[400].obs;
   final textColor = Colors.white24.obs;
   final themedata = Rxn<ThemeData>();
 
-  /// The method channel for setting the title bar color on Windows.
-  final platform = const MethodChannel('win_titlebar_color');
   String? currentSongId;
   late Brightness systemBrightness;
 
@@ -58,7 +55,6 @@ class ThemeController extends GetxController {
               : null,
           value);
     }
-    setWindowsTitleBarColor(themedata.value!.scaffoldBackgroundColor);
   }
 
   void setTheme(ImageProvider imageProvider, String songId) async {
@@ -84,7 +80,6 @@ class ThemeController extends GetxController {
         titleColorSwatch: _createMaterialColor(textColor.value));
     currentSongId = songId;
     Hive.box(appPrefsBoxName).put("themePrimaryColor", (primaryColor.value!).toARGB32());
-    setWindowsTitleBarColor(themedata.value!.scaffoldBackgroundColor);
   }
 
   ThemeData _createThemeData(MaterialColor? primarySwatch, ThemeType themeType,
@@ -110,7 +105,21 @@ class ThemeController extends GetxController {
         primaryColorDark: Colors.black,
         primaryColorLight: const Color(0xFF1E1E1E),
         cardColor: const Color(0xFF121212),
-        dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF121212)),
+        dialogTheme: DialogThemeData(
+          backgroundColor: const Color(0xD91A1A1A),
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
+          ),
+          titleTextStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
+          contentTextStyle: const TextStyle(color: Colors.white70),
+        ),
         colorScheme: const ColorScheme.dark(
             primary: Colors.white,
             secondary: Color(0xFF222222),
@@ -122,7 +131,15 @@ class ThemeController extends GetxController {
         progressIndicatorTheme: const ProgressIndicatorThemeData(
             color: Colors.white, linearTrackColor: Colors.white24),
         bottomSheetTheme: const BottomSheetThemeData(
-            backgroundColor: Colors.black, modalBarrierColor: Colors.black87),
+          backgroundColor: Color(0xE61A1A1A),
+          modalBarrierColor: Colors.black87,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+            side: BorderSide(color: Color(0x22FFFFFF)),
+          ),
+        ),
         textTheme: const TextTheme(
             titleLarge: TextStyle(
                 fontSize: 23,
@@ -191,20 +208,7 @@ class ThemeController extends GetxController {
     return MaterialColor(color.toARGB32(), swatch);
   }
 
-  Future<void> setWindowsTitleBarColor(Color color) async {
-    if (!GetPlatform.isWindows) return;
-    try {
-      Future.delayed(
-          const Duration(milliseconds: 350),
-          () async => await platform.invokeMethod('setTitleBarColor', {
-                'r': (color.r * 255.0).round(),
-                'g': (color.g * 255.0).round(),
-                'b': (color.b * 255.0).round(),
-              }));
-    } on PlatformException catch (e) {
-      printERROR("Failed to set title bar color: ${e.message}");
-    }
-  }
+
 }
 
 extension ComplementaryColor on Color {

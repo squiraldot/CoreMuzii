@@ -1,4 +1,6 @@
+import 'dart:ui' as ui;
 import 'services/constant.dart';
+import 'services/update_checker.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,12 +22,24 @@ import 'ui/screens/Settings/settings_screen_controller.dart';
 import '/ui/utils/theme_controller.dart';
 import 'ui/screens/Home/home_screen_controller.dart';
 import 'ui/screens/Library/library_controller.dart';
-import 'utils/system_tray.dart';
 import 'utils/update_check_flag_file.dart';
+import 'utils/song_info_diagnostics.dart';
 import 'services/local_proxy.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    SongInfoDiagnostics.reportFlutterError(details);
+  };
+  ui.PlatformDispatcher.instance.onError = (error, stack) {
+    final handled = SongInfoDiagnostics.reportPlatformError(error, stack);
+    if (!handled) {
+      debugPrint('PlatformError: $error');
+      debugPrintStack(stackTrace: stack);
+    }
+    return handled;
+  };
   await initHive();
   _setAppInitPrefs();
   startApplicationServices();
@@ -35,6 +49,27 @@ Future<void> main() async {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   TerminateRestart.instance.initialize();
   runApp(const MyApp());
+  if (updateCheckFlag) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = Get.context;
+      if (context == null) return;
+      UpdateChecker.check().then((result) {
+        final release = result.update;
+        final currentContext = Get.context;
+        if (release != null &&
+            currentContext != null &&
+            currentContext.mounted) {
+          UpdateChecker.showUpdateDialog(
+            currentContext,
+            installedVersion: result.installedVersion,
+            release: release,
+          );
+        }
+      }).catchError((Object error) {
+        debugPrint('Startup version check failed: $error');
+      });
+    });
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -43,10 +78,10 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    if (!GetPlatform.isDesktop) Get.put(AppLinksController());
+    Get.put(AppLinksController());
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     return GetMaterialApp(
-        title: 'MDLovFi Music',
+        title: 'MuziiNap',
         home: const Home(),
         debugShowCheckedModeBanner: false,
         translations: Languages(),
@@ -96,21 +131,13 @@ Future<void> startApplicationServices() async {
   Get.lazyPut(() => LibraryArtistsController(), fenix: true);
   Get.lazyPut(() => SettingsScreenController(), fenix: true);
   Get.lazyPut(() => Downloader(), fenix: true);
-  if (GetPlatform.isDesktop) {
-    Get.lazyPut(() => SearchScreenController(), fenix: true);
-    Get.put(DesktopSystemTray());
-  }
+  Get.lazyPut(() => SearchScreenController(), fenix: true);
 }
 
 initHive() async {
   String applicationDataDirectoryPath;
-  if (GetPlatform.isDesktop) {
-    applicationDataDirectoryPath =
-        "${(await getApplicationSupportDirectory()).path}/db";
-  } else {
-    applicationDataDirectoryPath =
-        (await getApplicationDocumentsDirectory()).path;
-  }
+  applicationDataDirectoryPath =
+      (await getApplicationDocumentsDirectory()).path;
   await Hive.initFlutter(applicationDataDirectoryPath);
   await Hive.openBox("SongsCache");
   await Hive.openBox("SongDownloads");
