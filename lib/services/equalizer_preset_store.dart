@@ -100,7 +100,7 @@ class EqualizerPresetStore {
   }) async {
     return create(
       name: name ?? '${preset.name} Copy',
-      author: preset.author == 'MDLovFi' ? 'User' : preset.author,
+      author: (preset.author == 'MDLovFi' || preset.author == 'MuziiNap') ? 'User' : preset.author,
       description: preset.description,
       config: preset.config,
     );
