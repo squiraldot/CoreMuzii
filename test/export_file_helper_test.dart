@@ -7,7 +7,8 @@ void main() {
   late Directory tempDirectory;
 
   setUp(() async {
-    tempDirectory = await Directory.systemTemp.createTemp('export_file_helper_');
+    tempDirectory =
+        await Directory.systemTemp.createTemp('export_file_helper_');
   });
 
   tearDown(() async {
@@ -18,21 +19,32 @@ void main() {
 
   group('findAvailableExportFile', () {
     test('returns the base filename when it is unused', () async {
-      final file = await findAvailableExportFile(tempDirectory, 'My Playlist', 'json');
+      final file =
+          await findAvailableExportFile(tempDirectory, 'My Playlist', 'json');
 
       expect(file.path, '${tempDirectory.path}/My Playlist.json');
       expect(await file.exists(), isFalse);
     });
 
-    test('uses the next numeric suffix without overwriting existing files', () async {
-      await File('${tempDirectory.path}/My Playlist.csv').writeAsString('existing');
-      await File('${tempDirectory.path}/My Playlist_1.csv').writeAsString('existing');
+    test('uses the next numeric suffix without overwriting existing files',
+        () async {
+      await File('${tempDirectory.path}/My Playlist.csv')
+          .writeAsString('existing');
+      await File('${tempDirectory.path}/My Playlist_1.csv')
+          .writeAsString('existing');
 
-      final file = await findAvailableExportFile(tempDirectory, 'My Playlist', 'csv');
+      final file =
+          await findAvailableExportFile(tempDirectory, 'My Playlist', 'csv');
 
       expect(file.path, '${tempDirectory.path}/My Playlist_2.csv');
-      expect(await File('${tempDirectory.path}/My Playlist.csv').readAsString(), 'existing');
-      expect(await File('${tempDirectory.path}/My Playlist_1.csv').readAsString(), 'existing');
+      expect(
+        await File('${tempDirectory.path}/My Playlist.csv').readAsString(),
+        'existing',
+      );
+      expect(
+        await File('${tempDirectory.path}/My Playlist_1.csv').readAsString(),
+        'existing',
+      );
     });
   });
 }
