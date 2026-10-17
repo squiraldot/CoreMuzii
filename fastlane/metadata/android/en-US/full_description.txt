@@ -21,4 +21,4 @@ Features:
 - No Login required
 - Piped playlist integration
 
-MuziiNap Source Code: https://github.com/squiraldot/CoreMuzii
+MuziiNap source code is maintained in the project's GitHub repository.
