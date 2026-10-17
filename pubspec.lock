@@ -430,14 +430,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.9"
-  flutter_app_packager:
-    dependency: transitive
-    description:
-      name: flutter_app_packager
-      sha256: b5bfb7113b49710c004c5f1ab6f08ac121418540d49e14825dd75e99810fa695
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.9"
   flutter_cache_manager:
     dependency: transitive
     description:
@@ -446,14 +438,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.2"
-  flutter_distributor:
-    dependency: "direct main"
-    description:
-      name: flutter_distributor
-      sha256: "50d56df265e97396427ec42cc02374b72d08c71b3442d662b97fc089bd1705ea"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.2"
   flutter_js:
     dependency: "direct main"
     description:
