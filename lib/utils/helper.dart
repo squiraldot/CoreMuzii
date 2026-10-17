@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
@@ -157,33 +156,6 @@ void sortArtist(
     List reversed = artistList.reversed.toList();
     artistList.clear();
     artistList.addAll(reversed);
-  }
-}
-
-/// Return true if new version available
-Future<bool> newVersionCheck(String currentVersion) async {
-  try {
-    final tags = (await Dio()
-            .get("https://api.github.com/repos/Merrmist/MDLovFi-Music/tags"))
-        .data;
-    final availableVersion = tags[0]['name'] as String;
-    List currentVersion_ = currentVersion.replaceAll(RegExp(r'[vV]'), '').split(".");
-    List availableVersion_ = availableVersion.replaceAll(RegExp(r'[vV]'), '').split(".");
-    if (int.parse(availableVersion_[0]) > int.parse(currentVersion_[0])) {
-      return true;
-    } else if (int.parse(availableVersion_[1]) >
-            int.parse(currentVersion_[1]) &&
-        int.parse(availableVersion_[0]) == int.parse(currentVersion_[0])) {
-      return true;
-    } else if (int.parse(availableVersion_[2]) >
-            int.parse(currentVersion_[2]) &&
-        int.parse(availableVersion_[0]) == int.parse(currentVersion_[0]) &&
-        int.parse(availableVersion_[1]) == int.parse(currentVersion_[1])) {
-      return true;
-    }
-    return false;
-  } catch (e) {
-    return false;
   }
 }
 
